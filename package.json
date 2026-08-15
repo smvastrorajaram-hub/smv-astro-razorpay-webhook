@@ -9,5 +9,6 @@
   "dependencies": {
     "express": "^5.1.0",
     "firebase-admin": "^13.4.0"
+    "razorpay": "^2.9.6"
   }
 }
