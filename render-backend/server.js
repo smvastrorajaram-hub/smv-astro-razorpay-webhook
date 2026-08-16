@@ -137,7 +137,7 @@ function signatureEqual(expected, actual) {
 
 app.get("/", (req, res) => res.status(200).json({
   service: "SMV ASTRO Razorpay Backend",
-  version: "2026-08-17-v65-resend-firestore-index-fix",
+  version: "2026-08-17-v66.1-single-email-contact-fix",
   status: "online",
   razorpay: "enabled",
   firebase: "enabled"
@@ -249,7 +249,7 @@ app.get("/email-status", async (req,res)=>{
     resendFromConfigured:!!RESEND_FROM,
     smtpConfigured,
     message:configured?"Email service is configured.":"Set ADMIN_EMAIL, RESEND_API_KEY and RESEND_FROM in Render Environment.",
-    version:"2026-08-17-v65-resend-firestore-index-fix"
+    version:"2026-08-17-v66.1-single-email-contact-fix"
   });
 });
 
