@@ -2,11 +2,10 @@ const express = require("express");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const admin = require("firebase-admin");
-const nodemailer = require("nodemailer");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const ADMIN_UID = "TwjeEIFS3Zcf1SxboLZoujm91Ky2";
+const ADMIN_UID = String(process.env.ADMIN_UID || "TwjeEIFS3Zcf1SxboLZoujm91Ky2").trim();
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -25,19 +24,63 @@ const FieldValue = admin.firestore.FieldValue;
 const RAZORPAY_KEY_ID = String(process.env.RAZORPAY_KEY_ID || "").trim();
 const RAZORPAY_KEY_SECRET = String(process.env.RAZORPAY_KEY_SECRET || "").trim();
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "").trim();
+const RESEND_API_KEY = String(process.env.RESEND_API_KEY || "").trim();
+const RESEND_FROM = String(process.env.RESEND_FROM || "onboarding@resend.dev").trim();
+// SMTP is retained as an optional fallback for paid Render services. Render Free
+// services block outbound SMTP ports 25/465/587, so Resend HTTP API is preferred.
 const SMTP_HOST = String(process.env.SMTP_HOST || "").trim();
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_USER = String(process.env.SMTP_USER || "").trim();
 const SMTP_PASS = String(process.env.SMTP_PASS || "").trim();
 const SMTP_FROM = String(process.env.SMTP_FROM || SMTP_USER || "").trim();
-const smtpTransport = (SMTP_HOST && SMTP_USER && SMTP_PASS)
-  ? nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_PORT === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS }
-    })
-  : null;
+let smtpTransport = null;
+try {
+  const nodemailer = require("nodemailer");
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    smtpTransport = nodemailer.createTransport({
+      host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_PORT === 465,
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+      connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000
+    });
+  }
+} catch (_) {}
+
+async function sendEmail({to, subject, text, html, replyTo}) {
+  const recipients = Array.isArray(to) ? to.filter(Boolean) : [to].filter(Boolean);
+  if (!recipients.length) throw new Error("No recipient email address is available.");
+  if (RESEND_API_KEY) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          from: RESEND_FROM,
+          to: recipients,
+          subject,
+          text,
+          html,
+          ...(replyTo ? { reply_to: replyTo } : {})
+        }),
+        signal: controller.signal
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        const msg = body?.message || body?.name || `Resend API returned HTTP ${r.status}`;
+        throw new Error(msg);
+      }
+      return body;
+    } finally { clearTimeout(timer); }
+  }
+  if (smtpTransport) {
+    return smtpTransport.sendMail({ from: SMTP_FROM, to: recipients, replyTo, subject, text, html });
+  }
+  throw new Error("Email provider is not configured. Set RESEND_API_KEY and RESEND_FROM in Render.");
+}
 if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
   console.error("Razorpay credentials are missing. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Render.");
 }
@@ -72,6 +115,19 @@ async function requireUser(req, res) {
   }
 }
 
+async function isAdminUser(user) {
+  if (!user) return false;
+  if (user.uid === ADMIN_UID) return true;
+  if (user.admin === true || user.role === "admin") return true;
+  try {
+    const snap = await db.collection("smv_users").doc(user.uid).get();
+    return snap.exists && String(snap.data()?.role || "").toLowerCase() === "admin";
+  } catch (e) {
+    console.error("Admin role lookup failed:", e?.message || e);
+    return false;
+  }
+}
+
 function signatureEqual(expected, actual) {
   const a = Buffer.from(String(expected || ""));
   const b = Buffer.from(String(actual || ""));
@@ -80,7 +136,7 @@ function signatureEqual(expected, actual) {
 
 app.get("/", (req, res) => res.status(200).json({
   service: "SMV ASTRO Razorpay Backend",
-  version: "2026-08-17-contact-question-email-v63",
+  version: "2026-08-17-v65-resend-firestore-index-fix",
   status: "online",
   razorpay: "enabled",
   firebase: "enabled"
@@ -89,7 +145,7 @@ app.get("/", (req, res) => res.status(200).json({
 app.get("/test-razorpay", async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return;
-  if (user.uid !== ADMIN_UID) return res.status(403).json({ error: "Admin access required." });
+  if (!(await isAdminUser(user))) return res.status(403).json({ error: "Admin access required." });
   try {
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) return res.status(500).json({ ok: false, error: "Razorpay credentials are missing in Render." });
     const mode = RAZORPAY_KEY_ID.startsWith("rzp_test_") ? "test" : (RAZORPAY_KEY_ID.startsWith("rzp_live_") ? "live" : "unknown");
@@ -126,9 +182,9 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: "Please enter a valid email address." });
     }
-    if (!ADMIN_EMAIL || !smtpTransport) {
-      console.error("Contact email configuration is missing. Set ADMIN_EMAIL, SMTP_HOST, SMTP_USER and SMTP_PASS in Render.");
-      return res.status(503).json({ error: "Contact email service is not configured yet. Please contact admin." });
+    if (!ADMIN_EMAIL || (!RESEND_API_KEY && !smtpTransport)) {
+      console.error("Contact email configuration is missing. Set ADMIN_EMAIL and RESEND_API_KEY/RESEND_FROM in Render.");
+      return res.status(503).json({ error: "Email service is not configured. Add RESEND_API_KEY and RESEND_FROM in Render." });
     }
 
     const ref = db.collection("contactQueries").doc();
@@ -167,34 +223,53 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
         <p><small>Query ID: ${escapeHtmlEmail(ref.id)}</small></p>
       </div>`;
 
-    await smtpTransport.sendMail({
-      from: SMTP_FROM,
-      to: ADMIN_EMAIL,
-      replyTo: email,
-      subject,
-      text,
-      html: htmlBody
-    });
+    await sendEmail({ to: ADMIN_EMAIL, replyTo: email, subject, text, html: htmlBody });
 
     return res.status(200).json({ ok: true, queryId: ref.id });
   } catch (e) {
     console.error("Contact query failed:", e);
-    return res.status(500).json({ error: "Unable to send your query right now. Please try again later." });
+    return res.status(502).json({ error: e?.message || "Unable to send your query right now. Please try again later." });
   }
 });
 
-
-
-
 app.get("/email-status", async (req,res)=>{
-  const configured=!!(ADMIN_EMAIL && smtpTransport);
-  res.json({ok:configured,adminEmailConfigured:!!ADMIN_EMAIL,smtpConfigured:!!smtpTransport,smtpHostConfigured:!!SMTP_HOST,smtpUserConfigured:!!SMTP_USER,smtpPasswordConfigured:!!SMTP_PASS,message:configured?"Email service is configured.":"Set ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and optionally SMTP_FROM in Render Environment.",version:"2026-08-17-contact-question-email-v63"});
+  const resendConfigured=!!RESEND_API_KEY;
+  const smtpConfigured=!!smtpTransport;
+  const configured=!!(ADMIN_EMAIL && (resendConfigured || smtpConfigured));
+  res.json({
+    ok:configured,
+    provider:resendConfigured?"resend":"smtp",
+    adminEmailConfigured:!!ADMIN_EMAIL,
+    resendApiKeyConfigured:resendConfigured,
+    resendFromConfigured:!!RESEND_FROM,
+    smtpConfigured,
+    message:configured?"Email service is configured.":"Set ADMIN_EMAIL, RESEND_API_KEY and RESEND_FROM in Render Environment.",
+    version:"2026-08-17-v65-resend-firestore-index-fix"
+  });
+});
+
+app.post("/admin/test-email", express.json({limit:"5kb"}), async(req,res)=>{
+  const user=await requireUser(req,res); if(!user)return;
+  if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
+  try{
+    if(!ADMIN_EMAIL || !RESEND_API_KEY) return res.status(503).json({error:"RESEND_API_KEY and ADMIN_EMAIL are required."});
+    await sendEmail({
+      to: ADMIN_EMAIL,
+      subject: "SMV ASTRO — Email system test",
+      text: "This is a test email from the SMV ASTRO Render backend. If you received this message, Resend email delivery is working.",
+      html: "<p>This is a test email from the <b>SMV ASTRO</b> Render backend.</p><p>If you received this message, Resend email delivery is working.</p>"
+    });
+    return res.json({ok:true,message:"Test email sent successfully.",to:ADMIN_EMAIL});
+  }catch(e){
+    console.error("Admin email test failed:",e);
+    return res.status(502).json({ok:false,error:e?.message||"Resend email test failed."});
+  }
 });
 
 app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
   const user=await requireUser(req,res); if(!user)return;
   try{
-    if(!ADMIN_EMAIL || !smtpTransport) return res.status(503).json({error:"Email service is not configured in Render. Set ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and SMTP_FROM."});
+    if(!ADMIN_EMAIL || (!RESEND_API_KEY && !smtpTransport)) return res.status(503).json({error:"Email service is not configured in Render. Set ADMIN_EMAIL, RESEND_API_KEY and RESEND_FROM."});
     const questionId=String(req.body?.questionId||"").trim();
     const event=String(req.body?.event||"").trim();
     const reason=String(req.body?.reason||"").trim();
@@ -203,7 +278,7 @@ app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
     const qSnap=await db.collection("smv_questions").doc(questionId).get();
     if(!qSnap.exists) return res.status(404).json({error:"Question not found."});
     const q=qSnap.data()||{};
-    const isAdmin=user.uid===ADMIN_UID;
+    const isAdmin=await isAdminUser(user);
     const isCustomer=q.customerId===user.uid;
     const isAstrologer=q.astrologerId===user.uid;
     if(event==="payment_verified" && !isCustomer) return res.status(403).json({error:"Only the question owner can send this notification."});
@@ -234,7 +309,7 @@ app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
       if(astrologerEmail)to=[astrologerEmail]; subject="SMV ASTRO — Answer revision required"; text=`Dear ${astrologerName},\n\nYour submitted answer requires revision.\n\nReason: ${reason||"Please review and resubmit the answer."}\nQuestion ID: ${questionId}\n\nRegards,\nSMV ASTRO`;
     }
     if(!to.length) return res.status(400).json({error:"No recipient email address is available for this update."});
-    await smtpTransport.sendMail({from:SMTP_FROM,to,replyTo:ADMIN_EMAIL,subject,text});
+    await sendEmail({to,replyTo:ADMIN_EMAIL,subject,text});
     return res.json({ok:true,recipients:to.length,event});
   }catch(e){console.error("Question notification failed:",e);return res.status(500).json({error:"Unable to send question update email right now."});}
 });
@@ -249,35 +324,55 @@ app.post("/appointment-booking", express.json({ limit: "20kb" }), async (req, re
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:"Please enter a valid email address."});
     const ref=db.collection("appointments").doc();
     await ref.set({name,email,mobile,type,preferredDate,preferredTime,notes,status:"new",createdAt:FieldValue.serverTimestamp(),source:"website-appointment-form"});
-    if(!ADMIN_EMAIL||!smtpTransport) return res.status(503).json({error:"Appointment email service is not configured yet. Please contact admin."});
-    await smtpTransport.sendMail({from:SMTP_FROM,to:ADMIN_EMAIL,replyTo:email,subject:`New SVM ASTRO ${type} Request — ${name}`,text:["New SVM ASTRO Appointment Request","",`Name: ${name}`,`Email: ${email}`,`Mobile: ${mobile}`,`Type: ${type}`,`Preferred: ${preferredDate} ${preferredTime}`,`Notes: ${notes||"None"}`,`Appointment ID: ${ref.id}`].join("\n")});
+    if(!ADMIN_EMAIL||(!RESEND_API_KEY && !smtpTransport)) return res.status(503).json({error:"Appointment email service is not configured yet. Add RESEND_API_KEY and RESEND_FROM in Render."});
+    await sendEmail({to:ADMIN_EMAIL,replyTo:email,subject:`New SVM ASTRO ${type} Request — ${name}`,text:["New SVM ASTRO Appointment Request","",`Name: ${name}`,`Email: ${email}`,`Mobile: ${mobile}`,`Type: ${type}`,`Preferred: ${preferredDate} ${preferredTime}`,`Notes: ${notes||"None"}`,`Appointment ID: ${ref.id}`].join("\n")});
     return res.json({ok:true,appointmentId:ref.id});
-  } catch(e){console.error("Appointment booking failed:",e);return res.status(500).json({error:e?.message||"Unable to submit appointment request."});}
+  } catch(e){console.error("Appointment booking failed:",e);return res.status(502).json({error:e?.message||"Unable to submit appointment request."});}
 });
 
 app.get("/public-announcements", async (req,res)=>{
-  try{const snap=await db.collection("smv_announcements").where("active","==",true).orderBy("createdAt","desc").limit(5).get();return res.json({announcements:snap.docs.map(d=>({id:d.id,...d.data()}))});}
-  catch(e){console.error("Announcements read failed:",e);return res.json({announcements:[]});}
+  try{
+    // Deliberately avoid where/orderBy so this endpoint never requires a
+    // Firestore composite index. Filter and sort in memory instead.
+    const snap=await db.collection("smv_announcements").limit(100).get();
+    const announcements=snap.docs.map(d=>({id:d.id,...d.data()}))
+      .filter(x=>x.active===true)
+      .sort((a,b)=>{
+        const at=a.createdAt?.toMillis?a.createdAt.toMillis():(a.createdAt?.seconds||0)*1000;
+        const bt=b.createdAt?.toMillis?b.createdAt.toMillis():(b.createdAt?.seconds||0)*1000;
+        return bt-at;
+      }).slice(0,5);
+    return res.json({announcements});
+  } catch(e){console.error("Announcements read failed:",e?.message||e);return res.json({announcements:[]});}
 });
 
 app.post("/admin/announcement", express.json({limit:"10kb"}), async(req,res)=>{
-  const user=await requireUser(req,res); if(!user)return; if(user.uid!==ADMIN_UID)return res.status(403).json({error:"Admin access required."});
+  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
   try{const title=String(req.body?.title||"").trim(),message=String(req.body?.message||"").trim();if(!title||!message)return res.status(400).json({error:"Title and message are required."});const ref=db.collection("smv_announcements").doc();await ref.set({title,message,active:true,createdAt:FieldValue.serverTimestamp(),createdBy:user.uid});return res.json({ok:true,id:ref.id});}
   catch(e){return res.status(500).json({error:e?.message||"Unable to publish announcement."});}
 });
 
 app.delete("/admin/announcement/:id", async(req,res)=>{
-  const user=await requireUser(req,res); if(!user)return; if(user.uid!==ADMIN_UID)return res.status(403).json({error:"Admin access required."});
+  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
   try{await db.collection("smv_announcements").doc(req.params.id).delete();return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to delete announcement."});}
 });
 
 app.get("/admin/appointments", async(req,res)=>{
-  const user=await requireUser(req,res); if(!user)return; if(user.uid!==ADMIN_UID)return res.status(403).json({error:"Admin access required."});
-  try{const snap=await db.collection("appointments").orderBy("createdAt","desc").limit(50).get();return res.json({appointments:snap.docs.map(d=>({id:d.id,...d.data()}))});}catch(e){return res.status(500).json({error:e?.message||"Unable to load appointments."});}
+  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
+  try{
+    // Avoid orderBy so an index can never block the Admin Dashboard.
+    const snap=await db.collection("appointments").limit(200).get();
+    const appointments=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
+      const at=a.createdAt?.toMillis?a.createdAt.toMillis():(a.createdAt?.seconds||0)*1000;
+      const bt=b.createdAt?.toMillis?b.createdAt.toMillis():(b.createdAt?.seconds||0)*1000;
+      return bt-at;
+    }).slice(0,50);
+    return res.json({appointments});
+  }catch(e){return res.status(500).json({error:e?.message||"Unable to load appointments."});}
 });
 
 app.post("/admin/appointment-status", express.json({limit:"5kb"}), async(req,res)=>{
-  const user=await requireUser(req,res); if(!user)return; if(user.uid!==ADMIN_UID)return res.status(403).json({error:"Admin access required."});
+  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
   try{const id=String(req.body?.id||"").trim(),status=String(req.body?.status||"").trim();if(!id||!["new","confirmed","completed","cancelled"].includes(status))return res.status(400).json({error:"Invalid appointment update."});await db.collection("appointments").doc(id).update({status,updatedAt:FieldValue.serverTimestamp(),updatedBy:user.uid});return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to update appointment."});}
 });
 
@@ -553,4 +648,4 @@ app.post("/razorpay/webhook", express.raw({ type: "application/json" }), async (
   }
 });
 
-app.listen(PORT, "0.0.0.0", () => console.log(`SMV ASTRO Razorpay backend running on port ${PORT}`));
+app.listen(PORT, "0.0.0.0", () => console.log(`SMV ASTRO Razorpay backend running on port ${PORT}`));                                       
