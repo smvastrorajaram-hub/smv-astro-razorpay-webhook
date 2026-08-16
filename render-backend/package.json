@@ -1,6 +1,6 @@
 {
   "name": "smv-astro-razorpay-webhook",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "SMV ASTRO SERVICES Razorpay Backend",
   "main": "server.js",
   "scripts": {
@@ -13,3 +13,4 @@
     "nodemailer": "^7.0.6"
   }
 }
+
