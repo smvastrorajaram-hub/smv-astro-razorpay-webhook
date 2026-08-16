@@ -21,10 +21,12 @@ if (!admin.apps.length) {
 }
 const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+const RAZORPAY_KEY_ID = String(process.env.RAZORPAY_KEY_ID || "").trim();
+const RAZORPAY_KEY_SECRET = String(process.env.RAZORPAY_KEY_SECRET || "").trim();
+if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+  console.error("Razorpay credentials are missing. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Render.");
+}
+const razorpay = new Razorpay({ key_id: RAZORPAY_KEY_ID, key_secret: RAZORPAY_KEY_SECRET });
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",").map(x => x.trim()).filter(Boolean);
@@ -74,8 +76,10 @@ app.get("/test-razorpay", async (req, res) => {
   if (!user) return;
   if (user.uid !== ADMIN_UID) return res.status(403).json({ error: "Admin access required." });
   try {
+    if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) return res.status(500).json({ ok: false, error: "Razorpay credentials are missing in Render." });
+    const mode = RAZORPAY_KEY_ID.startsWith("rzp_test_") ? "test" : (RAZORPAY_KEY_ID.startsWith("rzp_live_") ? "live" : "unknown");
     await razorpay.orders.all({ count: 1 });
-    return res.json({ ok: true, message: "Render payment server can reach Razorpay and the configured credentials were accepted." });
+    return res.json({ ok: true, mode, keyPrefix: RAZORPAY_KEY_ID.slice(0, 9), message: `Razorpay ${mode} credentials accepted by Render.` });
   } catch (e) {
     console.error("Razorpay connection test failed:", e);
     return res.status(502).json({ error: e?.error?.description || e?.description || e?.message || "Razorpay connection failed." });
@@ -202,7 +206,7 @@ app.post("/create-order", express.json(), async (req, res) => {
       if (q.paymentStatus === "paid" && q.razorpayOrderId) {
         return res.status(200).json({
           success: true, alreadyPaid: true, questionId,
-          orderId: q.razorpayOrderId, keyId: process.env.RAZORPAY_KEY_ID,
+          orderId: q.razorpayOrderId, keyId: RAZORPAY_KEY_ID,
           amount: Math.round(Number(q.amount || 0) * 100), currency: "INR"
         });
       }
@@ -221,7 +225,7 @@ app.post("/create-order", express.json(), async (req, res) => {
         const existing = await razorpay.orders.fetch(q.razorpayOrderId);
         if (existing.status === "paid") return res.status(409).json({ error: "This payment has already been completed. Please refresh your dashboard." });
         if (Number(existing.amount) === Math.round(amount * 100) && existing.currency === "INR") {
-          return res.json({ success: true, questionId, orderId: existing.id, keyId: process.env.RAZORPAY_KEY_ID, amount: existing.amount, currency: existing.currency, reused: true });
+          return res.json({ success: true, questionId, orderId: existing.id, keyId: RAZORPAY_KEY_ID, amount: existing.amount, currency: existing.currency, reused: true });
         }
       } catch (e) { console.warn("Could not reuse old order:", e?.message || e); }
     }
@@ -244,7 +248,7 @@ app.post("/create-order", express.json(), async (req, res) => {
       firebaseUid: user.uid, customerEmail: user.email || null, astrologerId: String(q.astrologerId || ""),
       serviceName: req.body?.serviceName || "Public Astrology Question", status: "created", createdAt: FieldValue.serverTimestamp()
     });
-    return res.json({ success: true, questionId, orderId: order.id, keyId: process.env.RAZORPAY_KEY_ID, amount: order.amount, currency: order.currency });
+    return res.json({ success: true, questionId, orderId: order.id, keyId: RAZORPAY_KEY_ID, amount: order.amount, currency: order.currency });
   } catch (e) {
     console.error("Create order error:", e);
     return res.status(500).json({ error: e?.error?.description || e?.description || e?.message || "Unable to create Razorpay order" });
@@ -295,8 +299,12 @@ app.post("/verify-payment", express.json(), async (req, res) => {
     const q = qSnap.data();
     if (q.customerId !== user.uid) return res.status(403).json({ error: "You do not own this question." });
     if (q.razorpayOrderId !== orderId) return res.status(409).json({ error: "Payment order mismatch." });
-    const expected = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET).update(`${orderId}|${paymentId}`).digest("hex");
-    if (!signatureEqual(expected, signature)) return res.status(401).json({ error: "Invalid payment signature." });
+    const expected = crypto.createHmac("sha256", RAZORPAY_KEY_SECRET).update(`${orderId}|${paymentId}`).digest("hex");
+    if (!signatureEqual(expected, signature)) {
+      const mode = RAZORPAY_KEY_ID.startsWith("rzp_test_") ? "test" : (RAZORPAY_KEY_ID.startsWith("rzp_live_") ? "live" : "unknown");
+      console.error("Payment verification signature mismatch", { questionId, orderId, paymentId, mode });
+      return res.status(401).json({ error: "Invalid payment signature. Check that Render RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET belong to the same Razorpay mode (both Test or both Live)." });
+    }
     const payment = await razorpay.payments.fetch(paymentId);
     if (payment.order_id !== orderId) return res.status(409).json({ error: "Payment order mismatch." });
     if (String(payment.status).toLowerCase() !== "captured") return res.status(409).json({ error: "Payment is not captured yet." });
@@ -351,4 +359,3 @@ app.post("/razorpay/webhook", express.raw({ type: "application/json" }), async (
 });
 
 app.listen(PORT, "0.0.0.0", () => console.log(`SMV ASTRO Razorpay backend running on port ${PORT}`));
-    
