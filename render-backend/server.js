@@ -26,6 +26,7 @@ const RAZORPAY_KEY_SECRET = String(process.env.RAZORPAY_KEY_SECRET || "").trim()
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "").trim();
 const RESEND_API_KEY = String(process.env.RESEND_API_KEY || "").trim();
 const RESEND_FROM = String(process.env.RESEND_FROM || "onboarding@resend.dev").trim();
+const RESEND_TEST_RECIPIENT = String(process.env.RESEND_TEST_RECIPIENT || ADMIN_EMAIL || "").trim();
 // SMTP is retained as an optional fallback for paid Render services. Render Free
 // services block outbound SMTP ports 25/465/587, so Resend HTTP API is preferred.
 const SMTP_HOST = String(process.env.SMTP_HOST || "").trim();
@@ -223,7 +224,8 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
         <p><small>Query ID: ${escapeHtmlEmail(ref.id)}</small></p>
       </div>`;
 
-    await sendEmail({ to: ADMIN_EMAIL, replyTo: email, subject, text, html: htmlBody });
+    const contactRecipient = RESEND_API_KEY ? (RESEND_TEST_RECIPIENT || ADMIN_EMAIL) : ADMIN_EMAIL;
+    await sendEmail({ to: contactRecipient, replyTo: email, subject, text, html: htmlBody });
 
     return res.status(200).json({ ok: true, queryId: ref.id });
   } catch (e) {
@@ -231,6 +233,9 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
     return res.status(502).json({ error: e?.message || "Unable to send your query right now. Please try again later." });
   }
 });
+
+
+
 
 app.get("/email-status", async (req,res)=>{
   const resendConfigured=!!RESEND_API_KEY;
@@ -648,4 +653,4 @@ app.post("/razorpay/webhook", express.raw({ type: "application/json" }), async (
   }
 });
 
-app.listen(PORT, "0.0.0.0", () => console.log(`SMV ASTRO Razorpay backend running on port ${PORT}`));                                       
+app.listen(PORT, "0.0.0.0", () => console.log(`SMV ASTRO Razorpay backend running on port ${PORT}`));
