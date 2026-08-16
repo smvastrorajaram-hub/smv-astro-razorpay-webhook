@@ -2,6 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const admin = require("firebase-admin");
+const nodemailer = require("nodemailer");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -23,6 +24,20 @@ const db = admin.firestore();
 const FieldValue = admin.firestore.FieldValue;
 const RAZORPAY_KEY_ID = String(process.env.RAZORPAY_KEY_ID || "").trim();
 const RAZORPAY_KEY_SECRET = String(process.env.RAZORPAY_KEY_SECRET || "").trim();
+const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "").trim();
+const SMTP_HOST = String(process.env.SMTP_HOST || "").trim();
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+const SMTP_USER = String(process.env.SMTP_USER || "").trim();
+const SMTP_PASS = String(process.env.SMTP_PASS || "").trim();
+const SMTP_FROM = String(process.env.SMTP_FROM || SMTP_USER || "").trim();
+const smtpTransport = (SMTP_HOST && SMTP_USER && SMTP_PASS)
+  ? nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_PORT === 465,
+      auth: { user: SMTP_USER, pass: SMTP_PASS }
+    })
+  : null;
 if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
   console.error("Razorpay credentials are missing. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Render.");
 }
@@ -65,7 +80,7 @@ function signatureEqual(expected, actual) {
 
 app.get("/", (req, res) => res.status(200).json({
   service: "SMV ASTRO Razorpay Backend",
-  version: "2026-08-17-payment-questionid-tz-fix",
+  version: "2026-08-17-contact-question-email-v63",
   status: "online",
   razorpay: "enabled",
   firebase: "enabled"
@@ -84,6 +99,186 @@ app.get("/test-razorpay", async (req, res) => {
     console.error("Razorpay connection test failed:", e);
     return res.status(502).json({ error: e?.error?.description || e?.description || e?.message || "Razorpay connection failed." });
   }
+});
+
+
+function escapeHtmlEmail(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
+}
+
+
+app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => {
+  try {
+    const name = String(req.body?.name || "").trim();
+    const email = String(req.body?.email || "").trim();
+    const place = String(req.body?.place || "").trim();
+    const mobile = String(req.body?.mobile || "").trim();
+    const query = String(req.body?.query || "").trim();
+
+    if (!name || !email || !place || !mobile || !query) {
+      return res.status(400).json({ error: "Please fill all required fields." });
+    }
+    if (name.length > 100 || email.length > 160 || place.length > 120 || mobile.length > 20 || query.length > 3000) {
+      return res.status(400).json({ error: "One or more fields are too long." });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "Please enter a valid email address." });
+    }
+    if (!ADMIN_EMAIL || !smtpTransport) {
+      console.error("Contact email configuration is missing. Set ADMIN_EMAIL, SMTP_HOST, SMTP_USER and SMTP_PASS in Render.");
+      return res.status(503).json({ error: "Contact email service is not configured yet. Please contact admin." });
+    }
+
+    const ref = db.collection("contactQueries").doc();
+    const createdAt = FieldValue.serverTimestamp();
+    await ref.set({
+      name, email, place, mobile, query,
+      status: "new",
+      createdAt,
+      source: "website-contact-form"
+    });
+
+    const subject = `New SVM ASTRO Customer Query — ${name}`;
+    const text = [
+      "New SVM ASTRO Customer Query",
+      "",
+      `Name: ${name}`,
+      `Email: ${email}`,
+      `Place: ${place}`,
+      `Mobile: ${mobile}`,
+      "",
+      "Query:",
+      query,
+      "",
+      `Query ID: ${ref.id}`
+    ].join("\n");
+
+    const htmlBody = `
+      <div style="font-family:Arial,sans-serif;line-height:1.6">
+        <h2 style="color:#7e1818">New SVM ASTRO Customer Query</h2>
+        <p><b>Name:</b> ${escapeHtmlEmail(name)}</p>
+        <p><b>Email:</b> ${escapeHtmlEmail(email)}</p>
+        <p><b>Place:</b> ${escapeHtmlEmail(place)}</p>
+        <p><b>Mobile:</b> ${escapeHtmlEmail(mobile)}</p>
+        <p><b>Query:</b></p>
+        <div style="white-space:pre-wrap;border:1px solid #ddd;padding:12px;border-radius:8px">${escapeHtmlEmail(query)}</div>
+        <p><small>Query ID: ${escapeHtmlEmail(ref.id)}</small></p>
+      </div>`;
+
+    await smtpTransport.sendMail({
+      from: SMTP_FROM,
+      to: ADMIN_EMAIL,
+      replyTo: email,
+      subject,
+      text,
+      html: htmlBody
+    });
+
+    return res.status(200).json({ ok: true, queryId: ref.id });
+  } catch (e) {
+    console.error("Contact query failed:", e);
+    return res.status(500).json({ error: "Unable to send your query right now. Please try again later." });
+  }
+});
+
+
+
+
+app.get("/email-status", async (req,res)=>{
+  const configured=!!(ADMIN_EMAIL && smtpTransport);
+  res.json({ok:configured,adminEmailConfigured:!!ADMIN_EMAIL,smtpConfigured:!!smtpTransport,smtpHostConfigured:!!SMTP_HOST,smtpUserConfigured:!!SMTP_USER,smtpPasswordConfigured:!!SMTP_PASS,message:configured?"Email service is configured.":"Set ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and optionally SMTP_FROM in Render Environment.",version:"2026-08-17-contact-question-email-v63"});
+});
+
+app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
+  const user=await requireUser(req,res); if(!user)return;
+  try{
+    if(!ADMIN_EMAIL || !smtpTransport) return res.status(503).json({error:"Email service is not configured in Render. Set ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and SMTP_FROM."});
+    const questionId=String(req.body?.questionId||"").trim();
+    const event=String(req.body?.event||"").trim();
+    const reason=String(req.body?.reason||"").trim();
+    const allowed=["payment_verified","question_approved","question_rejected","answer_submitted","answer_approved","answer_rejected"];
+    if(!questionId||!allowed.includes(event)) return res.status(400).json({error:"Invalid question notification request."});
+    const qSnap=await db.collection("smv_questions").doc(questionId).get();
+    if(!qSnap.exists) return res.status(404).json({error:"Question not found."});
+    const q=qSnap.data()||{};
+    const isAdmin=user.uid===ADMIN_UID;
+    const isCustomer=q.customerId===user.uid;
+    const isAstrologer=q.astrologerId===user.uid;
+    if(event==="payment_verified" && !isCustomer) return res.status(403).json({error:"Only the question owner can send this notification."});
+    if(["question_approved","question_rejected","answer_approved","answer_rejected"].includes(event) && !isAdmin) return res.status(403).json({error:"Admin access required for this notification."});
+    if(event==="answer_submitted" && !isAstrologer) return res.status(403).json({error:"Only the assigned astrologer can send this notification."});
+
+    async function userEmail(uid){
+      if(!uid)return "";
+      try{const u=await admin.auth().getUser(uid);return String(u.email||"").trim();}catch(e){}
+      try{const s=await db.collection("smv_users").doc(uid).get();return String(s.data()?.email||"").trim();}catch(e){return "";}
+    }
+    const customerEmail=String(q.customerEmail||await userEmail(q.customerId)||"").trim();
+    const astrologerEmail=await userEmail(q.astrologerId);
+    const customerName=String(q.customerName||q.birthName||"Customer");
+    const astrologerName=String(q.astrologerName||"Astrologer");
+    let subject="", text="", to=[];
+    if(event==="payment_verified"){
+      if(customerEmail)to=[customerEmail]; subject="SMV ASTRO — Question payment received"; text=`Dear ${customerName},\n\nYour payment for your astrology question has been successfully verified. Your question is now waiting for Admin approval.\n\nQuestion: ${q.question||""}\nQuestion ID: ${questionId}\n\nRegards,\nSMV ASTRO`;
+    } else if(event==="question_approved"){
+      if(customerEmail)to=[customerEmail]; subject="SMV ASTRO — Your question has been approved"; text=`Dear ${customerName},\n\nYour paid astrology question has been approved by Admin and is now available to an approved astrologer.\n\nQuestion: ${q.question||""}\nQuestion ID: ${questionId}\n\nRegards,\nSMV ASTRO`;
+    } else if(event==="question_rejected"){
+      if(customerEmail)to=[customerEmail]; subject="SMV ASTRO — Question update"; text=`Dear ${customerName},\n\nYour astrology question was not approved by Admin.\n\nReason: ${reason||"Please contact SMV ASTRO."}\nQuestion ID: ${questionId}\n\nRegards,\nSMV ASTRO`;
+    } else if(event==="answer_submitted"){
+      if(customerEmail)to=[customerEmail]; if(ADMIN_EMAIL&&!to.includes(ADMIN_EMAIL))to.push(ADMIN_EMAIL); subject="SMV ASTRO — Astrologer answer submitted"; text=`Dear ${customerName},\n\n${astrologerName} has submitted an answer to your astrology question. It is now waiting for Admin review.\n\nQuestion: ${q.question||""}\nQuestion ID: ${questionId}\n\nRegards,\nSMV ASTRO`;
+    } else if(event==="answer_approved"){
+      if(customerEmail)to.push(customerEmail); if(astrologerEmail&&!to.includes(astrologerEmail))to.push(astrologerEmail); subject="SMV ASTRO — Astrology answer approved"; text=`Your astrology answer has been approved by SMV ASTRO Admin.\n\nQuestion: ${q.question||""}\nQuestion ID: ${questionId}\n\nThe customer can now view the approved answer.`;
+    } else if(event==="answer_rejected"){
+      if(astrologerEmail)to=[astrologerEmail]; subject="SMV ASTRO — Answer revision required"; text=`Dear ${astrologerName},\n\nYour submitted answer requires revision.\n\nReason: ${reason||"Please review and resubmit the answer."}\nQuestion ID: ${questionId}\n\nRegards,\nSMV ASTRO`;
+    }
+    if(!to.length) return res.status(400).json({error:"No recipient email address is available for this update."});
+    await smtpTransport.sendMail({from:SMTP_FROM,to,replyTo:ADMIN_EMAIL,subject,text});
+    return res.json({ok:true,recipients:to.length,event});
+  }catch(e){console.error("Question notification failed:",e);return res.status(500).json({error:"Unable to send question update email right now."});}
+});
+
+app.post("/appointment-booking", express.json({ limit: "20kb" }), async (req, res) => {
+  try {
+    const name=String(req.body?.name||"").trim(), email=String(req.body?.email||"").trim(), mobile=String(req.body?.mobile||"").trim();
+    const type=String(req.body?.type||"").trim(), preferredDate=String(req.body?.preferredDate||"").trim(), preferredTime=String(req.body?.preferredTime||"").trim(), notes=String(req.body?.notes||"").trim();
+    if(!name||!email||!mobile||!type||!preferredDate||!preferredTime) return res.status(400).json({error:"Please fill all required appointment fields."});
+    if(!["Chat Consultation","Call Consultation"].includes(type)) return res.status(400).json({error:"Please choose Chat or Call consultation."});
+    if(name.length>100||email.length>160||mobile.length>20||notes.length>2000) return res.status(400).json({error:"One or more fields are too long."});
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:"Please enter a valid email address."});
+    const ref=db.collection("appointments").doc();
+    await ref.set({name,email,mobile,type,preferredDate,preferredTime,notes,status:"new",createdAt:FieldValue.serverTimestamp(),source:"website-appointment-form"});
+    if(!ADMIN_EMAIL||!smtpTransport) return res.status(503).json({error:"Appointment email service is not configured yet. Please contact admin."});
+    await smtpTransport.sendMail({from:SMTP_FROM,to:ADMIN_EMAIL,replyTo:email,subject:`New SVM ASTRO ${type} Request — ${name}`,text:["New SVM ASTRO Appointment Request","",`Name: ${name}`,`Email: ${email}`,`Mobile: ${mobile}`,`Type: ${type}`,`Preferred: ${preferredDate} ${preferredTime}`,`Notes: ${notes||"None"}`,`Appointment ID: ${ref.id}`].join("\n")});
+    return res.json({ok:true,appointmentId:ref.id});
+  } catch(e){console.error("Appointment booking failed:",e);return res.status(500).json({error:e?.message||"Unable to submit appointment request."});}
+});
+
+app.get("/public-announcements", async (req,res)=>{
+  try{const snap=await db.collection("smv_announcements").where("active","==",true).orderBy("createdAt","desc").limit(5).get();return res.json({announcements:snap.docs.map(d=>({id:d.id,...d.data()}))});}
+  catch(e){console.error("Announcements read failed:",e);return res.json({announcements:[]});}
+});
+
+app.post("/admin/announcement", express.json({limit:"10kb"}), async(req,res)=>{
+  const user=await requireUser(req,res); if(!user)return; if(user.uid!==ADMIN_UID)return res.status(403).json({error:"Admin access required."});
+  try{const title=String(req.body?.title||"").trim(),message=String(req.body?.message||"").trim();if(!title||!message)return res.status(400).json({error:"Title and message are required."});const ref=db.collection("smv_announcements").doc();await ref.set({title,message,active:true,createdAt:FieldValue.serverTimestamp(),createdBy:user.uid});return res.json({ok:true,id:ref.id});}
+  catch(e){return res.status(500).json({error:e?.message||"Unable to publish announcement."});}
+});
+
+app.delete("/admin/announcement/:id", async(req,res)=>{
+  const user=await requireUser(req,res); if(!user)return; if(user.uid!==ADMIN_UID)return res.status(403).json({error:"Admin access required."});
+  try{await db.collection("smv_announcements").doc(req.params.id).delete();return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to delete announcement."});}
+});
+
+app.get("/admin/appointments", async(req,res)=>{
+  const user=await requireUser(req,res); if(!user)return; if(user.uid!==ADMIN_UID)return res.status(403).json({error:"Admin access required."});
+  try{const snap=await db.collection("appointments").orderBy("createdAt","desc").limit(50).get();return res.json({appointments:snap.docs.map(d=>({id:d.id,...d.data()}))});}catch(e){return res.status(500).json({error:e?.message||"Unable to load appointments."});}
+});
+
+app.post("/admin/appointment-status", express.json({limit:"5kb"}), async(req,res)=>{
+  const user=await requireUser(req,res); if(!user)return; if(user.uid!==ADMIN_UID)return res.status(403).json({error:"Admin access required."});
+  try{const id=String(req.body?.id||"").trim(),status=String(req.body?.status||"").trim();if(!id||!["new","confirmed","completed","cancelled"].includes(status))return res.status(400).json({error:"Invalid appointment update."});await db.collection("appointments").doc(id).update({status,updatedAt:FieldValue.serverTimestamp(),updatedBy:user.uid});return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to update appointment."});}
 });
 
 app.post("/create-order", express.json(), async (req, res) => {
