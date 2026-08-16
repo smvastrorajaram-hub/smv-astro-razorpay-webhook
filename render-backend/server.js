@@ -63,6 +63,7 @@ function signatureEqual(expected, actual) {
 
 app.get("/", (req, res) => res.status(200).json({
   service: "SMV ASTRO Razorpay Backend",
+  version: "2026-08-17-payment-questionid-tz-fix",
   status: "online",
   razorpay: "enabled",
   firebase: "enabled"
@@ -85,25 +86,134 @@ app.post("/create-order", express.json(), async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return;
   try {
-    const questionId = String(req.body?.questionId || "").trim();
-    if (!questionId) return res.status(400).json({ error: "questionId is required" });
+    let questionId = String(req.body?.questionId || "").trim();
+    let qRef;
+    let q;
 
-    const qRef = db.collection("smv_questions").doc(questionId);
-    const qSnap = await qRef.get();
-    if (!qSnap.exists) return res.status(404).json({ error: "Question not found" });
-    const q = qSnap.data();
-    if (q.customerId !== user.uid) return res.status(403).json({ error: "You do not own this question." });
+    // Create/read the question on the trusted server. The browser no longer calls
+    // Firestore to create the question document, which eliminates the empty
+    // documentPath error seen before Razorpay opened.
+    if (questionId) {
+      if (questionId.includes("/") || questionId === "." || questionId === "..") {
+        return res.status(400).json({ error: "A valid questionId is required." });
+      }
+      qRef = db.collection("smv_questions").doc(questionId);
+      const qSnap = await qRef.get();
+      if (!qSnap.exists) {
+        const settingSnap = await db.collection("smv_settings").doc("question").get();
+        const configuredPrice = Number(settingSnap.data()?.price || 5);
+        const birth = req.body?.birthDetails || {};
+        const customerName = String(req.body?.customerName || birth.name || "").trim();
+        const questionText = String(req.body?.question || "").trim();
+        if (!customerName || !questionText || !birth.birthDate || !birth.birthTime || !String(birth.birthPlace || "").trim()) {
+          return res.status(400).json({ error: "Complete customer birth details and question are required." });
+        }
+        q = {
+          customerId: user.uid, customerName, birthName: customerName, question: questionText,
+          amount: configuredPrice, status: "awaiting_payment", paymentStatus: "pending",
+          allocationStatus: "awaiting_admin",
+          birthDetails: {
+            name: customerName, birthDate: String(birth.birthDate), birthTime: String(birth.birthTime),
+            birthPlace: String(birth.birthPlace).trim(), birthGender: String(birth.birthGender || ""),
+            timezone: "Asia/Kolkata", utcOffsetMinutes: 330
+          },
+          birthDate: String(birth.birthDate), birthTime: String(birth.birthTime),
+          birthPlace: String(birth.birthPlace).trim(), birthGender: String(birth.birthGender || ""),
+          birthTimezone: "Asia/Kolkata", birthUtcOffsetMinutes: 330,
+          createdAt: FieldValue.serverTimestamp()
+        };
+        await qRef.set(q);
+      } else {
+        q = qSnap.data();
+        if (q.customerId !== user.uid) return res.status(403).json({ error: "You do not own this question." });
+        // Preserve India wall-clock birth time. Never reinterpret a user-entered
+        // HH:mm value as UTC and shift it by 5:30 hours.
+        if (!q.birthTimezone || !q.birthUtcOffsetMinutes || !q.birthDetails?.timezone) {
+          await qRef.set({
+            birthTimezone: q.birthTimezone || "Asia/Kolkata",
+            birthUtcOffsetMinutes: Number(q.birthUtcOffsetMinutes ?? 330),
+            birthDetails: {
+              ...(q.birthDetails || {}),
+              timezone: q.birthDetails?.timezone || "Asia/Kolkata",
+              utcOffsetMinutes: Number(q.birthDetails?.utcOffsetMinutes ?? 330)
+            }
+          }, { merge: true });
+          q = {
+            ...q,
+            birthTimezone: q.birthTimezone || "Asia/Kolkata",
+            birthUtcOffsetMinutes: Number(q.birthUtcOffsetMinutes ?? 330),
+            birthDetails: {
+              ...(q.birthDetails || {}),
+              timezone: q.birthDetails?.timezone || "Asia/Kolkata",
+              utcOffsetMinutes: Number(q.birthDetails?.utcOffsetMinutes ?? 330)
+            }
+          };
+        }
+      }
+    } else {
+      qRef = db.collection("smv_questions").doc();
+      questionId = qRef.id;
+      if (!questionId) return res.status(500).json({ error: "Unable to create a valid question ID." });
+
+      const settingSnap = await db.collection("smv_settings").doc("question").get();
+      const configuredPrice = Number(settingSnap.data()?.price || 5);
+      if (!Number.isFinite(configuredPrice) || configuredPrice < 1) {
+        return res.status(409).json({ error: "Question price is not configured correctly by Admin." });
+      }
+
+      const birth = req.body?.birthDetails || {};
+      const customerName = String(req.body?.customerName || birth.name || "").trim();
+      const questionText = String(req.body?.question || "").trim();
+      if (!customerName || !questionText || !birth.birthDate || !birth.birthTime || !String(birth.birthPlace || "").trim()) {
+        return res.status(400).json({ error: "Complete customer birth details and question are required." });
+      }
+
+      q = {
+        customerId: user.uid,
+        customerName,
+        birthName: customerName,
+        question: questionText,
+        amount: configuredPrice,
+        status: "awaiting_payment",
+        paymentStatus: "pending",
+        allocationStatus: "awaiting_admin",
+        birthDetails: {
+          name: customerName,
+          birthDate: String(birth.birthDate),
+          birthTime: String(birth.birthTime),
+          birthPlace: String(birth.birthPlace).trim(),
+          birthGender: String(birth.birthGender || "")
+        },
+        birthDate: String(birth.birthDate),
+        birthTime: String(birth.birthTime),
+        birthPlace: String(birth.birthPlace).trim(),
+        birthGender: String(birth.birthGender || ""),
+        birthTimezone: "Asia/Kolkata",
+        birthUtcOffsetMinutes: 330,
+        createdAt: FieldValue.serverTimestamp()
+      };
+      await qRef.set(q);
+    }
+
+    if (!q || q.customerId !== user.uid) return res.status(403).json({ error: "You do not own this question." });
+    console.log("[create-order] questionId=", questionId, "customer=", user.uid);
+
     if (!["awaiting_payment", "payment_failed"].includes(q.status)) {
-      if (q.paymentStatus === "paid") return res.status(200).json({ success: true, alreadyPaid: true, orderId: q.razorpayOrderId || null, keyId: process.env.RAZORPAY_KEY_ID, amount: Math.round(Number(q.amount || 0) * 100), currency: "INR" });
+      if (q.paymentStatus === "paid" && q.razorpayOrderId) {
+        return res.status(200).json({
+          success: true, alreadyPaid: true, questionId,
+          orderId: q.razorpayOrderId, keyId: process.env.RAZORPAY_KEY_ID,
+          amount: Math.round(Number(q.amount || 0) * 100), currency: "INR"
+        });
+      }
       return res.status(409).json({ error: "This question is not available for payment." });
     }
 
-    const astroSnap = await db.collection("smv_astrologers").doc(String(q.astrologerId || "")).get();
-    if (!astroSnap.exists || astroSnap.data().status !== "approved") return res.status(409).json({ error: "This astrologer is not approved." });
     const amount = Number(q.amount || 0);
-    const configuredPrice = Number(astroSnap.data().pricePerQuestion || 0);
+    const questionSetting = await db.collection("smv_settings").doc("question").get();
+    const configuredPrice = Number(questionSetting.data()?.price || amount || 5);
     if (!Number.isFinite(amount) || amount < 1 || !Number.isFinite(configuredPrice) || configuredPrice < 1 || Math.round(amount * 100) !== Math.round(configuredPrice * 100)) {
-      return res.status(409).json({ error: "Consultation amount is invalid or has changed. Please start the question again." });
+      return res.status(409).json({ error: "Question price is invalid or has changed. Please start the question again." });
     }
 
     if (q.razorpayOrderId && ["order_created", "verification_failed", "failed"].includes(q.paymentStatus)) {
@@ -111,7 +221,7 @@ app.post("/create-order", express.json(), async (req, res) => {
         const existing = await razorpay.orders.fetch(q.razorpayOrderId);
         if (existing.status === "paid") return res.status(409).json({ error: "This payment has already been completed. Please refresh your dashboard." });
         if (Number(existing.amount) === Math.round(amount * 100) && existing.currency === "INR") {
-          return res.json({ success: true, orderId: existing.id, keyId: process.env.RAZORPAY_KEY_ID, amount: existing.amount, currency: existing.currency, reused: true });
+          return res.json({ success: true, questionId, orderId: existing.id, keyId: process.env.RAZORPAY_KEY_ID, amount: existing.amount, currency: existing.currency, reused: true });
         }
       } catch (e) { console.warn("Could not reuse old order:", e?.message || e); }
     }
@@ -121,15 +231,20 @@ app.post("/create-order", express.json(), async (req, res) => {
       receipt: `SMV_${questionId.slice(0, 25)}_${Date.now()}`,
       notes: { questionId, customerId: user.uid, astrologerId: String(q.astrologerId || "") }
     });
+    if (!order || !order.id || typeof order.id !== "string") {
+      console.error("Razorpay returned an order without a valid order ID", order);
+      return res.status(502).json({ error: "Razorpay order was created without a valid order ID." });
+    }
+
     const answerSettings = await db.collection("smv_settings").doc("answer").get();
     const minimumWords = Math.max(1, Math.min(10000, Math.floor(Number(answerSettings.data()?.minimumWords || 150))));
     await qRef.set({ razorpayOrderId: order.id, paymentCurrency: "INR", paymentStatus: "order_created", answerMinWords: minimumWords, paymentUpdatedAt: FieldValue.serverTimestamp() }, { merge: true });
     await db.collection("razorpay_orders").doc(order.id).set({
       razorpayOrderId: order.id, questionId, amount: order.amount, currency: order.currency,
       firebaseUid: user.uid, customerEmail: user.email || null, astrologerId: String(q.astrologerId || ""),
-      serviceName: req.body?.serviceName || "Astrology Consultation", status: "created", createdAt: FieldValue.serverTimestamp()
+      serviceName: req.body?.serviceName || "Public Astrology Question", status: "created", createdAt: FieldValue.serverTimestamp()
     });
-    return res.json({ success: true, orderId: order.id, keyId: process.env.RAZORPAY_KEY_ID, amount: order.amount, currency: order.currency });
+    return res.json({ success: true, questionId, orderId: order.id, keyId: process.env.RAZORPAY_KEY_ID, amount: order.amount, currency: order.currency });
   } catch (e) {
     console.error("Create order error:", e);
     return res.status(500).json({ error: e?.error?.description || e?.description || e?.message || "Unable to create Razorpay order" });
@@ -153,7 +268,7 @@ async function markQuestionPaid(questionId, orderId, paymentId, signature, sourc
     const astroCommission = Math.round(amount * astroPercent) / 100;
     const adminCommission = Math.round(amount * adminPercent) / 100;
     tx.update(qRef, {
-      status: "paid", paymentStatus: "paid", razorpayPaymentId: paymentId, razorpaySignature: signature,
+      status: "pending_admin_approval", paymentStatus: "paid", allocationStatus: "awaiting_admin", razorpayPaymentId: paymentId, razorpaySignature: signature,
       paidAt: q.paidAt || FieldValue.serverTimestamp(), paymentUpdatedAt: FieldValue.serverTimestamp(),
       paymentConfirmedBy: source, commissionPercent: astroPercent,
       astrologerCommissionAmount: astroCommission, adminCommissionAmount: adminCommission
@@ -161,8 +276,7 @@ async function markQuestionPaid(questionId, orderId, paymentId, signature, sourc
     return { already: false, customerId: q.customerId, astrologerId: q.astrologerId, astroCommission, adminCommission };
   });
   if (!result.already) {
-    await db.collection("smv_notifications").add({ userId: result.customerId, type: "payment", title: "Payment successful", message: "Your payment was verified. Your question is now waiting for answers.", questionId, createdAt: FieldValue.serverTimestamp(), read: false });
-    if (result.astrologerId) await db.collection("smv_notifications").add({ userId: result.astrologerId, type: "new_question", title: "New paid question", message: "A new paid customer question is waiting in your dashboard.", questionId, createdAt: FieldValue.serverTimestamp(), read: false });
+    await db.collection("smv_notifications").add({ userId: result.customerId, type: "payment", title: "Payment successful", message: "Your payment was verified. Your question is now waiting for Admin approval.", questionId, createdAt: FieldValue.serverTimestamp(), read: false });
   }
   return result;
 }
@@ -209,7 +323,8 @@ app.post("/razorpay/webhook", express.raw({ type: "application/json" }), async (
     const orderEntity = event?.payload?.order?.entity || null;
     const paymentId = paymentEntity?.id || null;
     const orderId = orderEntity?.id || paymentEntity?.order_id || null;
-    const eventKey = `${eventType}_${paymentId || orderId || crypto.createHash("sha256").update(req.body).digest("hex")}`;
+    const eventKey = `${eventType}_${paymentId || orderId || crypto.createHash("sha256").update(req.body).digest("hex")}`.replace(/\//g, "_");
+    if (!eventKey) return res.status(400).send("Invalid webhook event key");
     const eventRef = db.collection("razorpay_webhook_events").doc(eventKey);
     if ((await eventRef.get()).exists) return res.status(200).send("OK");
     await eventRef.set({ event: eventType, razorpayPaymentId: paymentId, razorpayOrderId: orderId, receivedAt: FieldValue.serverTimestamp(), processed: false });
@@ -236,4 +351,4 @@ app.post("/razorpay/webhook", express.raw({ type: "application/json" }), async (
 });
 
 app.listen(PORT, "0.0.0.0", () => console.log(`SMV ASTRO Razorpay backend running on port ${PORT}`));
-        
+    
