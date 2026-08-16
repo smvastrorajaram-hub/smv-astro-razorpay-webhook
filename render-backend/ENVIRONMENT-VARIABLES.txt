@@ -1,0 +1,11 @@
+RENDER ENVIRONMENT VARIABLES
+
+RAZORPAY_KEY_ID=<your Razorpay Test/Live Key ID>
+RAZORPAY_KEY_SECRET=<your Razorpay Test/Live Key Secret>
+RAZORPAY_WEBHOOK_SECRET=<your Razorpay Webhook Secret>
+
+FIREBASE_PROJECT_ID=smv-astro
+FIREBASE_CLIENT_EMAIL=<Firebase service account client email>
+FIREBASE_PRIVATE_KEY=<Firebase service account private key; keep \n as escaped newlines if required by your Render setup>
+
+ALLOWED_ORIGINS=https://smvastrorajaram-hub.github.io,https://smv-astro-razorpay-webhook.onrender.com
