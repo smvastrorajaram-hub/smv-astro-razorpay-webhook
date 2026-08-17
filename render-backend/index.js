@@ -1,23 +1,188 @@
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
 
 admin.initializeApp();
 const db = admin.firestore();
 
-function countWords(text) {
-  return String(text || '').trim() ? String(text).trim().split(/\s+/).filter(Boolean).length : 0;
+const RAZORPAY_KEY_ID = defineSecret("RAZORPAY_KEY_ID");
+const RAZORPAY_KEY_SECRET = defineSecret("RAZORPAY_KEY_SECRET");
+const RAZORPAY_WEBHOOK_SECRET = defineSecret("RAZORPAY_WEBHOOK_SECRET");
+
+function getRazorpay(keyId, secret) {
+  if (!keyId || !secret) throw new Error("Razorpay server credentials are missing. Configure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Firebase Functions secrets, then redeploy functions.");
+  return new Razorpay({ key_id: String(keyId).trim(), key_secret: String(secret).trim() });
 }
-async function assertAdmin(request) {
-  if (!request.auth) throw new HttpsError('unauthenticated', 'Please login.');
-  if (request.auth.uid === 'TwjeEIFS3Zcf1SxboLZoujm91Ky2') return;
-  const adminSnap = await db.collection('smv_admins').doc(request.auth.uid).get();
-  if (!adminSnap.exists || adminSnap.data()?.active === false) {
-    throw new HttpsError('permission-denied', 'Admin access required.');
+function readRazorpayConfig() {
+  try {
+    const keyId=String(RAZORPAY_KEY_ID.value()||"").trim();
+    const secret=String(RAZORPAY_KEY_SECRET.value()||"").trim();
+    getRazorpay(keyId,secret);
+    return {keyId,secret};
+  } catch(e) {
+    throw new HttpsError("failed-precondition",`Razorpay configuration error: ${e?.message||String(e)}`);
   }
 }
 
+function countWords(text) {
+  return String(text || '').trim() ? String(text).trim().split(/\s+/).filter(Boolean).length : 0;
+}
+function assertAdmin(request) {
+  if (!request.auth || request.auth.uid !== 'TwjeEIFS3Zcf1SxboLZoujm91Ky2') throw new HttpsError('permission-denied', 'Admin access required.');
+}
+
+async function findQuestionByRazorpayOrder(orderId, questionId = "") {
+  if (questionId) {
+    const direct = await db.collection("smv_questions").doc(questionId).get();
+    if (direct.exists && direct.data().razorpayOrderId === orderId) return direct;
+  }
+  const snap = await db.collection("smv_questions").where("razorpayOrderId", "==", orderId).limit(1).get();
+  return snap.empty ? null : snap.docs[0];
+}
+
+function safeSignatureEqual(expected, actual) {
+  const a = Buffer.from(String(expected || ""), "utf8");
+  const b = Buffer.from(String(actual || ""), "utf8");
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+async function reconcileCapturedPayment({ questionId, orderId, paymentId, signature = "", source = "api" }) {
+  const qRef = db.collection("smv_questions").doc(questionId);
+  const result = await db.runTransaction(async tx => {
+    const qs = await tx.get(qRef);
+    if (!qs.exists) throw new Error("Question not found.");
+    const q = qs.data();
+    if (q.razorpayOrderId !== orderId) throw new Error("Order mismatch.");
+    if (q.paymentStatus === "paid" && q.razorpayPaymentId === paymentId) {
+      return { alreadyPaid: true, customerId: q.customerId, astrologerId: q.astrologerId };
+    }
+    const amount = Number(q.amount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid consultation amount.");
+
+    const commissionSnap = await db.collection("smv_settings").doc("commission").get();
+    const commission = commissionSnap.exists ? commissionSnap.data() : { astroPercent: 20, adminPercent: 80 };
+    const astroPercent = Number(commission.astroPercent ?? 20);
+    const adminPercent = Number(commission.adminPercent ?? 80);
+    if (astroPercent < 0 || adminPercent < 0 || Math.abs(astroPercent + adminPercent - 100) > 0.001) {
+      throw new Error("Commission settings are invalid.");
+    }
+    const astrologerCommissionAmount = Math.round(amount * astroPercent) / 100;
+    const adminCommissionAmount = Math.round(amount * adminPercent) / 100;
+    tx.update(qRef, {
+      status: "paid",
+      paymentStatus: "paid",
+      razorpayPaymentId: paymentId,
+      ...(signature ? { razorpaySignature: signature } : {}),
+      paidAt: q.paidAt || admin.firestore.FieldValue.serverTimestamp(),
+      paymentUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      paymentConfirmedBy: source,
+      commissionPercent: astroPercent,
+      astrologerCommissionAmount,
+      adminCommissionAmount
+    });
+    return { alreadyPaid: false, customerId: q.customerId, astrologerId: q.astrologerId, astrologerCommissionAmount, adminCommissionAmount };
+  });
+
+  if (!result.alreadyPaid) {
+    await db.collection("smv_notifications").add({
+      userId: result.customerId, type: "payment", title: "Payment successful",
+      message: "Your payment was verified. Your question is now waiting for answers.",
+      questionId, createdAt: admin.firestore.FieldValue.serverTimestamp(), read: false
+    });
+    if (result.astrologerId) {
+      await db.collection("smv_notifications").add({
+        userId: result.astrologerId, type: "new_question", title: "New paid question",
+        message: "A new paid customer question is waiting in your dashboard.",
+        questionId, createdAt: admin.firestore.FieldValue.serverTimestamp(), read: false
+      });
+    }
+  }
+  return result;
+}
+
+exports.createRazorpayOrder = onCall(
+  { region: "asia-south1", secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Please login.");
+    const questionId = String(request.data?.questionId || "").trim();
+    if (!questionId) throw new HttpsError("invalid-argument", "questionId is required.");
+
+    const qRef = db.collection("smv_questions").doc(questionId);
+    const snap = await qRef.get();
+    if (!snap.exists) throw new HttpsError("not-found", "Question not found.");
+    const q = snap.data();
+
+    if (q.customerId !== request.auth.uid) {
+      throw new HttpsError("permission-denied", "You do not own this question.");
+    }
+    const astroSnap = await db.collection("smv_astrologers").doc(String(q.astrologerId || "")).get();
+    if (!astroSnap.exists || astroSnap.data().status !== "approved") {
+      throw new HttpsError("failed-precondition", "This astrologer is not approved.");
+    }
+    if (!["awaiting_payment", "payment_failed"].includes(q.status)) {
+      if (q.paymentStatus === "paid") return { orderId: q.razorpayOrderId || null, keyId: readRazorpayConfig().keyId, amount: Math.round(Number(q.amount || 0) * 100), currency: "INR", alreadyPaid: true };
+      throw new HttpsError("failed-precondition", "This question is not available for payment.");
+    }
+
+    const configuredPrice = Number(astroSnap.data().pricePerQuestion);
+    if (!Number.isFinite(configuredPrice) || configuredPrice < 1 || configuredPrice > 100000) {
+      throw new HttpsError("failed-precondition", "Astrologer consultation price is not configured correctly.");
+    }
+    const amountRupees = configuredPrice;
+
+    // Idempotent order creation: reuse an existing unpaid Razorpay order for this question.
+    if (q.razorpayOrderId && ["order_created", "verification_failed", "failed"].includes(q.paymentStatus)) {
+      try {
+        const razorpay = getRazorpay(readRazorpayConfig().keyId, readRazorpayConfig().secret);
+        const existing = await razorpay.orders.fetch(q.razorpayOrderId);
+        if (existing.status === "paid") {
+          throw new HttpsError("failed-precondition", "This payment has already been completed. Please refresh your dashboard.");
+        }
+        if (Number(existing.amount) === Math.round(amountRupees * 100) && String(existing.currency) === "INR") {
+          return { orderId: existing.id, keyId: readRazorpayConfig().keyId, amount: existing.amount, currency: existing.currency, reused: true };
+        }
+      } catch (e) {
+        if (e instanceof HttpsError) throw e;
+        console.warn("Existing Razorpay order could not be reused; creating a new order.", e?.message || e);
+      }
+    }
+
+    const answerSettingsSnap = await db.collection("smv_settings").doc("answer").get();
+    const minimumWords = Math.max(1, Math.min(10000, Math.floor(Number(answerSettingsSnap.data()?.minimumWords || 150))));
+    let order;
+    try {
+      const razorpay = getRazorpay(readRazorpayConfig().keyId, readRazorpayConfig().secret);
+      order = await razorpay.orders.create({
+        amount: Math.round(amountRupees * 100),
+        currency: "INR",
+        receipt: `smv_${questionId.slice(0, 30)}`,
+        notes: { questionId, customerId: request.auth.uid, astrologerId: String(q.astrologerId || "") }
+      });
+    } catch (e) {
+      console.error("Razorpay order creation failed", e);
+      const msg = e?.error?.description || e?.description || e?.message || "Razorpay order creation failed.";
+      throw new HttpsError("failed-precondition", `Razorpay order creation failed: ${msg}`);
+    }
+
+    await qRef.set({
+      amount: amountRupees,
+      razorpayOrderId: order.id,
+      paymentCurrency: "INR",
+      paymentStatus: "order_created",
+      answerMinWords: minimumWords,
+      paymentUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    return { orderId: order.id, keyId: readRazorpayConfig().keyId, amount: order.amount, currency: order.currency };
+  }
+);
+
+
+
 exports.approveAnswerAndCreditCommission = onCall(
-  { region: "asia-south1" },
+  { region: "asia-south1", secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET] },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated","Please login.");
     const questionId=String(request.data?.questionId||"").trim();
@@ -70,6 +235,179 @@ exports.approveAnswerAndCreditCommission = onCall(
   }
 );
 
+exports.markPaymentFailed = onCall(
+  { region: "asia-south1", secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Please login.");
+    const questionId=String(request.data?.questionId||"").trim();
+    if(!questionId) throw new HttpsError("invalid-argument","questionId is required.");
+    const ref=db.collection("smv_questions").doc(questionId);
+    const snap=await ref.get();
+    if(!snap.exists) throw new HttpsError("not-found","Question not found.");
+    const q=snap.data();
+    if(q.customerId!==request.auth.uid) throw new HttpsError("permission-denied","Not your question.");
+    if(["paid","admin_approved","admin_review","answered","processing"].includes(q.status) || q.paymentStatus === "paid") return {ok:true, recovered:false};
+
+    // Never mark a question failed solely because the browser closed. Re-check the Razorpay order first.
+    if (q.razorpayOrderId) {
+      try {
+        const razorpay = getRazorpay(readRazorpayConfig().keyId, readRazorpayConfig().secret);
+        const order = await razorpay.orders.fetch(q.razorpayOrderId);
+        if (String(order.status).toLowerCase() === "paid") {
+          const payments = await razorpay.orders.fetchPayments(q.razorpayOrderId);
+          const captured = (payments?.items || []).find(p => String(p.status).toLowerCase() === "captured");
+          if (captured) {
+            await reconcileCapturedPayment({ questionId, orderId:q.razorpayOrderId, paymentId:captured.id, source:"payment_recovery" });
+            return {ok:true, recovered:true};
+          }
+        }
+      } catch (e) {
+        console.warn("Payment failure check could not confirm Razorpay status.", e?.message || e);
+        return {ok:true, recovered:false, retry:true};
+      }
+    }
+    await ref.set({status:"payment_failed",paymentStatus:"failed",paymentUpdatedAt:admin.firestore.FieldValue.serverTimestamp()},{merge:true});
+    return {ok:true, recovered:false};
+  }
+);
+
+exports.verifyRazorpayPayment = onCall(
+  { region: "asia-south1", secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Please login.");
+    const questionId = String(request.data?.questionId || "").trim();
+    const orderId = String(request.data?.razorpay_order_id || "").trim();
+    const paymentId = String(request.data?.razorpay_payment_id || "").trim();
+    const signature = String(request.data?.razorpay_signature || "").trim();
+    if (!questionId || !orderId || !paymentId || !signature) throw new HttpsError("invalid-argument", "Incomplete payment response.");
+    const qRef = db.collection("smv_questions").doc(questionId);
+    const snap = await qRef.get();
+    if (!snap.exists) throw new HttpsError("not-found", "Question not found.");
+    const q = snap.data();
+    if (q.customerId !== request.auth.uid) throw new HttpsError("permission-denied", "Not your question.");
+    if (q.razorpayOrderId !== orderId) throw new HttpsError("failed-precondition", "Order mismatch.");
+
+    const expected = crypto.createHmac("sha256", readRazorpayConfig().secret).update(`${orderId}|${paymentId}`).digest("hex");
+    if (!safeSignatureEqual(expected, signature)) {
+      await qRef.set({ paymentStatus: "verification_failed", paymentUpdatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      throw new HttpsError("permission-denied", "Invalid payment signature.");
+    }
+
+    const razorpay = getRazorpay(readRazorpayConfig().keyId, readRazorpayConfig().secret);
+    let payment;
+    try { payment = await razorpay.payments.fetch(paymentId); }
+    catch (e) { throw new HttpsError("unavailable", "Payment received but Razorpay confirmation is temporarily unavailable. Your payment will be recovered automatically if captured."); }
+    if (payment.order_id !== orderId) throw new HttpsError("failed-precondition", "Payment order mismatch.");
+    if (String(payment.status).toLowerCase() !== "captured") throw new HttpsError("failed-precondition", "Payment is not captured yet.");
+    if (Number(payment.amount) !== Math.round(Number(q.amount) * 100)) throw new HttpsError("failed-precondition", "Payment amount mismatch.");
+
+    const result = await reconcileCapturedPayment({ questionId, orderId, paymentId, signature, source:"checkout_verification" });
+    return { verified:true, questionId, alreadyProcessed:result.alreadyPaid, astrologerCommissionAmount:result.astrologerCommissionAmount || Number(q.astrologerCommissionAmount || 0), adminCommissionAmount:result.adminCommissionAmount || Number(q.adminCommissionAmount || 0) };
+  }
+);
+
+// Razorpay server-to-server recovery channel. Configure this URL in the Razorpay Dashboard
+// and subscribe to payment.captured and payment.failed (order.paid is also accepted).
+exports.razorpayWebhook = onRequest(
+  { region: "asia-south1", secrets: [RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET] },
+  async (req, res) => {
+    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    const rawBody = req.rawBody;
+    const receivedSignature = String(req.get("X-Razorpay-Signature") || "");
+    if (!rawBody || !receivedSignature) return res.status(400).send("Missing webhook signature.");
+    const expected = crypto.createHmac("sha256", RAZORPAY_WEBHOOK_SECRET.value()).update(rawBody).digest("hex");
+    if (!safeSignatureEqual(expected, receivedSignature)) return res.status(401).send("Invalid webhook signature.");
+
+    let event;
+    try { event = typeof req.body === "object" ? req.body : JSON.parse(rawBody.toString("utf8")); }
+    catch { return res.status(400).send("Invalid JSON."); }
+    const eventId = String(req.get("X-Razorpay-Event-Id") || event?.id || "").trim();
+    const eventName = String(event?.event || "").trim();
+    if (!eventId) return res.status(400).send("Missing event id.");
+
+    const eventRef = db.collection("smv_razorpay_webhook_events").doc(eventId);
+    const eventResult = await db.runTransaction(async tx => {
+      const existing = await tx.get(eventRef);
+      if (existing.exists) {
+        const status = String(existing.data()?.status || "");
+        if (["processed", "ignored"].includes(status)) return { duplicate:true };
+        tx.set(eventRef, { eventId, event:eventName, retryAt:admin.firestore.FieldValue.serverTimestamp(), status:"processing" }, {merge:true});
+        return { duplicate:false, retry:true };
+      }
+      tx.set(eventRef, { eventId, event:eventName, receivedAt:admin.firestore.FieldValue.serverTimestamp(), status:"processing" });
+      return { duplicate:false };
+    });
+    if (eventResult.duplicate) return res.status(200).send("Already processed");
+
+    try {
+      const payload = event?.payload || {};
+      const paymentEntity = payload?.payment?.entity;
+      const orderEntity = payload?.order?.entity;
+      const paymentId = String(paymentEntity?.id || "").trim();
+      const orderId = String(paymentEntity?.order_id || orderEntity?.id || "").trim();
+      const questionId = String(paymentEntity?.notes?.questionId || orderEntity?.notes?.questionId || "").trim();
+
+      if (["payment.captured", "order.paid"].includes(eventName)) {
+        if (!orderId) throw new Error("Webhook does not contain an order id.");
+        let resolvedPaymentId = paymentId;
+        let resolvedAmount = Number(paymentEntity?.amount || orderEntity?.amount_paid || 0);
+        if (!resolvedPaymentId) {
+          const razorpay = getRazorpay(readRazorpayConfig().keyId, readRazorpayConfig().secret);
+          const payments = await razorpay.orders.fetchPayments(orderId);
+          const captured = (payments?.items || []).find(p => String(p.status).toLowerCase() === "captured");
+          if (captured) { resolvedPaymentId = captured.id; resolvedAmount = Number(captured.amount || resolvedAmount); }
+        }
+        if (!resolvedPaymentId) throw new Error("Webhook does not contain a captured payment id.");
+        const qSnap = await findQuestionByRazorpayOrder(orderId, questionId);
+        if (!qSnap) throw new Error("Question for Razorpay order was not found.");
+        const q = qSnap.data();
+        if (resolvedAmount !== Math.round(Number(q.amount || 0) * 100)) throw new Error("Webhook payment amount mismatch.");
+        const result = await reconcileCapturedPayment({ questionId:qSnap.id, orderId, paymentId:resolvedPaymentId, source:"razorpay_webhook" });
+        await eventRef.set({ status:"processed", questionId:qSnap.id, paymentId:resolvedPaymentId, orderId, processedAt:admin.firestore.FieldValue.serverTimestamp(), alreadyPaid:result.alreadyPaid }, {merge:true});
+        return res.status(200).send("OK");
+      }
+
+      if (eventName === "payment.failed") {
+        if (!orderId) throw new Error("Payment failed webhook has no order id.");
+        const qSnap = await findQuestionByRazorpayOrder(orderId, questionId);
+        if (qSnap) {
+          const q=qSnap.data();
+          if (q.paymentStatus !== "paid" && q.status === "awaiting_payment") {
+            await qSnap.ref.set({ paymentStatus:"failed", paymentUpdatedAt:admin.firestore.FieldValue.serverTimestamp(), lastPaymentFailureAt:admin.firestore.FieldValue.serverTimestamp() }, {merge:true});
+          }
+          await eventRef.set({ status:"processed", questionId:qSnap.id, paymentId, orderId, processedAt:admin.firestore.FieldValue.serverTimestamp() }, {merge:true});
+        } else {
+          await eventRef.set({ status:"processed", paymentId, orderId, processedAt:admin.firestore.FieldValue.serverTimestamp(), note:"No matching consultation found" }, {merge:true});
+        }
+        return res.status(200).send("OK");
+      }
+
+      await eventRef.set({ status:"ignored", processedAt:admin.firestore.FieldValue.serverTimestamp() }, {merge:true});
+      return res.status(200).send("Ignored");
+    } catch (e) {
+      console.error("Razorpay webhook processing failed", e);
+      await eventRef.set({ status:"failed", error:String(e?.message || e), failedAt:admin.firestore.FieldValue.serverTimestamp() }, {merge:true});
+      return res.status(500).send("Webhook processing failed");
+    }
+  }
+);
+
+exports.testRazorpayConnection = onCall(
+  { region: "asia-south1", secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET] },
+  async (request) => {
+    assertAdmin(request);
+    try {
+      const razorpay = getRazorpay(readRazorpayConfig().keyId, readRazorpayConfig().secret);
+      await razorpay.orders.all({ count: 1 });
+      return { ok: true, message: "Firebase can reach Razorpay and the configured server credentials were accepted." };
+    } catch (e) {
+      console.error("Razorpay connection test failed", e);
+      const msg = e?.error?.description || e?.description || e?.message || "Razorpay connection failed.";
+      throw new HttpsError("failed-precondition", msg);
+    }
+  }
+);
+
 exports.submitAstrologerAnswer = onCall({ region: "asia-south1" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Please login.");
   const questionId = String(request.data?.questionId || "").trim();
@@ -95,56 +433,6 @@ exports.submitAstrologerAnswer = onCall({ region: "asia-south1" }, async (reques
   return {submitted:true,questionId,words,minimumWords,commissionAmount,commissionStatus:"pending_admin_approval"};
 });
 
-
-exports.approvePublicQuestion = onCall({ region: "asia-south1" }, async (request) => {
-  await assertAdmin(request);
-  const questionId=String(request.data?.questionId||"").trim();
-  if(!questionId) throw new HttpsError("invalid-argument","questionId is required.");
-  const qRef=db.collection("smv_questions").doc(questionId);
-  const snap=await qRef.get();
-  if(!snap.exists) throw new HttpsError("not-found","Question not found.");
-  const q=snap.data();
-  if(!["awaiting_admin","pending_admin_approval","paid"].includes(q.status) || (q.status==="paid" && q.adminQuestionApprovedAt)) throw new HttpsError("failed-precondition","This question is not waiting for Admin approval.");
-  await qRef.set({status:"paid",allocationStatus:"available_to_astrologers",adminQuestionApprovedAt:admin.firestore.FieldValue.serverTimestamp(),adminQuestionApprovedBy:request.auth.uid,adminQuestionRejectionReason:admin.firestore.FieldValue.delete()},{merge:true});
-  await db.collection("smv_notifications").add({userId:q.customerId,type:"question_approved",title:"Question Approved",message:"Your paid question has been approved by Admin and is now available to approved astrologers.",questionId,createdAt:admin.firestore.FieldValue.serverTimestamp(),read:false});
-  return {approved:true,questionId};
-});
-
-exports.rejectPublicQuestion = onCall({ region: "asia-south1" }, async (request) => {
-  await assertAdmin(request);
-  const questionId=String(request.data?.questionId||"").trim();
-  const reason=String(request.data?.reason||"").trim();
-  if(!questionId||!reason) throw new HttpsError("invalid-argument","questionId and rejection reason are required.");
-  const qRef=db.collection("smv_questions").doc(questionId);
-  const snap=await qRef.get();
-  if(!snap.exists) throw new HttpsError("not-found","Question not found.");
-  const q=snap.data();
-  if(!["pending_admin_approval","paid"].includes(q.status) || (q.status==="paid" && q.adminQuestionApprovedAt)) throw new HttpsError("failed-precondition","This question is not waiting for Admin approval.");
-  await qRef.set({status:"question_rejected",allocationStatus:"rejected_by_admin",adminQuestionRejectedAt:admin.firestore.FieldValue.serverTimestamp(),adminQuestionRejectedBy:request.auth.uid,adminQuestionRejectionReason:reason},{merge:true});
-  await db.collection("smv_notifications").add({userId:q.customerId,type:"question_rejected",title:"Question Not Approved",message:`Your paid question was not approved by Admin. Reason: ${reason}`,questionId,createdAt:admin.firestore.FieldValue.serverTimestamp(),read:false});
-  return {rejected:true,questionId};
-});
-
-exports.getAstrologerQuestionInbox = onCall({ region: "asia-south1" }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Please login.");
-  const uid=request.auth.uid;
-  const astroSnap=await db.collection("smv_astrologers").doc(uid).get();
-  if(!astroSnap.exists || astroSnap.data().status!=="approved") throw new HttpsError("permission-denied","Astrologer approval is required.");
-  const qs=await db.collection("smv_questions").where("status","==","paid").get();
-  return {questions:qs.docs.filter(d=>!d.data().astrologerId && d.data().adminQuestionApprovedAt).map(d=>({id:d.id,...d.data()}))};
-});
-
-exports.claimPublicQuestion = onCall({ region: "asia-south1" }, async (request) => {
-  if (!request.auth) throw new HttpsError("unauthenticated", "Please login.");
-  const uid=request.auth.uid, questionId=String(request.data?.questionId||"").trim();
-  if(!questionId) throw new HttpsError("invalid-argument","questionId is required.");
-  const astroSnap=await db.collection("smv_astrologers").doc(uid).get();
-  if(!astroSnap.exists || astroSnap.data().status!=="approved") throw new HttpsError("permission-denied","Astrologer approval is required.");
-  const qRef=db.collection("smv_questions").doc(questionId); let customerId="";
-  await db.runTransaction(async tx=>{const qs=await tx.get(qRef);if(!qs.exists) throw new HttpsError("not-found","Question not found.");const q=qs.data();if(q.status!=="paid"||!q.adminQuestionApprovedAt||q.astrologerId) throw new HttpsError("failed-precondition","This question is not approved by Admin or has already been claimed.");customerId=q.customerId;const a=astroSnap.data();tx.update(qRef,{astrologerId:uid,astrologerName:a.name||"Approved Astrologer",status:"admin_approved",allocationStatus:"claimed_by_astrologer",claimedAt:admin.firestore.FieldValue.serverTimestamp(),claimedBy:uid});});
-  await db.collection("smv_notifications").add({userId:customerId,type:"question_claimed",title:"Your question is assigned",message:`${astroSnap.data().name||"An approved astrologer"} has claimed your paid astrology question.`,questionId,createdAt:admin.firestore.FieldValue.serverTimestamp(),read:false});
-  return {claimed:true,questionId};
-});
 
 exports.submitVerifiedReview = onCall({ region: "asia-south1" }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Please login.");
@@ -213,7 +501,7 @@ exports.requestAstrologerWithdrawal = onCall({ region: "asia-south1" }, async (r
 });
 
 exports.adminUpdateWithdrawalStatus = onCall({ region: "asia-south1" }, async (request) => {
-  await assertAdmin(request);
+  assertAdmin(request);
   const withdrawalId=String(request.data?.withdrawalId||"").trim(), status=String(request.data?.status||"").trim();
   if(!withdrawalId||!["processing","paid","rejected"].includes(status)) throw new HttpsError("invalid-argument","Invalid withdrawal update.");
   const ref=db.collection("smv_withdrawals").doc(withdrawalId), snap=await ref.get();
@@ -228,4 +516,3 @@ exports.adminUpdateWithdrawalStatus = onCall({ region: "asia-south1" }, async (r
   await db.collection("smv_notifications").add({userId:w.astrologerId,type:"withdrawal_status",title,message:msg,withdrawalId,createdAt:admin.firestore.FieldValue.serverTimestamp(),read:false});
   return {updated:true,status};
 });
-      
