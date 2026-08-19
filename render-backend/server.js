@@ -372,39 +372,7 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
 
 
 
-app.get("/email-status", async (req,res)=>{
-  const resendConfigured=!!RESEND_API_KEY;
-  const smtpConfigured=!!smtpTransport;
-  const configured=!!(ADMIN_EMAIL && (resendConfigured || smtpConfigured));
-  res.json({
-    ok:configured,
-    provider:resendConfigured?"resend":"smtp",
-    adminEmailConfigured:!!ADMIN_EMAIL,
-    resendApiKeyConfigured:resendConfigured,
-    resendFromConfigured:!!RESEND_FROM,
-    smtpConfigured,
-    message:configured?"Email service is configured.":"Set ADMIN_EMAIL, RESEND_API_KEY and RESEND_FROM in Render Environment.",
-    version:"2026-08-17-v67.1-razorpay-authorised-capture-fix"
-  });
-});
 
-app.post("/admin/test-email", express.json({limit:"5kb"}), async(req,res)=>{
-  const user=await requireUser(req,res); if(!user)return;
-  if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
-  try{
-    if(!ADMIN_EMAIL || !RESEND_API_KEY) return res.status(503).json({error:"RESEND_API_KEY and ADMIN_EMAIL are required."});
-    await sendEmail({
-      to: ADMIN_EMAIL,
-      subject: "SMV ASTRO — Email system test",
-      text: "This is a test email from the SMV ASTRO Render backend. If you received this message, Resend email delivery is working.",
-      html: "<p>This is a test email from the <b>SMV ASTRO</b> Render backend.</p><p>If you received this message, Resend email delivery is working.</p>"
-    });
-    return res.json({ok:true,message:"Test email sent successfully.",to:ADMIN_EMAIL});
-  }catch(e){
-    console.error("Admin email test failed:",e);
-    return res.status(502).json({ok:false,error:e?.message||"Resend email test failed."});
-  }
-});
 
 app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
   const user=await requireUser(req,res); if(!user)return;
@@ -454,47 +422,79 @@ app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
   }catch(e){console.error("Question notification failed:",e);return res.status(500).json({error:"Unable to send question update email right now."});}
 });
 
+
+async function nextBookingId() {
+  const dateKey = indiaDateKey();
+  const ref = db.collection("smv_counters").doc(`booking_${dateKey}`);
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const next = (snap.exists ? Number(snap.data()?.lastNumber || 0) : 0) + 1;
+    tx.set(ref, { lastNumber: next, dateKey, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return `SMV-BKG-${dateKey}-${String(next).padStart(2, "0")}`;
+  });
+}
+
 app.post("/appointment-booking", express.json({ limit: "20kb" }), async (req, res) => {
+  const user = await requireUser(req, res);
+  if (!user) return;
   try {
-    const name=String(req.body?.name||"").trim(), email=String(req.body?.email||"").trim(), mobile=String(req.body?.mobile||"").trim();
+    const name=String(req.body?.name||"").trim(), email=String(req.body?.email||user.email||"").trim(), mobile=String(req.body?.mobile||"").trim();
     const type=String(req.body?.type||"").trim(), preferredDate=String(req.body?.preferredDate||"").trim(), preferredTime=String(req.body?.preferredTime||"").trim(), notes=String(req.body?.notes||"").trim();
     if(!name||!email||!mobile||!type||!preferredDate||!preferredTime) return res.status(400).json({error:"Please fill all required appointment fields."});
     if(!["Chat Consultation","Call Consultation"].includes(type)) return res.status(400).json({error:"Please choose Chat or Call consultation."});
     if(name.length>100||email.length>160||mobile.length>20||notes.length>2000) return res.status(400).json({error:"One or more fields are too long."});
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({error:"Please enter a valid email address."});
+
+    const bookingId = await nextBookingId();
     const ref=db.collection("smv_appointments").doc();
-    await ref.set({name,email,mobile,type,preferredDate,preferredTime,notes,status:"new",createdAt:FieldValue.serverTimestamp(),source:"website-appointment-form"});
-    if(!ADMIN_EMAIL||(!RESEND_API_KEY && !smtpTransport)) return res.status(503).json({error:"Appointment email service is not configured yet. Add RESEND_API_KEY and RESEND_FROM in Render."});
-    await sendEmail({to:ADMIN_EMAIL,replyTo:email,subject:`New SVM ASTRO ${type} Request — ${name}`,text:["New SVM ASTRO Appointment Request","",`Name: ${name}`,`Email: ${email}`,`Mobile: ${mobile}`,`Type: ${type}`,`Preferred: ${preferredDate} ${preferredTime}`,`Notes: ${notes||"None"}`,`Appointment ID: ${ref.id}`].join("\n")});
-    return res.json({ok:true,appointmentId:ref.id});
-  } catch(e){console.error("Appointment booking failed:",e);return res.status(502).json({error:e?.message||"Unable to submit appointment request."});}
+    const data={bookingId,customerUid:user.uid,customerEmail:user.email||email,name,email,mobile,type,preferredDate,preferredTime,notes,status:"new",paymentStatus:"not_required",bookingStatus:"requested",createdAt:FieldValue.serverTimestamp(),source:"website-appointment-form",updatedAt:FieldValue.serverTimestamp()};
+    await ref.set(data);
+
+    // Email notification is best-effort. Booking creation must not fail just because
+    // the optional notification provider is unavailable.
+    if(ADMIN_EMAIL && (RESEND_API_KEY || smtpTransport)){
+      try {
+        await sendEmail({to:ADMIN_EMAIL,replyTo:email,subject:`SMV ASTRO ${type} Booking — ${bookingId}`,text:["New SMV ASTRO Booking Request","",`Booking ID: ${bookingId}`,`Customer UID: ${user.uid}`,`Name: ${name}`,`Email: ${email}`,`Mobile: ${mobile}`,`Type: ${type}`,`Preferred: ${preferredDate} ${preferredTime}`,`Notes: ${notes||"None"}`].join("\n")});
+      } catch(emailErr) { console.warn("Booking notification email failed; booking remains created:", emailErr?.message||emailErr); }
+    }
+    return res.json({ok:true,bookingId,appointmentId:ref.id,status:"new",bookingStatus:"requested"});
+  } catch(e){console.error("Appointment booking failed:",e);return res.status(502).json({error:e?.message||"Unable to create booking right now."});}
 });
 
-app.get("/public-announcements", async (req,res)=>{
+app.get("/public-blogs", async (req,res)=>{
   try{
-    // Deliberately avoid where/orderBy so this endpoint never requires a
-    // Firestore composite index. Filter and sort in memory instead.
-    const snap=await db.collection("smv_announcements").limit(100).get();
-    const announcements=snap.docs.map(d=>({id:d.id,...d.data()}))
-      .filter(x=>x.active===true)
-      .sort((a,b)=>{
-        const at=a.createdAt?.toMillis?a.createdAt.toMillis():(a.createdAt?.seconds||0)*1000;
-        const bt=b.createdAt?.toMillis?b.createdAt.toMillis():(b.createdAt?.seconds||0)*1000;
-        return bt-at;
-      }).slice(0,5);
-    return res.json({announcements});
-  } catch(e){console.error("Announcements read failed:",e?.message||e);return res.json({announcements:[]});}
+    const snap=await db.collection("smv_blogs").limit(200).get();
+    const blogs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.active!==false)
+      .sort((a,b)=>String(b.updatedAtText||b.createdAtText||"").localeCompare(String(a.updatedAtText||a.createdAtText||"")));
+    return res.json({blogs});
+  }catch(e){console.error("Public blogs read failed:",e?.message||e);return res.status(500).json({error:"Unable to load blogs."});}
 });
 
-app.post("/admin/announcement", express.json({limit:"10kb"}), async(req,res)=>{
+app.get("/admin/blogs", async (req,res)=>{
   const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
-  try{const title=String(req.body?.title||"").trim(),message=String(req.body?.message||"").trim();if(!title||!message)return res.status(400).json({error:"Title and message are required."});const ref=db.collection("smv_announcements").doc();await ref.set({title,message,active:true,createdAt:FieldValue.serverTimestamp(),createdBy:user.uid});return res.json({ok:true,id:ref.id});}
-  catch(e){return res.status(500).json({error:e?.message||"Unable to publish announcement."});}
+  try{const snap=await db.collection("smv_blogs").limit(300).get();const blogs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.updatedAtText||b.createdAtText||"").localeCompare(String(a.updatedAtText||a.createdAtText||"")));return res.json({blogs});}
+  catch(e){return res.status(500).json({error:e?.message||"Unable to load blogs."});}
 });
 
-app.delete("/admin/announcement/:id", async(req,res)=>{
+app.post("/admin/blog", express.json({limit:"30kb"}), async (req,res)=>{
   const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
-  try{await db.collection("smv_announcements").doc(req.params.id).delete();return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to delete announcement."});}
+  try{
+    const id=String(req.body?.id||"").trim(), title=String(req.body?.title||"").trim(), category=String(req.body?.category||"Astrology").trim()||"Astrology", excerpt=String(req.body?.excerpt||"").trim(), content=String(req.body?.content||"").trim();
+    if(!title||!content)return res.status(400).json({error:"Blog title and content are required."});
+    const now=new Date().toLocaleString("en-IN");
+    if(id){await db.collection("smv_blogs").doc(id).update({title,category,excerpt,content,updatedAtText:now});return res.json({ok:true,id});}
+    const ref=db.collection("smv_blogs").doc();await ref.set({title,category,excerpt,content,active:true,createdAtText:now,updatedAtText:now,createdBy:user.uid});return res.json({ok:true,id:ref.id});
+  }catch(e){return res.status(500).json({error:e?.message||"Unable to save blog."});}
+});
+
+app.post("/admin/blog-status", express.json({limit:"5kb"}), async (req,res)=>{
+  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
+  try{const id=String(req.body?.id||"").trim(),active=!!req.body?.active;if(!id)return res.status(400).json({error:"Blog ID is required."});await db.collection("smv_blogs").doc(id).update({active,updatedAtText:new Date().toLocaleString("en-IN")});return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to update blog."});}
+});
+
+app.delete("/admin/blog/:id", async (req,res)=>{
+  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
+  try{await db.collection("smv_blogs").doc(req.params.id).delete();return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to delete blog."});}
 });
 
 app.get("/admin/appointments", async(req,res)=>{
