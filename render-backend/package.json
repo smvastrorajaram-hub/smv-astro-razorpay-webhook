@@ -1,0 +1,15 @@
+{
+  "name": "smv-astro-razorpay-webhook",
+  "version": "2.1.0",
+  "description": "SMV ASTRO SERVICES Razorpay Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "firebase-admin": "^13.4.0",
+    "razorpay": "^2.9.6",
+    "nodemailer": "^7.0.6"
+  }
+}
