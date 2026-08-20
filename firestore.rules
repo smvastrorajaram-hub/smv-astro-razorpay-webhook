@@ -56,10 +56,10 @@ service cloud.firestore {
     }
     match /smv_questions/{questionId} {
       allow create: if signedIn() && request.resource.data.customerId == request.auth.uid && request.resource.data.status == "awaiting_payment";
-      allow read: if signedIn() && (resource.data.customerId == request.auth.uid || resource.data.astrologerId == request.auth.uid || isAdmin() || (isApprovedAstrologer() && resource.data.status == "paid" && resource.data.allocationStatus == "available_to_astrologers"));
+      allow read: if signedIn() && (resource.data.customerId == request.auth.uid || resource.data.astrologerId == request.auth.uid || isAdmin() || (isApprovedAstrologer() && resource.data.status == "paid" && resource.data.allocationStatus == "assigned_to_astrologer" && resource.data.astrologerId == request.auth.uid));
       allow update: if isAdmin() ||
         (signedIn() && resource.data.customerId == request.auth.uid && resource.data.status == "answered" && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["reviewed","reviewSubmittedAt"])) ||
-        (isApprovedAstrologer() && resource.data.status == "paid" && resource.data.allocationStatus == "available_to_astrologers" && request.resource.data.astrologerId == request.auth.uid && request.resource.data.status == "admin_approved" && request.resource.data.allocationStatus == "claimed_by_astrologer" && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["astrologerId","astrologerName","status","allocationStatus","claimedAt","claimedBy","astrologerCommissionAmount","commissionPercent","commissionRate","commissionStatus"])) ||
+        (isApprovedAstrologer() && resource.data.status == "paid" && resource.data.allocationStatus == "assigned_to_astrologer" && resource.data.astrologerId == request.auth.uid && request.resource.data.astrologerId == request.auth.uid && request.resource.data.status == "admin_approved" && request.resource.data.allocationStatus == "claimed_by_astrologer" && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["astrologerId","astrologerName","status","allocationStatus","claimedAt","claimedBy","astrologerCommissionAmount","commissionPercent","commissionRate","commissionStatus"])) ||
         (isApprovedAstrologer() && resource.data.astrologerId == request.auth.uid && (resource.data.status == "admin_approved" || resource.data.status == "revision_required") && request.resource.data.status == "processing" && request.resource.data.astrologerId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["answer","answerWordCount","answerSubmittedAt","astrologerAnswerStatus","status","astrologerCommissionAmount","commissionPercent","commissionRate","commissionStatus"]));
     }
     match /smv_appointments/{appointmentId} {
@@ -70,6 +70,10 @@ service cloud.firestore {
     match /smv_withdrawals/{withdrawalId} {
       allow read: if signedIn() && (resource.data.astrologerId == request.auth.uid || isAdmin());
       allow create, update, delete: if isAdmin();
+    }
+    match /smv_payments/{paymentId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.customerId == request.auth.uid) || (signedIn() && resource.data.astrologerId == request.auth.uid && resource.data.type == "astrologer_earning");
+      allow write: if isAdmin();
     }
     match /smv_reviews/{reviewId} {
       allow read: if resource.data.approved == true || isAdmin() || (signedIn() && (resource.data.customerId == request.auth.uid || resource.data.astrologerId == request.auth.uid));
