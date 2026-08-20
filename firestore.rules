@@ -57,7 +57,10 @@ service cloud.firestore {
     match /smv_questions/{questionId} {
       allow create: if signedIn() && request.resource.data.customerId == request.auth.uid && request.resource.data.status == "awaiting_payment";
       allow read: if signedIn() && (resource.data.customerId == request.auth.uid || resource.data.astrologerId == request.auth.uid || isAdmin() || (isApprovedAstrologer() && resource.data.status == "paid" && resource.data.allocationStatus == "available_to_astrologers"));
-      allow update: if isAdmin() || (signedIn() && resource.data.customerId == request.auth.uid && resource.data.status == "answered" && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["reviewed","reviewSubmittedAt"]));
+      allow update: if isAdmin() ||
+        (signedIn() && resource.data.customerId == request.auth.uid && resource.data.status == "answered" && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["reviewed","reviewSubmittedAt"])) ||
+        (isApprovedAstrologer() && resource.data.status == "paid" && resource.data.allocationStatus == "available_to_astrologers" && request.resource.data.astrologerId == request.auth.uid && request.resource.data.status == "admin_approved" && request.resource.data.allocationStatus == "claimed_by_astrologer" && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["astrologerId","astrologerName","status","allocationStatus","claimedAt","claimedBy","astrologerCommissionAmount","commissionPercent","commissionRate","commissionStatus"])) ||
+        (isApprovedAstrologer() && resource.data.astrologerId == request.auth.uid && (resource.data.status == "admin_approved" || resource.data.status == "revision_required") && request.resource.data.status == "processing" && request.resource.data.astrologerId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["answer","answerWordCount","answerSubmittedAt","astrologerAnswerStatus","status","astrologerCommissionAmount","commissionPercent","commissionRate","commissionStatus"]));
     }
     match /smv_appointments/{appointmentId} {
       allow create: if signedIn() && request.resource.data.customerId == request.auth.uid && request.resource.data.status == "new";

@@ -708,8 +708,13 @@ async function getUserProfile(uid){
 async function isCurrentAdmin(){
   if(!currentUser) return false;
   if(currentUser.uid===ADMIN_UID) return true;
-  const profile=await getUserProfile(currentUser.uid);
-  return String(profile.role||"").toLowerCase()==="admin";
+  try {
+    const r=await renderApi("/admin-data",{method:"GET"});
+    return r?.success===true;
+  } catch(e) {
+    const profile=await getUserProfile(currentUser.uid);
+    return String(profile.role||"").toLowerCase()==="admin";
+  }
 }
 async function openAdminEntry(){
   if(!currentUser){pendingAfterLogin="admin";openAuth("login");return;}
@@ -973,25 +978,7 @@ $("submitQuestionBtn")?.addEventListener("click",async()=>{
    const birthTime=$("birthTime").value;
    const birthPlace=$("birthPlace").value.trim();
    const birthGender=$("birthGender").value;
-   // Reuse the same question only for an unchanged retry; changed form gets a fresh ID.
-   const fingerprint=JSON.stringify([currentUser.uid,name,text,birthDate,birthTime,birthPlace,birthGender,amount]);
-   const questionId=(pendingQuestionId&&pendingQuestionFingerprint===fingerprint&&/^[A-Za-z0-9_-]{6,}$/.test(pendingQuestionId))?pendingQuestionId:makeQuestionId();
-   pendingQuestionId=questionId;
-   pendingQuestionFingerprint=fingerprint;
-   const payload={questionId,customerName:name,question:text,amount,birthDetails:{name,birthDate,birthTime,birthPlace,birthGender,timezone:"Asia/Kolkata",utcOffsetMinutes:330},serviceName:"Public Astrology Question",customerEmail:currentUser.email||""};
-  await withTimeout(setDoc(doc(db,"smv_questions",questionId),{
-    customerId:currentUser.uid,
-    customerName:name,
-    birthName:name,
-    question:text,
-    amount,
-    status:"awaiting_payment",
-    paymentStatus:"pending",
-    allocationStatus:"awaiting_admin",
-    birthDetails:{name,birthDate,birthTime,birthPlace,birthGender,timezone:"Asia/Kolkata",utcOffsetMinutes:330},
-    birthDate,birthTime,birthPlace,birthGender,
-    createdAt:serverTimestamp()
-  },{merge:true}),15000);
+   const payload={customerName:name,question:text,amount,birthDetails:{name,birthDate,birthTime,birthPlace,birthGender,timezone:"Asia/Kolkata",utcOffsetMinutes:330},serviceName:"Public Astrology Question",customerEmail:currentUser.email||""};
   const orderRes=await withTimeout(renderApi("/create-order",{method:"POST",body:JSON.stringify(payload)}),30000);
   if(orderRes?.questionId) pendingQuestionId=String(orderRes.questionId).trim();
   const {orderId,keyId,amount:paise,currency}=orderRes||{};
@@ -1821,9 +1808,12 @@ async function loadAdminPanel(){
  show('admin');
  setTimeout(()=>window.__smvRefreshAdminSections?.(),0);
  try{
-  const safeCollectionDocs = async (name) => { try { return await withTimeout(getDocs(collection(db,name)),15000); } catch (e) { console.error('Admin collection load failed:', name, e); return { docs: [], size: 0 }; } };
-  const [users,astros,questions]=await Promise.all([safeCollectionDocs('smv_users'),safeCollectionDocs('smv_astrologers'),safeCollectionDocs('smv_questions')]);
-  const customers=users.docs.filter(d=>d.data().role==='customer').length, pendingDocs=astros.docs.filter(d=>d.data().status==='pending'); const userMap=new Map(users.docs.map(d=>[d.id,d.data()]));
+  const adminData=await withTimeout(renderApi('/admin-data',{method:'GET'}),20000);
+  if(!adminData?.success) throw new Error('Admin data could not be loaded.');
+  const toDocs=(arr)=>({docs:(arr||[]).map(x=>({id:x.id,data:()=>x})),size:(arr||[]).length,empty:!(arr||[]).length});
+  const users=toDocs(adminData.users), astros=toDocs(adminData.astrologers), questions=toDocs(adminData.questions);
+  const customers=(adminData.customers||[]).length, pendingDocs=astros.docs.filter(d=>d.data().status==='pending');
+  const userMap=new Map(users.docs.map(d=>[d.id,d.data()]));
   $('adminSummary').innerHTML=`<div class="stat">Customers <b>${customers}</b></div><div class="stat">Astrologers <b>${astros.size}</b></div><div class="stat">Pending <b>${pendingDocs.length}</b></div><div class="stat">Questions <b>${questions.size}</b></div>`;
   let settings={astroPercent:20,adminPercent:80}; try{const ss=await getDoc(doc(db,'smv_settings','commission'));if(ss.exists())settings=ss.data();}catch(e){}
   let questionSettings={price:5}; try{const qps=await getDoc(doc(db,'smv_settings','question'));if(qps.exists())questionSettings=qps.data();}catch(e){}
