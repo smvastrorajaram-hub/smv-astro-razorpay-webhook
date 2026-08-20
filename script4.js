@@ -64,7 +64,7 @@
     try{
       await fb(); const u=auth?.currentUser; if(!u)throw new Error('Please login as Admin.');
       const token=await u.getIdToken(true);
-      const r=await fetch(BACKEND_URL+'/admin/appointments',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+      const r=await fetch(BACKEND+'/admin/appointments',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
       const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||`Appointment service returned HTTP ${r.status}.`);
       const items=Array.isArray(d.appointments)?d.appointments:[];
       if(!items.length){box.innerHTML='<div class="empty">No appointment requests.</div>';return;}
@@ -76,7 +76,7 @@
   async function updateAppointment(id,status,button){
     if(appointmentUpdating)return; appointmentUpdating=true;
     const buttons=[...document.querySelectorAll('[data-apstatus]')]; buttons.forEach(x=>x.disabled=true);
-    try{await fb();const u=auth?.currentUser;if(!u)throw new Error('Please login as Admin.');const token=await u.getIdToken(true);const r=await fetch(BACKEND_URL+'/admin/appointment-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({id,status}),cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`Appointment update returned HTTP ${r.status}.`);await loadAdminAppointments();}catch(e){console.error('Appointment update error:',e);alert(e?.message||String(e));buttons.forEach(x=>x.disabled=false);}finally{appointmentUpdating=false;}
+    try{await fb();const u=auth?.currentUser;if(!u)throw new Error('Please login as Admin.');const token=await u.getIdToken(true);const r=await fetch(BACKEND+'/admin/appointment-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({id,status}),cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`Appointment update returned HTTP ${r.status}.`);await loadAdminAppointments();}catch(e){console.error('Appointment update error:',e);alert(e?.message||String(e));buttons.forEach(x=>x.disabled=false);}finally{appointmentUpdating=false;}
   }
 
   function setupLanguage(){

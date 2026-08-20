@@ -913,11 +913,15 @@ function waitForAuthReady(){return authReady;}
 // ---------- Astrologer list ----------
 async function loadAstrologers(){ return loadAstroCards(); }
 async function loadAstroCards(){
- const box=$("astroCards");box.innerHTML='<div class="empty">Loading astrologers...</div>';
- try{const snap=await withTimeout(getDocs(query(collection(db,"smv_astrologers"),where("status","==","approved"))));
-  if(snap.empty){box.innerHTML='<div class="empty">No approved astrologers available yet.</div>';return;}
-  box.innerHTML="";snap.forEach(d=>{const a={id:d.id,...d.data()},card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${a.photoData}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=()=>openPublicAstrologerProfile(a);box.appendChild(card);});
- }catch(e){box.innerHTML='<div class="empty error">Could not load astrologers. Please check Firebase/Firestore rules.</div>';}
+ const box=$("astroCards");if(!box)return;box.innerHTML='<div class="empty">Loading astrologers...</div>';
+ try{
+  const r=await fetch(RAZORPAY_BACKEND_URL+"/public/astrologers",{cache:"no-store"});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||`Astrologer service returned HTTP ${r.status}.`);
+  const items=Array.isArray(d.astrologers)?d.astrologers:[];
+  if(!items.length){box.innerHTML='<div class="empty">No approved astrologers available yet.</div>';return;}
+  box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=()=>openPublicAstrologerProfile(a);box.appendChild(card);});
+ }catch(e){console.error("Approved astrologers load failed:",e);box.innerHTML='<div class="empty error">Approved astrologers are temporarily unavailable.</div>';}
 }
 let questionPriceUnsubscribe=null;
 async function loadQuestionPrice(){
@@ -1234,7 +1238,7 @@ ${ad.status === 'rejected' && ad.rejectionReason
   : ''}</div>
     <div class="card"><h3>Total Earnings</h3><p style="font-size:28px"><b>₹${Number(ep.totalEarnings||0).toFixed(2)}</b></p><p>Available to Withdraw: <b>₹${Number(ep.availableToWithdraw||0).toFixed(2)}</b></p><p class="small">Minimum withdrawal: ₹${Number(ep.minimumWithdrawal||300).toFixed(2)}</p>${Number(ep.availableToWithdraw||0)>=Number(ep.minimumWithdrawal||300)?'<p class="success"><b>You can withdraw</b></p><button class="btn" id="withdrawBtn">WITHDRAW</button>':'<p class="small">Reach ₹300 to request a withdrawal.</p>'}</div>
    </div>
-   <div class="card" style="margin-top:16px"><h3>Public Question Inbox</h3><p class="small">All paid public questions are shown here. The customer price and your current commission are shown automatically.</p>${!approved?'<div class="empty">Your astrologer profile must be approved by Admin before you can claim questions.</div>':availableQuestions.length?availableQuestions.slice(0,50).map(q=>`<div class="card" style="margin:10px 0"><b>${escapeHtml(q.question||'Question')}</b><div class="small">Birth details: ${escapeHtml(q.birthName||q.birthDetails?.name||'')} · ${escapeHtml(q.birthDate||q.birthDetails?.birthDate||'')} · ${escapeHtml(q.birthTime||q.birthDetails?.birthTime||'')} · ${escapeHtml(q.birthPlace||q.birthDetails?.birthPlace||'')} · ${escapeHtml(q.birthGender||q.birthDetails?.birthGender||'')}</div><div class="small"><b>Customer paid: ₹${Number(q.amount||0).toFixed(2)}</b> · <b>Your commission: ₹${Number(q.astrologerCommissionAmount||0).toFixed(2)}</b> (${Number(q.commissionPercent||q.commissionRate||0)}%)</div><button class="btn" data-claim-question="${q.id}">CLAIM & ANSWER</button></div>`).join(''):'<div class="empty">No paid public questions are available right now.</div>'}</div>
+   <div class="card" style="margin-top:16px"><h3>Public Question Inbox</h3><p class="small">All paid public questions are shown here. The customer price and your current commission are shown automatically.</p>${!approved?'<div class="empty">Your astrologer profile must be approved by Admin before you can claim questions.</div>':availableQuestions.length?availableQuestions.slice(0,50).map(q=>`<div class="card" style="margin:10px 0"><b>${escapeHtml(q.question||'Question')}</b><div class="small">Birth details: ${escapeHtml(q.birthName||q.birthDetails?.name||'')} · ${escapeHtml(q.birthDate||q.birthDetails?.birthDate||'')} · ${escapeHtml(q.birthTime||q.birthDetails?.birthTime||'')} · ${escapeHtml(q.birthPlace||q.birthDetails?.birthPlace||'')} · ${escapeHtml(q.birthGender||q.birthDetails?.birthGender||'')}</div><div class="small"><b>Question ID: ${escapeHtml(q.id||'')}</b></div><div class="small"><b>Customer paid: ₹${Number(q.amount||0).toFixed(2)}</b> · <b>Your commission: ₹${Number(q.astrologerCommissionAmount||0).toFixed(2)}</b> (${Number(q.commissionPercent||q.commissionRate||0)}%)</div><button class="btn" data-claim-question="${q.id}">CLAIM & ANSWER</button></div>`).join(''):'<div class="empty">No paid public questions are available right now.</div>'}</div>
 <div class="card" style="margin-top:16px"><h3>Questions & Answers</h3>
    ${qs.empty?'<div class="empty">No questions yet.</div>':qs.docs.slice(0,20).map(d=>{const q=d.data(); const canAnswer=
   approved &&
@@ -2045,7 +2049,7 @@ answerBox
             q.astrologerCommissionAmount || 0
           );
 
-        const creditResponse = await renderApi('/admin/credit-commission',{method:'POST',headers:await authHeaders(),body:JSON.stringify({questionId:id})});
+        const creditResponse = await renderApi('/admin/credit-commission',{method:'POST',body:JSON.stringify({questionId:id})});
         if(!creditResponse?.success) throw new Error(creditResponse?.error||'Unable to credit astrologer commission.');
 
         await withTimeout(

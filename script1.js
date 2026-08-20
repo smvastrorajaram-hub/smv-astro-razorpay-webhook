@@ -312,11 +312,15 @@ function waitForAuthReady(){return authReady;}
 // ---------- Astrologer list ----------
 async function loadAstrologers(){ return loadAstroCards(); }
 async function loadAstroCards(){
- const box=$("astroCards");box.innerHTML='<div class="empty">Loading astrologers...</div>';
- try{const snap=await withTimeout(getDocs(query(collection(db,"smv_astrologers"),where("status","==","approved"))));
-  if(snap.empty){box.innerHTML='<div class="empty">No approved astrologers available yet.</div>';return;}
-  box.innerHTML="";snap.forEach(d=>{const a={id:d.id,...d.data()},card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${a.photoData}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=()=>openPublicAstrologerProfile(a);box.appendChild(card);});
- }catch(e){box.innerHTML='<div class="empty error">Could not load astrologers. Please check Firebase/Firestore rules.</div>';}
+ const box=$("astroCards");if(!box)return;box.innerHTML='<div class="empty">Loading astrologers...</div>';
+ try{
+  const r=await fetch(RAZORPAY_BACKEND_URL+"/public/astrologers",{cache:"no-store"});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||`Astrologer service returned HTTP ${r.status}.`);
+  const items=Array.isArray(d.astrologers)?d.astrologers:[];
+  if(!items.length){box.innerHTML='<div class="empty">No approved astrologers available yet.</div>';return;}
+  box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=()=>openPublicAstrologerProfile(a);box.appendChild(card);});
+ }catch(e){console.error("Approved astrologers load failed:",e);box.innerHTML='<div class="empty error">Approved astrologers are temporarily unavailable.</div>';}
 }
 let questionPriceUnsubscribe=null;
 async function loadQuestionPrice(){
