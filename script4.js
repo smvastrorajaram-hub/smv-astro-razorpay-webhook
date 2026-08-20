@@ -37,24 +37,11 @@
   }
   async function loadReviews(){
     const box=$('publicReviews');if(!box)return;
-    try{
-      const f=await fb();
-      const snap=await f.getDocs(f.query(f.collection(db,'smv_reviews'),f.where('approved','==',true),f.limit(12)));
-      if(snap.empty){box.innerHTML='<div class="empty">No public reviews yet. Be the first verified customer to share your experience.</div>';return;}
-      const reviews=await Promise.all(snap.docs.map(async d=>{
-        const r=d.data();
-        let astro={}; let customer={};
-        try{if(r.astrologerId){const a=await f.getDoc(f.doc(db,'smv_astrologers',r.astrologerId));if(a.exists())astro=a.data()||{};}}catch(e){console.warn('Astrologer profile lookup failed',e);}
-        try{if(r.customerId){const c=await f.getDoc(f.doc(db,'smv_users',r.customerId));if(c.exists())customer=c.data()||{};}}catch(e){console.warn('Customer profile lookup failed',e);}
-        const stars='★'.repeat(Math.max(0,Math.min(5,Number(r.rating||0))))+'☆'.repeat(5-Math.max(0,Math.min(5,Number(r.rating||0))));
-        const astroName=astro.name||r.astrologerName||'SMV ASTRO Astrologer';
-        const astroPhoto=astro.photoData||astro.photoURL||astro.photoUrl||'';
-        const customerName=customer.name||customer.displayName||r.customerName||'Verified Customer';
-        const photo=astroPhoto?`<img src="${esc(astroPhoto)}" alt="${esc(astroName)}" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);">`:`<div style="width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:#f7df9b;color:#7b1e1e;font-weight:800;font-size:22px;border:2px solid var(--gold);">${esc(String(astroName).charAt(0).toUpperCase())}</div>`;
-        return `<div class="card review-card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">${photo}<div><div style="font-weight:800;font-size:18px">${esc(astroName)}</div><div class="small">Astrologer</div></div></div><div class="stars">${stars}</div><p style="white-space:pre-wrap">“${esc(r.review||'Verified customer review')}”</p><p class="small"><b>Customer: ${esc(customerName)}</b></p></div>`;
-      }));
-      box.innerHTML=reviews.join('');
-    }catch(e){console.error('Public reviews load failed',e);box.innerHTML='<div class="empty">Reviews are temporarily unavailable.</div>';}
+    // Common review feed intentionally removed. Reviews are shown only inside
+    // the selected astrologer's PROFILE & REVIEWS view.
+    box.innerHTML='';
+    const section=box.closest('.card, section, .section');
+    if(section) section.style.display='none';
   }
   async function authHeaders(){await fb();const u=auth?.currentUser;if(!u)throw new Error('Please login as Admin to use this feature.');return {Authorization:'Bearer '+await u.getIdToken()};}
   let adminAppointmentsLoading=false;
