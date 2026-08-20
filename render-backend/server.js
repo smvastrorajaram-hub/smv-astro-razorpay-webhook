@@ -423,6 +423,15 @@ app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
 });
 
 
+function nextPaymentIdInTransaction(dateKey, snap) {
+  const next = (snap.exists ? Number(snap.data()?.lastNumber || 0) : 0) + 1;
+  return {
+    id: `SMV-PAY-${dateKey}-${String(next).padStart(2, "0")}`,
+    next
+  };
+}
+
+
 async function nextPaymentId() {
   const dateKey = indiaDateKey();
   const ref = db.collection("smv_counters").doc(`payment_${dateKey}`);
@@ -715,8 +724,17 @@ async function markQuestionPaid(questionId, orderId, paymentId, signature, sourc
     if (astroPercent < 0 || adminPercent < 0 || Math.abs(astroPercent + adminPercent - 100) > 0.001) throw new Error("Commission settings are invalid.");
     const astroCommission = Math.round(amount * astroPercent) / 100;
     const adminCommission = Math.round(amount * adminPercent) / 100;
-    const customerPaymentId = await nextPaymentId();
-    const astrologerPaymentId = await nextPaymentId();
+    const paymentDateKey = indiaDateKey();
+    const paymentCounterRef = db.collection("smv_counters").doc(`payment_${paymentDateKey}`);
+    const paymentCounterSnap = await tx.get(paymentCounterRef);
+    const firstPayment = nextPaymentIdInTransaction(tx, paymentDateKey, paymentCounterSnap);
+    const secondPayment = {
+      id: `SMV-PAY-${paymentDateKey}-${String(firstPayment.next + 1).padStart(2, "0")}`,
+      next: firstPayment.next + 1
+    };
+    tx.set(paymentCounterRef, { lastNumber: secondPayment.next, dateKey: paymentDateKey, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    const customerPaymentId = firstPayment.id;
+    const astrologerPaymentId = secondPayment.id;
     const customerPaymentRef = db.collection("smv_payments").doc(customerPaymentId);
     const astrologerPaymentRef = db.collection("smv_payments").doc(astrologerPaymentId);
     tx.set(customerPaymentRef, {
