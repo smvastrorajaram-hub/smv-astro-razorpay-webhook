@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://rranjithakanishka-max.github.io/SMV-ASTRO-WEBSITE/sitemap.xml
