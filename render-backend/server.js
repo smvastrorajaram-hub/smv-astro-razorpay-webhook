@@ -722,63 +722,54 @@ app.post("/create-order", express.json(), async (req, res) => {
 
 async function markQuestionPaid(questionId, orderId, paymentId, signature, source) {
   const qRef = db.collection("smv_questions").doc(questionId);
-  const commissionSnap = await db.collection("smv_settings").doc("commission").get();
-  const commission = commissionSnap.exists ? commissionSnap.data() : { astroPercent: 20, adminPercent: 80 };
   const result = await db.runTransaction(async tx => {
     const snap = await tx.get(qRef);
     if (!snap.exists) throw new Error("Question not found.");
     const q = snap.data();
     if (q.razorpayOrderId !== orderId) throw new Error("Order mismatch.");
-    if (q.paymentStatus === "paid" && q.razorpayPaymentId === paymentId) return {
-      already: true, customerId: q.customerId, astrologerId: q.astrologerId,
-      customerPaymentId: q.customerPaymentId || null, astrologerPaymentId: q.astrologerPaymentId || null
-    };
+    if (q.paymentStatus === "paid" && q.razorpayPaymentId === paymentId) return { already: true, customerId: q.customerId, customerPaymentId: q.customerPaymentId || null };
     const amount = Number(q.amount || 0);
-    const astroPercent = Number(commission.astroPercent ?? 20);
-    const adminPercent = Number(commission.adminPercent ?? 80);
-    if (astroPercent < 0 || adminPercent < 0 || Math.abs(astroPercent + adminPercent - 100) > 0.001) throw new Error("Commission settings are invalid.");
-    const astroCommission = Math.round(amount * astroPercent) / 100;
-    const adminCommission = Math.round(amount * adminPercent) / 100;
+    if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invalid question amount.");
     const paymentDateKey = indiaDateKey();
     const paymentCounterRef = db.collection("smv_counters").doc(`payment_${paymentDateKey}`);
     const paymentCounterSnap = await tx.get(paymentCounterRef);
-    const firstPayment = nextPaymentIdInTransaction(paymentDateKey, paymentCounterSnap);
-    const secondPayment = {
-      id: `SMV-PAY-${paymentDateKey}-${String(firstPayment.next + 1).padStart(2, "0")}`,
-      next: firstPayment.next + 1
-    };
-    tx.set(paymentCounterRef, { lastNumber: secondPayment.next, dateKey: paymentDateKey, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-    const customerPaymentId = firstPayment.id;
-    const astrologerPaymentId = secondPayment.id;
-    const customerPaymentRef = db.collection("smv_payments").doc(customerPaymentId);
-    const astrologerPaymentRef = db.collection("smv_payments").doc(astrologerPaymentId);
-    tx.set(customerPaymentRef, {
-      paymentId: customerPaymentId, type: "customer_payment", customerId: q.customerId,
-      astrologerId: q.astrologerId || null, questionId, bookingId: q.bookingId || null,
-      razorpayOrderId: orderId, razorpayPaymentId: paymentId, amount,
-      status: "paid", paymentStatus: "paid", source, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
-    });
-    tx.set(astrologerPaymentRef, {
-      paymentId: astrologerPaymentId, type: "astrologer_earning", customerId: q.customerId,
-      astrologerId: q.astrologerId || null, questionId, bookingId: q.bookingId || null,
-      grossAmount: amount, commissionPercent: astroPercent, commissionAmount: adminCommission,
-      earningAmount: astroCommission, status: "pending", paymentStatus: "pending",
-      source, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
+    const paymentInfo = nextPaymentIdInTransaction(paymentDateKey, paymentCounterSnap);
+    tx.set(paymentCounterRef, { lastNumber: paymentInfo.next, dateKey: paymentDateKey, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    const customerPaymentId = paymentInfo.id;
+    tx.set(db.collection("smv_payments").doc(customerPaymentId), {
+      paymentId: customerPaymentId, type: "customer_payment", customerId: q.customerId, astrologerId: null, questionId, bookingId: q.bookingId || null,
+      razorpayOrderId: orderId, razorpayPaymentId: paymentId, amount, status: "paid", paymentStatus: "paid", source, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
     });
     tx.update(qRef, {
       status: "pending_admin_approval", paymentStatus: "paid", allocationStatus: "awaiting_admin", razorpayPaymentId: paymentId, razorpaySignature: signature,
-      paidAt: q.paidAt || FieldValue.serverTimestamp(), paymentUpdatedAt: FieldValue.serverTimestamp(),
-      paymentConfirmedBy: source, commissionPercent: astroPercent,
-      astrologerCommissionAmount: astroCommission, adminCommissionAmount: adminCommission,
-      customerPaymentId, astrologerPaymentId
+      paidAt: q.paidAt || FieldValue.serverTimestamp(), paymentUpdatedAt: FieldValue.serverTimestamp(), paymentConfirmedBy: source, customerPaymentId,
+      astrologerPaymentId: FieldValue.delete(), commissionStatus: "awaiting_admin_allocation"
     });
-    return { already: false, customerId: q.customerId, astrologerId: q.astrologerId, astroCommission, adminCommission, customerPaymentId, astrologerPaymentId };
+    return { already: false, customerId: q.customerId, customerPaymentId };
   });
-  if (!result.already) {
-    await db.collection("smv_notifications").add({ userId: result.customerId, type: "payment", title: "Payment successful", message: "Your payment was verified. Your question is now waiting for Admin approval.", questionId, createdAt: FieldValue.serverTimestamp(), read: false });
-  }
+  if (!result.already) await db.collection("smv_notifications").add({ userId: result.customerId, type: "payment", title: "Payment successful", message: "Your payment was verified. Your question is now waiting for Admin approval.", questionId, createdAt: FieldValue.serverTimestamp(), read: false });
   return result;
 }
+
+
+app.post("/admin/credit-commission", async (req, res) => {
+  const user = await requireUser(req, res); if (!user) return;
+  if (!(await isAdminUser(user))) return res.status(403).json({ error: "Admin access denied." });
+  try {
+    const questionId = String(req.body?.questionId || "").trim(); if (!questionId) return res.status(400).json({ error: "Question ID is required." });
+    const qRef = db.collection("smv_questions").doc(questionId);
+    const qSnap = await qRef.get(); if (!qSnap.exists) return res.status(404).json({ error: "Question not found." });
+    const q = qSnap.data() || {};
+    if (!q.astrologerId) return res.status(400).json({ error: "Astrologer is not assigned." });
+    const amount = Number(q.astrologerCommissionAmount || q.commissionAmount || 0);
+    if (!Number.isFinite(amount) || amount < 0) return res.status(400).json({ error: "Invalid astrologer commission amount." });
+    if (q.astrologerPaymentId && q.commissionStatus === "credited") return res.json({ success: true, astrologerPaymentId: q.astrologerPaymentId, commissionAmount: amount, already: true });
+    const paymentId = await nextPaymentId();
+    await db.collection("smv_payments").doc(paymentId).set({ paymentId, type:"astrologer_earning", customerId:q.customerId||null, astrologerId:q.astrologerId, questionId, bookingId:q.bookingId||null, grossAmount:Number(q.amount||0), commissionPercent:Number(q.commissionPercent||q.commissionRate||0), commissionAmount:amount, earningAmount:amount, status:"credited", paymentStatus:"pending_withdrawal", source:"admin_answer_approval", createdAt:FieldValue.serverTimestamp(), updatedAt:FieldValue.serverTimestamp() });
+    await qRef.update({ astrologerPaymentId:paymentId, commissionStatus:"credited", commissionCreditedAt:FieldValue.serverTimestamp(), commissionAmount:amount });
+    return res.json({ success:true, astrologerPaymentId:paymentId, commissionAmount:amount });
+  } catch(e) { console.error("Commission credit error:",e); return res.status(500).json({ error:e?.message||"Unable to credit commission." }); }
+});
 
 app.post("/verify-payment", express.json(), async (req, res) => {
   const user = await requireUser(req, res);
@@ -827,7 +818,7 @@ app.post("/verify-payment", express.json(), async (req, res) => {
     }
     const result = await markQuestionPaid(questionId, orderId, paymentId, signature, "render_checkout_verification");
     await db.collection("razorpay_orders").doc(orderId).set({ razorpayPaymentId: paymentId, status: "verified", questionId, verifiedAt: FieldValue.serverTimestamp() }, { merge: true });
-    return res.json({ verified: true, questionId, alreadyProcessed: result.already, customerPaymentId: result.customerPaymentId || null, astrologerPaymentId: result.astrologerPaymentId || null, message: "Payment verified and consultation updated successfully." });
+    return res.json({ verified: true, questionId, alreadyProcessed: result.already, customerPaymentId: result.customerPaymentId || null, message: "Payment verified and consultation updated successfully." });
   } catch (e) {
     console.error("Payment verification error:", e);
     return res.status(500).json({ error: e?.error?.description || e?.description || e?.message || "Payment verification failed" });
