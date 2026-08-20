@@ -402,48 +402,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <div class="hero-subline"><span>Traditional Wisdom</span><span>•</span><span>Personal Guidance</span><span>•</span><span>Trusted Consultation</span></div>
 </section>
 
-<section class="feature-section" id="quickActions">
-<div class="home-rule">
-<span>✦</span><span>QUICK CONSULTATION</span><span>✦</span>
-</div>
-<div class="quick-actions">
-<div class="card quick-action">
-<div class="quick-action-icon">💬</div>
-<div class="quick-action-title">Chat Consultation</div>
-<div class="quick-action-text">Private guidance through Chat</div>
-<button class="btn" data-open-booking="Chat Consultation" type="button">BOOK CHAT</button>
-</div>
-<div class="card quick-action">
-<div class="quick-action-icon">📞</div>
-<div class="quick-action-title">Call Consultation</div>
-<div class="quick-action-text">Personal guidance by Call</div>
-<button class="btn" data-open-booking="Call Consultation" type="button">BOOK CALL</button>
-</div>
-<div class="card quick-action">
-<div class="quick-action-icon">🔮</div>
-<div class="quick-action-title">Ask Now</div>
-<div class="quick-action-text">Ask your astrology question</div>
-<button class="btn" id="quickAskBtn" type="button">ASK NOW</button>
-</div>
-</div>
-</section>
-<section class="feature-section hidden" id="appointment">
-<div class="card">
-<div class="home-rule"><span>✦</span><span>APPOINTMENT / CONSULTATION BOOKING</span><span>✦</span></div>
-<h2>Book a Private Consultation</h2>
-<p class="small">Choose Chat or Call. Submit your preferred date/time and our admin team will confirm the appointment.</p>
-<form class="grid" id="appointmentForm" style="margin-top:12px">
-<div><label>Name *</label><input id="apName" maxlength="100" placeholder="Full name" required=""/></div>
-<div><label>Email *</label><input id="apEmail" maxlength="160" placeholder="Email" required="" type="email"/></div>
-<div><label>Mobile *</label><input id="apMobile" maxlength="20" placeholder="Mobile number" required="" type="tel"/></div>
-<div><label>Consultation *</label><select id="apType" required=""><option value="Chat Consultation">Chat Consultation</option><option value="Call Consultation">Call Consultation</option></select></div>
-<div><label>Preferred Date *</label><input id="apDate" required="" type="date"/></div>
-<div><label>Preferred Time *</label><input id="apTime" required="" type="time"/></div>
-<div style="grid-column:1/-1"><label>Notes / Topic</label><textarea id="apNotes" maxlength="2000" placeholder="Tell us briefly what you would like guidance on..."></textarea></div>
-<div style="grid-column:1/-1"><button class="btn" id="appointmentSubmit" type="submit">REQUEST APPOINTMENT</button><div class="small" id="appointmentMsg" style="margin-top:10px"></div></div>
-</form>
-</div>
-</section>
+<section class="feature-section" id="quickActions"><div class="home-rule"><span>✦</span><span>QUICK CONSULTATION</span><span>✦</span></div><div class="quick-actions"><div class="card quick-action"><div class="quick-action-icon">🔮</div><div class="quick-action-title">Ask Now</div><div class="quick-action-text">Ask your astrology question</div><button class="btn" id="quickAskBtn" type="button">ASK NOW</button></div></div></section>
 <section class="feature-section" id="approved-astrologers">
 <div class="home-rule"><span>✦</span><span>APPROVED ASTROLOGERS</span><span>✦</span></div>
 <h2>Our Approved Astrologers</h2>
@@ -586,7 +545,6 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <div class="card" style="margin-top:16px"><h3>Recent Questions</h3><div id="adminQuestions"><div class="empty">Loading questions...</div></div></div>
 <div class="card" style="margin-top:16px"><h3>Customer Reviews</h3><div id="adminReviews"><div class="empty">Loading reviews...</div></div><div id="adminReviewMsg" class="small"></div><input id="adminReviewRating" type="hidden" value="5"><textarea id="adminReviewText" class="hidden"></textarea><button id="saveAdminReview" class="hidden" type="button">SAVE</button></div>
 <div class="card" style="margin-top:16px"><h3>Astrologer Withdrawals</h3><div id="adminWithdrawals"><div class="empty">Loading withdrawal requests...</div></div></div>
-<div class="card" style="margin-top:16px"><h3>Appointment Requests</h3><div id="adminAppointments"><div class="empty">Loading appointment requests...</div></div></div>
 <div class="card" style="margin-top:16px"><h3>Question Price</h3><div class="action-row"><input id="questionPrice" type="number" min="1" step="0.01" placeholder="Question price"><button id="saveQuestionPrice" class="btn" type="button">SAVE PRICE</button></div><div id="questionPriceMsg" class="small"></div></div>
 <div class="card" style="margin-top:16px"><h3>Commission Settings</h3><div class="action-row"><input id="astroCommission" type="number" min="0" max="100" placeholder="Astrologer %"><input id="adminCommission" type="number" min="0" max="100" placeholder="Admin %"><button id="saveCommission" class="btn" type="button">SAVE COMMISSION</button></div><div id="commissionMsg" class="small"></div></div>
 <div class="card" style="margin-top:16px"><h3>Answer Word Limit</h3><div class="action-row"><input id="minimumAnswerWords" type="number" min="1" max="10000" placeholder="Minimum words"><button id="saveAnswerWords" class="btn" type="button">SAVE WORD LIMIT</button></div><div id="answerWordsMsg" class="small"></div></div>
@@ -682,6 +640,7 @@ async function openQuestionService(){
   $("birthName").value="";$("birthDate").value="";$("birthTime").value="";$("birthPlace").value="";$("birthGender").value="";$("questionText").value="";
   message("askMsg","");go("ask-flow");
 }
+  function smvDateTime(value){ try { if(!value) return '—'; const d=value?.toDate ? value.toDate() : (value?.seconds ? new Date(Number(value.seconds)*1000) : new Date(value)); if(Number.isNaN(d.getTime())) return '—'; return d.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}); } catch(e){ return '—'; } }
 window.__smvOpenQuestionService=openQuestionService;
 
 $("authBtn")?.addEventListener("click",async()=>{if(currentUser){await logoutToHome();}else{openAuth("login");}});
@@ -915,10 +874,17 @@ async function loadAstrologers(){ return loadAstroCards(); }
 async function loadAstroCards(){
  const box=$("astroCards");if(!box)return;box.innerHTML='<div class="empty">Loading astrologers...</div>';
  try{
-  const r=await fetch(RAZORPAY_BACKEND_URL+"/public/astrologers",{cache:"no-store"});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(d.error||`Astrologer service returned HTTP ${r.status}.`);
-  const items=Array.isArray(d.astrologers)?d.astrologers:[];
+  let items=[];
+  try {
+    const r=await withTimeout(fetch(RAZORPAY_BACKEND_URL+"/public/astrologers",{cache:"no-store"}),12000);
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||`Astrologer service returned HTTP ${r.status}.`);
+    items=Array.isArray(d.astrologers)?d.astrologers:[];
+  } catch(backendErr) {
+    console.warn("Public astrologer backend unavailable; using Firestore fallback:",backendErr);
+    const snap=await withTimeout(getDocs(collection(db,"smv_astrologers")),12000);
+    items=snap.docs.map(d=>({id:d.id,...(d.data()||{})})).filter(a=>String(a.status||"").toLowerCase()==="approved");
+  }
   if(!items.length){box.innerHTML='<div class="empty">No approved astrologers available yet.</div>';return;}
   box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=()=>openPublicAstrologerProfile(a);box.appendChild(card);});
  }catch(e){console.error("Approved astrologers load failed:",e);box.innerHTML='<div class="empty error">Approved astrologers are temporarily unavailable.</div>';}
@@ -1005,7 +971,7 @@ $("submitQuestionBtn")?.addEventListener("click",async()=>{
       message("askMsg",'<span class="success"><b>Payment verified successfully.</b></span>');
       btn.disabled=false;btn.textContent="PAID ✓";
       const successPanel=$("paymentSuccessPanel"), successDetails=$("paymentSuccessDetails");
-      if(successDetails) successDetails.innerHTML='<b>Question ID:</b> '+escapeHtml(pendingQuestionId)+'<br><b>Payment ID:</b> '+escapeHtml(customerPay)+'<br><b>Status:</b> Waiting for Admin question approval';
+      if(successDetails) successDetails.innerHTML='<b>Question ID:</b> '+escapeHtml(pendingQuestionId)+'<br><b>Payment ID:</b> '+escapeHtml(customerPay)+'<br><b>Payment Date & Time:</b> '+escapeHtml(smvDateTime(vr.paymentRecordedAt||new Date()))+'<br><b>Status:</b> Waiting for Admin question approval';
       if(successPanel) show("paymentSuccessPanel");
       pendingQuestionId="";
       const continueBtn=$("continueAfterPayment");
@@ -1243,7 +1209,7 @@ ${ad.status === 'rejected' && ad.rejectionReason
    ${qs.empty?'<div class="empty">No questions yet.</div>':qs.docs.slice(0,20).map(d=>{const q=d.data(); const canAnswer=
   approved &&
   (q.status==='paid' || q.status==='admin_approved') &&
-  q.astrologerId===currentUser.uid; const commission=q.astrologerCommissionAmount!=null?`<div><b>Your Commission: ₹${Number(q.astrologerCommissionAmount).toFixed(2)}</b></div>`:''; const minWords=Number(q.answerMinWords||150); return `<div class="card" style="margin:10px 0"><b>${escapeHtml(q.question||'Question')}</b><div class="small">Status: ${escapeHtml(q.status||'')} · Minimum answer: ${minWords} words</div>${commission}${q.answer?`<p>${escapeHtml(q.answer)}</p>`:''}${canAnswer?`<textarea id="ans_${d.id}" placeholder="Write at least ${minWords} words...">${escapeHtml(q.answer||'')}</textarea><div class="small" id="count_${d.id}">0 / ${minWords} words</div><button class="btn" data-answer="${d.id}" disabled>Submit for Admin Approval</button>`:''}${q.status==='revision_required'?`<textarea id="ans_${d.id}" placeholder="Revise with at least ${minWords} words...">${escapeHtml(q.answer||'')}</textarea><div class="small" id="count_${d.id}">0 / ${minWords} words</div><button class="btn" data-answer="${d.id}" disabled>Resubmit for Admin Approval</button>`:''}</div>`}).join('')}</div>
+  q.astrologerId===currentUser.uid; const commission=q.astrologerCommissionAmount!=null?`<div><b>Your Commission: ₹${Number(q.astrologerCommissionAmount).toFixed(2)}</b></div>`:''; const minWords=Number(q.answerMinWords||150); return `<div class="card" style="margin:10px 0"><b>${escapeHtml(q.question||'Question')}</b><div class="small"><b>Question ID: ${escapeHtml(d.id)}</b> · Status: ${escapeHtml(q.status||'')} · Minimum answer: ${minWords} words</div>${commission}${q.answer?`<p>${escapeHtml(q.answer)}</p>`:''}${canAnswer?`<textarea id="ans_${d.id}" placeholder="Write at least ${minWords} words...">${escapeHtml(q.answer||'')}</textarea><div class="small" id="count_${d.id}">0 / ${minWords} words</div><button class="btn" data-answer="${d.id}" disabled>Submit for Admin Approval</button>`:''}${q.status==='revision_required'?`<textarea id="ans_${d.id}" placeholder="Revise with at least ${minWords} words...">${escapeHtml(q.answer||'')}</textarea><div class="small" id="count_${d.id}">0 / ${minWords} words</div><button class="btn" data-answer="${d.id}" disabled>Resubmit for Admin Approval</button>`:''}</div>`}).join('')}</div>
    <div class="card" style="margin-top:16px">
   <h3>Earnings Ledger</h3>
 
@@ -1657,8 +1623,8 @@ ${ad.status === 'rejected' && ad.rejectionReason
       const ids = paymentSnap.docs.map(d=>d.data()?.astrologerPaymentId).filter(Boolean);
       const uniqueIds = [...new Set(ids)];
       $('withdrawPaymentIds').innerHTML = uniqueIds.length
-        ? '<b>Astrologer Payment ID:</b> ' + uniqueIds.map(escapeHtml).join(', ')
-        : '<b>Astrologer Payment ID:</b> Will appear after a credited consultation.';
+        ? '<b>Payment ID:</b> ' + uniqueIds.map(escapeHtml).join(', ')
+        : '<b>Payment ID:</b> Will appear after a credited consultation.';
     } catch(e) {
       $('withdrawPaymentIds').innerHTML = '<b>Astrologer Payment ID:</b> Unable to load payment ID right now.';
     }
@@ -1723,7 +1689,7 @@ ${ad.status === 'rejected' && ad.rejectionReason
         );
 
         $('withdrawMsg').innerHTML =
-          '<span class="success"><b>Withdrawal request received.</b><br>Admin will arrange payment within 24–48 hours.</span>';
+          '<span class="success"><b>Withdrawal request received.</b><br>Requested: '+escapeHtml(smvDateTime(new Date()))+'<br>Admin will arrange payment within 24–48 hours.</span>';
 
         setTimeout(() => {
           closeModal();
@@ -1772,7 +1738,7 @@ ${ad.status === 'rejected' && ad.rejectionReason
    const qs=await withTimeout(getDocs(query(collection(db,'smv_questions'),where('customerId','==',currentUser.uid))));
    const paid=qs.docs.filter(d=>d.data().status!=='awaiting_payment').length;
    box.innerHTML=`<div class="grid"><div class="card"><span class="badge">CUSTOMER</span><h3>Welcome, ${escapeHtml(data.name||currentUser.email||'Customer')}</h3><p>Email verification: <b>${currentUser.emailVerified?'Verified':'Pending from registration'}</b></p><p>Mobile: Private</p></div><div class="card"><h3>My Questions</h3><p>Total: <b>${qs.size}</b></p><p>Paid/processed: <b>${paid}</b></p></div></div>
-   <div class="card" style="margin-top:16px"><h3>My Consultations</h3>${qs.empty?'<div class="empty">No consultations yet. Start a private consultation to choose an astrologer.</div>':qs.docs.slice(0,20).map(d=>{const q=d.data(); const reviewButton=q.status==='answered'&&!q.reviewed?`<button class="btn" data-review="${d.id}" data-astro="${q.astrologerId}">Rate & Review</button>`:''; const statusMap={awaiting_payment:'Payment Pending',payment_failed:'Payment Failed',paid:'Waiting for Answers',admin_approved:'Waiting for Answers',processing:'Processing',answer_draft:'Processing',admin_review:'Processing',revision_required:'Revision Required',answered:'Answer Ready',admin_rejected:'Question Rejected'}; const astroName=q.astrologerName||'Selected Astrologer'; const statusText=q.status==='paid'||q.status==='admin_approved'?`Waiting for Answers — ${astroName}`:q.status==='processing'||q.status==='answer_draft'||q.status==='admin_review'?`Processing — ${astroName} answer received and under Admin review`:q.status==='answered'?'Answer Ready':(statusMap[q.status]||q.status||'Processing'); const steps=[['Payment Received',['paid','admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Question Approved',['admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Astrologer Answer Submitted',['processing','answer_draft','admin_review','answered'].includes(q.status)],['Admin Approval',['answered'].includes(q.status)],['Answer Ready',['answered'].includes(q.status)]]; const timeline=`<div class="timeline">${steps.map(x=>`<div class="timeline-step ${x[1]?'done':''}"><span>${x[1]?'✓':'○'}</span>${x[0]}</div>`).join('')}</div>`; const paymentLine=q.customerPaymentId?`<div class="small"><b>Customer Payment ID:</b> ${escapeHtml(q.customerPaymentId)}</div>`:''; return `<div style="padding:14px 0;border-bottom:1px solid #eee"><b>${escapeHtml(q.question||'Question')}</b><div class="small">Astrologer: <b>${escapeHtml(astroName)}</b> · Status: <b>${escapeHtml(statusText)}</b></div>${paymentLine}${timeline}${q.answer&&q.status==='answered'?`<div class="card" style="margin-top:10px"><b>Astrologer Answer</b><p style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word">${escapeHtml(q.answer)}</p></div>`:''}${reviewButton}</div>`}).join('')}</div>`;
+   <div class="card" style="margin-top:16px"><h3>My Consultations</h3>${qs.empty?'<div class="empty">No consultations yet. Start a private consultation to choose an astrologer.</div>':qs.docs.slice(0,20).map(d=>{const q=d.data(); const reviewButton=q.status==='answered'&&!q.reviewed?`<button class="btn" data-review="${d.id}" data-astro="${q.astrologerId}">Rate & Review</button>`:''; const statusMap={awaiting_payment:'Payment Pending',payment_failed:'Payment Failed',paid:'Waiting for Answers',admin_approved:'Waiting for Answers',processing:'Processing',answer_draft:'Processing',admin_review:'Processing',revision_required:'Revision Required',answered:'Answer Ready',admin_rejected:'Question Rejected'}; const astroName=q.astrologerName||'Selected Astrologer'; const statusText=q.status==='paid'||q.status==='admin_approved'?`Waiting for Answers — ${astroName}`:q.status==='processing'||q.status==='answer_draft'||q.status==='admin_review'?`Processing — ${astroName} answer received and under Admin review`:q.status==='answered'?'Answer Ready':(statusMap[q.status]||q.status||'Processing'); const steps=[['Payment Received',['paid','admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Question Approved',['admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Astrologer Answer Submitted',['processing','answer_draft','admin_review','answered'].includes(q.status)],['Admin Approval',['answered'].includes(q.status)],['Answer Ready',['answered'].includes(q.status)]]; const timeline=`<div class="timeline">${steps.map(x=>`<div class="timeline-step ${x[1]?'done':''}"><span>${x[1]?'✓':'○'}</span>${x[0]}</div>`).join('')}</div>`; const paymentLine=q.customerPaymentId?`<div class="small"><b>Customer Payment ID:</b> ${escapeHtml(q.customerPaymentId)} · <b>Payment Date & Time:</b> ${escapeHtml(smvDateTime(q.paidAt||q.paymentUpdatedAt))}</div>`:''; return `<div style="padding:14px 0;border-bottom:1px solid #eee"><b>${escapeHtml(q.question||'Question')}</b><div class="small">Astrologer: <b>${escapeHtml(astroName)}</b> · Status: <b>${escapeHtml(statusText)}</b></div>${paymentLine}${timeline}${q.answer&&q.status==='answered'?`<div class="card" style="margin-top:10px"><b>${q.answerAuthorType==='admin'||q.adminAnswered?'Admin Answer':'Astrologer Answer'}</b><p style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word">${escapeHtml(q.answer)}</p>${q.answerAuthorType==='admin'||q.adminAnswered?'<p class="small success"><b>Answered directly by SMV ASTRO Admin.</b></p>':''}</div>`:''}${reviewButton}</div>`}).join('')}</div>`;
    document.querySelectorAll('[data-review]').forEach(b=>b.onclick=()=>openReview(b.dataset.review,b.dataset.astro));
   }
   const note=document.createElement('div'); note.className='card'; note.style.marginTop='16px'; note.innerHTML='<h3>Notifications</h3><div id="userNotifications"><div class="small">Loading...</div></div>'; box.appendChild(note); await renderNotifications('userNotifications'); show('dashboard'); touchSession(); armIdleTimer();
@@ -1866,7 +1832,7 @@ async function loadAdminPanel(){
       const birthPlace=q.birthPlace||bd.birthPlace||''; const birthGender=q.birthGender||bd.birthGender||'';
       const selected=q.astrologerId||''; const pct=Number(q.commissionPercent||q.commissionRate||settings.astroPercent||20);
       const options=approvedAstros.map(a=>{const x=a.data()||{};return `<option value="${escapeHtml(a.id)}" ${selected===a.id?'selected':''}>${escapeHtml(x.name||'Astrologer')} — ${escapeHtml(x.expertise||x.specialization||'Astrology')}</option>`}).join('');
-      return `<div class="card" style="margin:10px 0"><h3>${escapeHtml(customerName)}</h3><p><b>Question ID:</b> ${escapeHtml(d.id)}</p><p><b>Question:</b> ${escapeHtml(q.question||'')}</p><p><b>Birth:</b> ${escapeHtml(birthDate)} · ${escapeHtml(birthTime)} · ${escapeHtml(birthPlace)} · ${escapeHtml(birthGender)}</p><p><b>Amount Paid:</b> ₹${Number(q.amount||0).toFixed(2)} · <b>Payment ID:</b> ${escapeHtml(q.customerPaymentId||'')}</p><div class="grid" style="margin-top:10px"><div><label>Assign Astrologer</label><select id="assignAstro_${d.id}"><option value="">Select approved astrologer</option>${options}</select></div><div><label>Astrologer Commission %</label><input id="assignCommission_${d.id}" type="number" min="0" max="100" step="0.01" value="${pct}"></div></div><p class="small" id="assignPreview_${d.id}"></p><div class="action-row"><button class="btn" data-approve-question="${d.id}">APPROVE & ALLOCATE</button><button class="btn gray" data-reject-question="${d.id}">REJECT QUESTION</button></div><input id="questionReject_${d.id}" placeholder="Rejection reason (required if rejecting)"></div>`;
+      return `<div class="card" style="margin:10px 0"><h3>${escapeHtml(customerName)}</h3><p><b>Question ID:</b> ${escapeHtml(d.id)}</p><p><b>Question:</b> ${escapeHtml(q.question||'')}</p><p><b>Birth:</b> ${escapeHtml(birthDate)} · ${escapeHtml(birthTime)} · ${escapeHtml(birthPlace)} · ${escapeHtml(birthGender)}</p><p><b>Amount Paid:</b> ₹${Number(q.amount||0).toFixed(2)} · <b>Payment ID:</b> ${escapeHtml(q.customerPaymentId||'')} · <b>Paid:</b> ${escapeHtml(smvDateTime(q.paidAt||q.paymentUpdatedAt))}</p><div class="grid" style="margin-top:10px"><div><label>Assign Astrologer</label><select id="assignAstro_${d.id}"><option value="">Select approved astrologer</option>${options}</select></div><div><label>Astrologer Commission %</label><input id="assignCommission_${d.id}" type="number" min="0" max="100" step="0.01" value="${pct}"></div></div><p class="small" id="assignPreview_${d.id}"></p><div class="action-row"><button class="btn" data-approve-question="${d.id}">APPROVE & ALLOCATE</button><button class="btn gray" data-reject-question="${d.id}">REJECT QUESTION</button></div><input id="questionReject_${d.id}" placeholder="Rejection reason (required if rejecting)"></div>`;
     }).join('') : '<div class="empty">No questions awaiting Admin approval.</div>';
   }catch(e){console.error('Question approval panel error',e);questionApprovalBox.innerHTML='<div class="empty error">Unable to load question approvals: '+escapeHtml(e.message||String(e))+'</div>';}
   questionApprovalBox.querySelectorAll('[data-approve-question]').forEach(b=>b.onclick=async()=>{
@@ -1936,7 +1902,7 @@ answerBox.innerHTML =
         return `
           <div class="card" style="margin:10px 0">
 
-            <b>
+            <b>Question ID: ${escapeHtml(d.id)}</b><br><b>
               ${escapeHtml(q.question || 'Question')}
             </b>
 
@@ -2263,7 +2229,7 @@ answerBox
 
   const withdrawalSnap=await getDocs(collection(db,'smv_withdrawals'));
   const withdrawalDocs=withdrawalSnap.docs.slice().sort((a,b)=>Number(b.data().createdAt?.seconds||0)-Number(a.data().createdAt?.seconds||0)).slice(0,50);
-  $('adminWithdrawals').innerHTML=withdrawalDocs.length?withdrawalDocs.map(d=>{const w=d.data();return `<div class="card" style="margin:10px 0"><b>₹${Number(w.amount||0).toFixed(2)}</b> · ${escapeHtml(w.status||'pending')}<div class="small">Astrologer: ${escapeHtml(w.astrologerId||'')} · Requested: ${escapeHtml(w.createdAt?.toDate? w.createdAt.toDate().toLocaleString(): 'Recently')}</div><div class="action-row">${w.status==='pending'?`<button class="btn" data-wstatus="${d.id}" data-status="processing">MARK PROCESSING</button><button class="btn gray" data-wstatus="${d.id}" data-status="rejected">REJECT</button>`:''}${w.status==='processing'?`<button class="btn" data-wstatus="${d.id}" data-status="paid">MARK PAID</button>`:''}</div></div>`}).join(''):'<div class="empty">No withdrawal requests.</div>';
+  $('adminWithdrawals').innerHTML=withdrawalDocs.length?withdrawalDocs.map(d=>{const w=d.data();return `<div class="card" style="margin:10px 0"><b>₹${Number(w.amount||0).toFixed(2)}</b> · ${escapeHtml(w.status||'pending')}<div class="small">Astrologer: ${escapeHtml(w.astrologerId||'')} · Payment ID: ${escapeHtml(w.astrologerPaymentId||'—')} · Requested: ${escapeHtml(smvDateTime(w.createdAt))}</div><div class="action-row">${w.status==='pending'?`<button class="btn" data-wstatus="${d.id}" data-status="processing">MARK PROCESSING</button><button class="btn gray" data-wstatus="${d.id}" data-status="rejected">REJECT</button>`:''}${w.status==='processing'?`<button class="btn" data-wstatus="${d.id}" data-status="paid">MARK PAID</button>`:''}</div></div>`}).join(''):'<div class="empty">No withdrawal requests.</div>';
  $('adminWithdrawals')
   .querySelectorAll('[data-wstatus]')
   .forEach(b => {
@@ -3010,6 +2976,68 @@ window.__SMV_APP_READY=true;
     }catch(e){console.error('Public reviews load failed',e);box.innerHTML='<div class="empty">Reviews are temporarily unavailable.</div>';}
   }
   async function authHeaders(){await fb();const u=auth?.currentUser;if(!u)throw new Error('Please login as Admin to use this feature.');return {Authorization:'Bearer '+await u.getIdToken()};}
+  // ADMIN TAKEOVER: if an allocated astrologer does not answer, Admin can edit the question and answer it.
+  const takeoverQuestions = questions.docs.filter(d => {
+    const q=d.data()||{};
+    return ['paid','admin_approved','processing','answer_draft','admin_review'].includes(q.status) && q.customerId && !q.answer;
+  });
+  const takeoverHtml = takeoverQuestions.length ? takeoverQuestions.map(d=>{
+    const q=d.data()||{};
+    return `<div class="card" style="margin:10px 0;border-left:4px solid var(--gold)">
+      <div><b>Question ID: ${escapeHtml(d.id)}</b></div>
+      <div class="small">Allocated Astrologer: ${escapeHtml(q.astrologerName||q.astrologerId||'Not assigned')}</div>
+      <label style="display:block;margin-top:10px"><b>Re-allocate to another approved Astrologer</b></label>
+      <div class="action-row"><select id="reallocAstro_${d.id}"><option value="">Select another approved astrologer</option>${astros.docs.filter(a=>a.id!==q.astrologerId && a.data()?.status==='approved').map(a=>{const x=a.data()||{};return `<option value="${escapeHtml(a.id)}">${escapeHtml(x.name||'Astrologer')} — ${escapeHtml(x.expertise||x.specialization||'Astrology')}</option>`}).join('')}</select><input id="reallocCommission_${d.id}" type="number" min="0" max="100" step="0.01" value="${Number(q.commissionPercent||q.commissionRate||settings.astroPercent||20)}" placeholder="Commission %"><button class="btn gray" data-keep-question="${d.id}">KEEP ALLOCATED</button><button class="btn gray" data-reallocate-question="${d.id}">RE-ALLOCATE</button></div>
+      <label style="display:block;margin-top:10px"><b>Edit Question</b></label>
+      <textarea id="adminQEdit_${d.id}" style="min-height:90px">${escapeHtml(q.question||'')}</textarea>
+      <label style="display:block;margin-top:10px"><b>Admin Answer</b></label>
+      <textarea id="adminAns_${d.id}" style="min-height:180px" placeholder="Admin can answer this question if the allocated astrologer is not responding."></textarea>
+      <div class="small" id="adminTakeCount_${d.id}">0 words</div>
+      <div class="action-row" style="margin-top:10px">
+        <button class="btn gray" data-admin-edit-question="${d.id}">SAVE QUESTION EDIT</button>
+        <button class="btn" data-admin-takeover="${d.id}">ADMIN ANSWER & CLOSE</button>
+      </div>
+      <div class="small">If Admin answers, the full customer payment is retained by Admin. No astrologer commission/payment ID will be created for this question.</div>
+    </div>`;
+  }).join('') : '<div class="empty">No unanswered allocated questions available for Admin takeover.</div>';
+  if(answerBox){
+    const takeoverCard=document.createElement('div');
+    takeoverCard.className='card';
+    takeoverCard.style.marginTop='16px';
+    takeoverCard.innerHTML='<h3>Allocated Questions — Admin Control</h3><p class="small">An allocated question stays visible here until an answer is submitted and approved. For every unanswered question Admin has three choices: <b>KEEP ALLOCATED</b>, <b>RE-ALLOCATE</b> to another approved astrologer, or <b>ADMIN ANSWER</b>.</p>'+takeoverHtml;
+    answerBox.parentElement.appendChild(takeoverCard);
+    takeoverCard.querySelectorAll('[data-keep-question]').forEach(btn=>btn.onclick=()=>{btn.textContent='KEPT ALLOCATED';btn.disabled=true;alert('Question remains assigned to the current astrologer. It will stay in Admin control until an answer is submitted.');});
+    takeoverCard.querySelectorAll('[data-reallocate-question]').forEach(btn=>btn.onclick=async()=>{
+      const id=btn.dataset.reallocateQuestion; const astroId=$("reallocAstro_"+id)?.value||''; const pct=Number($("reallocCommission_"+id)?.value);
+      if(!astroId){alert('Select another approved astrologer.');return;}
+      if(!Number.isFinite(pct)||pct<0||pct>100){alert('Enter a valid commission percentage.');return;}
+      const astroDoc=astros.docs.find(x=>x.id===astroId); const astro=astroDoc?.data()||{};
+      btn.disabled=true; btn.textContent='ALLOCATING...';
+      try{
+        const qRef=doc(db,'smv_questions',id); const snap=await getDoc(qRef); if(!snap.exists()) throw new Error('Question not found.'); const q=snap.data()||{};
+        const amount=Number(q.amount||0); const astroCommission=Math.round(amount*pct)/100; const adminCommission=Math.round((amount-astroCommission)*100)/100;
+        await updateDoc(qRef,{astrologerId:astroId,astrologerName:astro.name||'Astrologer',commissionPercent:pct,commissionRate:pct,astrologerCommissionAmount:astroCommission,adminCommissionAmount:adminCommission,allocationStatus:'assigned_to_astrologer',commissionStatus:'allocated_pending_answer',reallocatedAt:serverTimestamp(),reallocatedBy:currentUser.uid,answer:null,answerWordCount:0,astrologerAnswerStatus:'pending'});
+        await setDoc(doc(db,'smv_notifications',astroId+'_question_reassigned_'+Date.now()),{userId:astroId,type:'question_reassigned',title:'Question Re-assigned by Admin',message:'A paid question has been re-assigned to you by Admin.',questionId:id,commissionAmount:astroCommission,createdAt:serverTimestamp(),read:false});
+        alert('Question re-allocated to '+(astro.name||'the selected astrologer')+'. Same Question ID retained.'); await loadAdminPanel();
+      }catch(e){alert(e.message||String(e));btn.disabled=false;btn.textContent='RE-ALLOCATE';}
+    });
+    takeoverCard.querySelectorAll('[data-admin-edit-question]').forEach(btn=>btn.onclick=async()=>{
+      const id=btn.dataset.adminEditQuestion;
+      btn.disabled=true;
+      try{const r=await renderApi('/admin/edit-question',{method:'POST',body:JSON.stringify({questionId:id,question:$('adminQEdit_'+id).value.trim()})}); if(!r?.success) throw new Error(r?.error||'Unable to edit question.'); alert('Question updated successfully.'); await loadAdminPanel();}
+      catch(e){alert(e.message||String(e));btn.disabled=false;}
+    });
+    takeoverCard.querySelectorAll('[data-admin-takeover]').forEach(btn=>btn.onclick=async()=>{
+      const id=btn.dataset.adminTakeover, ans=$('adminAns_'+id)?.value.trim()||'';
+      const words=ans.split(/\s+/).filter(Boolean).length;
+      if(!ans){alert('Please enter the Admin answer.');return;}
+      if(words<Number((questions.docs.find(x=>x.id===id)?.data()?.answerMinWords)||1)){alert('Please meet the minimum answer word count.');return;}
+      btn.disabled=true;btn.textContent='SAVING...';
+      try{const r=await renderApi('/admin/takeover-answer',{method:'POST',body:JSON.stringify({questionId:id,answer:ans})}); if(!r?.success) throw new Error(r?.error||'Unable to save Admin answer.'); alert('Admin answer saved. Full customer payment is retained by Admin.'); await loadAdminPanel();}
+      catch(e){alert(e.message||String(e));btn.disabled=false;btn.textContent='ADMIN ANSWER & CLOSE';}
+    });
+  }
+
   let adminAppointmentsLoading=false;
   async function loadAdminAppointments(){
     const box=$('adminAppointments'); if(!box||adminAppointmentsLoading)return;
@@ -3017,7 +3045,7 @@ window.__SMV_APP_READY=true;
     try{
       await fb(); const u=auth?.currentUser; if(!u)throw new Error('Please login as Admin.');
       const token=await u.getIdToken(true);
-      const r=await fetch(BACKEND_URL+'/admin/appointments',{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+      const r=await withTimeout(fetch(BACKEND_URL+'/admin/appointments',{headers:{Authorization:'Bearer '+token},cache:'no-store'}),12000);
       const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||`Appointment service returned HTTP ${r.status}.`);
       const items=Array.isArray(d.appointments)?d.appointments:[];
       if(!items.length){box.innerHTML='<div class="empty">No appointment requests.</div>';return;}
