@@ -401,25 +401,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <p>Rooted in the time-honoured Indian tradition of Jyotisha, we bring thoughtful astrological guidance for life, relationships, career and important decisions — with trusted astrologers and a private consultation experience.</p>
 <div class="hero-subline"><span>Traditional Wisdom</span><span>•</span><span>Personal Guidance</span><span>•</span><span>Trusted Consultation</span></div>
 </section>
-<section id="featureHub" style="margin-top:12px">
-<div class="card feature-shell">
-<div class="feature-top">
-<div>
-<div class="home-rule"><span>✦</span><span data-i18n="discover">DISCOVER SMV ASTRO</span><span>✦</span></div>
-<h2 data-i18n="allServices">Services, Guidance &amp; Resources</h2>
-<p class="small" data-i18n="hubIntro">Explore trusted reviews, astrology articles and more.</p>
-</div>
-</div>
-<div class="feature-grid" id="featureCards">
-<a class="feature-tile" href="#reviews"><span>⭐</span><b data-i18n="reviews">Customer Reviews</b><small>Verified experiences</small></a>
 
-
-<a class="feature-tile" href="#register-flow"><span>👤</span><b data-i18n="account">Customer Account</b><small>Login &amp; registration</small></a>
-<a class="feature-tile" href="#featureHub"><span>🔔</span><b data-i18n="notifications">Notifications</b><small>Latest updates</small></a>
-<a class="feature-tile" href="#admin" id="adminFeatureBtn"><span>📊</span><b>Admin Dashboard</b><small>Admin login &amp; management</small></a>
-</div>
-</div>
-</section>
 <section class="feature-section" id="quickActions">
 <div class="home-rule">
 <span>✦</span><span>QUICK CONSULTATION</span><span>✦</span>
@@ -595,6 +577,20 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <div aria-live="polite" class="small" id="contactMsg" role="status"></div>
 </form>
 </section>
+<section class="hidden" id="admin" style="margin-top:45px">
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0">Admin Dashboard</h2><p class="small" style="margin:6px 0 0">SMV ASTRO administration and approval center</p></div><button class="btn gray" id="adminCloseBtn" type="button">← Home</button></div><div id="adminDataLoadMsg" style="margin-top:12px"></div><div id="adminSummary" class="stats-grid" style="margin-top:16px"></div></div>
+<div class="card" style="margin-top:16px"><h3>Public Question Approval</h3><div id="adminPendingQuestions"><div class="empty">Loading questions...</div></div></div>
+<div class="card" style="margin-top:16px"><h3>Astrologer Applications</h3><div id="pendingAstros"><div class="empty">Loading applications...</div></div></div>
+<div class="card" style="margin-top:16px"><h3>Answers Awaiting Approval</h3><div id="adminAnswers"><div class="empty">Loading answers...</div></div></div>
+<div class="card" style="margin-top:16px"><h3>Recent Questions</h3><div id="adminQuestions"><div class="empty">Loading questions...</div></div></div>
+<div class="card" style="margin-top:16px"><h3>Customer Reviews</h3><div id="adminReviews"><div class="empty">Loading reviews...</div></div><div id="adminReviewMsg" class="small"></div><input id="adminReviewRating" type="hidden" value="5"><textarea id="adminReviewText" class="hidden"></textarea><button id="saveAdminReview" class="hidden" type="button">SAVE</button></div>
+<div class="card" style="margin-top:16px"><h3>Astrologer Withdrawals</h3><div id="adminWithdrawals"><div class="empty">Loading withdrawal requests...</div></div></div>
+<div class="card" style="margin-top:16px"><h3>Appointment Requests</h3><div id="adminAppointments"><div class="empty">Loading appointment requests...</div></div></div>
+<div class="card" style="margin-top:16px"><h3>Question Price</h3><div class="action-row"><input id="questionPrice" type="number" min="1" step="0.01" placeholder="Question price"><button id="saveQuestionPrice" class="btn" type="button">SAVE PRICE</button></div><div id="questionPriceMsg" class="small"></div></div>
+<div class="card" style="margin-top:16px"><h3>Commission Settings</h3><div class="action-row"><input id="astroCommission" type="number" min="0" max="100" placeholder="Astrologer %"><input id="adminCommission" type="number" min="0" max="100" placeholder="Admin %"><button id="saveCommission" class="btn" type="button">SAVE COMMISSION</button></div><div id="commissionMsg" class="small"></div></div>
+<div class="card" style="margin-top:16px"><h3>Answer Word Limit</h3><div class="action-row"><input id="minimumAnswerWords" type="number" min="1" max="10000" placeholder="Minimum words"><button id="saveAnswerWords" class="btn" type="button">SAVE WORD LIMIT</button></div><div id="answerWordsMsg" class="small"></div></div>
+<div class="card" style="margin-top:16px"><h3>Razorpay Connection</h3><button id="testRazorpayBtn" class="btn" type="button">TEST RAZORPAY CONNECTION</button><div id="razorpayTestMsg" class="small" style="margin-top:8px"></div></div>
+</section>
 <footer>© SMV ASTRO SERVICES</footer>
 <div class="modal hidden" id="modal">
 <div class="modalbox" style="position:relative">
@@ -698,6 +694,7 @@ $("backAstroBtn")?.addEventListener("click",()=>{hide("ask-flow");go("ask-servic
 $("dashLink")?.addEventListener("click",e=>{e.preventDefault();loadDashboard();go("dashboard");});
 $("adminLink")?.addEventListener("click",e=>{e.preventDefault();openAdminEntry();});
 $("adminFeatureBtn")?.addEventListener("click",e=>{e.preventDefault();openAdminEntry();});
+$("adminCloseBtn")?.addEventListener("click",e=>{e.preventDefault();hide("admin");hide("adminLink");location.hash="";window.scrollTo({top:0,behavior:"smooth"});});
 $("consultationNav")?.addEventListener("click",e=>{e.preventDefault();openQuestionService();});
 
 // ---------- Admin access + Login / customer registration ----------
@@ -1621,6 +1618,8 @@ ${ad.status === 'rejected' && ad.rejectionReason
         24–48 hours.
       </p>
 
+      <div id="withdrawPaymentIds" class="small" style="margin:10px 0"><b>Astrologer Payment ID:</b> Loading...</div>
+
       <input
         id="withdrawAmount"
         type="number"
@@ -1644,6 +1643,17 @@ ${ad.status === 'rejected' && ad.rejectionReason
         style="margin-top:8px"
       ></div>
     `);
+
+    try {
+      const paymentSnap = await withTimeout(getDocs(query(collection(db,'smv_questions'),where('astrologerId','==',currentUser.uid))),15000);
+      const ids = paymentSnap.docs.map(d=>d.data()?.astrologerPaymentId).filter(Boolean);
+      const uniqueIds = [...new Set(ids)];
+      $('withdrawPaymentIds').innerHTML = uniqueIds.length
+        ? '<b>Astrologer Payment ID:</b> ' + uniqueIds.map(escapeHtml).join(', ')
+        : '<b>Astrologer Payment ID:</b> Will appear after a credited consultation.';
+    } catch(e) {
+      $('withdrawPaymentIds').innerHTML = '<b>Astrologer Payment ID:</b> Unable to load payment ID right now.';
+    }
 
     $('confirmWithdraw').onclick = async () => {
 
@@ -1754,7 +1764,7 @@ ${ad.status === 'rejected' && ad.rejectionReason
    const qs=await withTimeout(getDocs(query(collection(db,'smv_questions'),where('customerId','==',currentUser.uid))));
    const paid=qs.docs.filter(d=>d.data().status!=='awaiting_payment').length;
    box.innerHTML=`<div class="grid"><div class="card"><span class="badge">CUSTOMER</span><h3>Welcome, ${escapeHtml(data.name||currentUser.email||'Customer')}</h3><p>Email verification: <b>${currentUser.emailVerified?'Verified':'Pending from registration'}</b></p><p>Mobile: Private</p></div><div class="card"><h3>My Questions</h3><p>Total: <b>${qs.size}</b></p><p>Paid/processed: <b>${paid}</b></p></div></div>
-   <div class="card" style="margin-top:16px"><h3>My Consultations</h3>${qs.empty?'<div class="empty">No consultations yet. Start a private consultation to choose an astrologer.</div>':qs.docs.slice(0,20).map(d=>{const q=d.data(); const reviewButton=q.status==='answered'&&!q.reviewed?`<button class="btn" data-review="${d.id}" data-astro="${q.astrologerId}">Rate & Review</button>`:''; const statusMap={awaiting_payment:'Payment Pending',payment_failed:'Payment Failed',paid:'Waiting for Answers',admin_approved:'Waiting for Answers',processing:'Processing',answer_draft:'Processing',admin_review:'Processing',revision_required:'Revision Required',answered:'Answer Ready',admin_rejected:'Question Rejected'}; const astroName=q.astrologerName||'Selected Astrologer'; const statusText=q.status==='paid'||q.status==='admin_approved'?`Waiting for Answers — ${astroName}`:q.status==='processing'||q.status==='answer_draft'||q.status==='admin_review'?`Processing — ${astroName} answer received and under Admin review`:q.status==='answered'?'Answer Ready':(statusMap[q.status]||q.status||'Processing'); const steps=[['Payment Received',['paid','admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Question Approved',['admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Astrologer Answer Submitted',['processing','answer_draft','admin_review','answered'].includes(q.status)],['Admin Approval',['answered'].includes(q.status)],['Answer Ready',['answered'].includes(q.status)]]; const timeline=`<div class="timeline">${steps.map(x=>`<div class="timeline-step ${x[1]?'done':''}"><span>${x[1]?'✓':'○'}</span>${x[0]}</div>`).join('')}</div>`; const paymentLine=q.customerPaymentId?`<div class="small"><b>Customer Payment ID:</b> ${escapeHtml(q.customerPaymentId)}${q.astrologerPaymentId?` · <b>Astrologer Payment ID:</b> ${escapeHtml(q.astrologerPaymentId)}`:''}</div>`:''; return `<div style="padding:14px 0;border-bottom:1px solid #eee"><b>${escapeHtml(q.question||'Question')}</b><div class="small">Astrologer: <b>${escapeHtml(astroName)}</b> · Status: <b>${escapeHtml(statusText)}</b></div>${paymentLine}${timeline}${q.answer&&q.status==='answered'?`<div class="card" style="margin-top:10px"><b>Astrologer Answer</b><p style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word">${escapeHtml(q.answer)}</p></div>`:''}${reviewButton}</div>`}).join('')}</div>`;
+   <div class="card" style="margin-top:16px"><h3>My Consultations</h3>${qs.empty?'<div class="empty">No consultations yet. Start a private consultation to choose an astrologer.</div>':qs.docs.slice(0,20).map(d=>{const q=d.data(); const reviewButton=q.status==='answered'&&!q.reviewed?`<button class="btn" data-review="${d.id}" data-astro="${q.astrologerId}">Rate & Review</button>`:''; const statusMap={awaiting_payment:'Payment Pending',payment_failed:'Payment Failed',paid:'Waiting for Answers',admin_approved:'Waiting for Answers',processing:'Processing',answer_draft:'Processing',admin_review:'Processing',revision_required:'Revision Required',answered:'Answer Ready',admin_rejected:'Question Rejected'}; const astroName=q.astrologerName||'Selected Astrologer'; const statusText=q.status==='paid'||q.status==='admin_approved'?`Waiting for Answers — ${astroName}`:q.status==='processing'||q.status==='answer_draft'||q.status==='admin_review'?`Processing — ${astroName} answer received and under Admin review`:q.status==='answered'?'Answer Ready':(statusMap[q.status]||q.status||'Processing'); const steps=[['Payment Received',['paid','admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Question Approved',['admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Astrologer Answer Submitted',['processing','answer_draft','admin_review','answered'].includes(q.status)],['Admin Approval',['answered'].includes(q.status)],['Answer Ready',['answered'].includes(q.status)]]; const timeline=`<div class="timeline">${steps.map(x=>`<div class="timeline-step ${x[1]?'done':''}"><span>${x[1]?'✓':'○'}</span>${x[0]}</div>`).join('')}</div>`; const paymentLine=q.customerPaymentId?`<div class="small"><b>Customer Payment ID:</b> ${escapeHtml(q.customerPaymentId)}</div>`:''; return `<div style="padding:14px 0;border-bottom:1px solid #eee"><b>${escapeHtml(q.question||'Question')}</b><div class="small">Astrologer: <b>${escapeHtml(astroName)}</b> · Status: <b>${escapeHtml(statusText)}</b></div>${paymentLine}${timeline}${q.answer&&q.status==='answered'?`<div class="card" style="margin-top:10px"><b>Astrologer Answer</b><p style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word">${escapeHtml(q.answer)}</p></div>`:''}${reviewButton}</div>`}).join('')}</div>`;
    document.querySelectorAll('[data-review]').forEach(b=>b.onclick=()=>openReview(b.dataset.review,b.dataset.astro));
   }
   const note=document.createElement('div'); note.className='card'; note.style.marginTop='16px'; note.innerHTML='<h3>Notifications</h3><div id="userNotifications"><div class="small">Loading...</div></div>'; box.appendChild(note); await renderNotifications('userNotifications'); show('dashboard'); touchSession(); armIdleTimer();
@@ -1809,9 +1819,12 @@ async function loadAdminPanel(){
  setTimeout(()=>window.__smvRefreshAdminSections?.(),0);
  try{
   const adminData=await withTimeout(renderApi('/admin-data',{method:'GET'}),20000);
-  if(!adminData?.success) throw new Error('Admin data could not be loaded.');
+  if(!adminData?.success) throw new Error(adminData?.error||'Admin data could not be loaded.');
   const toDocs=(arr)=>({docs:(arr||[]).map(x=>({id:x.id,data:()=>x})),size:(arr||[]).length,empty:!(arr||[]).length});
   const users=toDocs(adminData.users), astros=toDocs(adminData.astrologers), questions=toDocs(adminData.questions);
+  const adminReadErrors=adminData.errors||{};
+  const readErrorText=Object.entries(adminReadErrors).filter(([,v])=>v).map(([k,v])=>k+': '+v).join(' | ');
+  $('adminDataLoadMsg') && ($('adminDataLoadMsg').innerHTML=readErrorText?'<div class="empty error">Some Admin data could not be loaded: '+escapeHtml(readErrorText)+'</div>':'');
   const customers=(adminData.customers||[]).length, pendingDocs=astros.docs.filter(d=>d.data().status==='pending');
   const userMap=new Map(users.docs.map(d=>[d.id,d.data()]));
   $('adminSummary').innerHTML=`<div class="stat">Customers <b>${customers}</b></div><div class="stat">Astrologers <b>${astros.size}</b></div><div class="stat">Pending <b>${pendingDocs.length}</b></div><div class="stat">Questions <b>${questions.size}</b></div>`;
@@ -2529,7 +2542,7 @@ $('adminReviews')
 
           <label>Rating</label>
 
-          <select id="adminReviewRating">
+          <select id="editReviewRating">
             <option value="5"
               ${Number(r.rating) === 5 ? 'selected' : ''}>
               ★★★★★ — 5
@@ -2561,41 +2574,41 @@ $('adminReviews')
           </label>
 
           <textarea
-            id="adminReviewText"
+            id="editReviewText"
             placeholder="Customer review"
             style="width:100%;min-height:120px"
           >${escapeHtml(r.review || '')}</textarea>
 
           <button
             class="btn"
-            id="saveAdminReview"
+            id="saveEditedReview"
             style="margin-top:10px">
             SAVE CHANGES
           </button>
 
           <div
-            id="adminReviewMsg"
+            id="editReviewMsg"
             class="small"
             style="margin-top:8px">
           </div>
         `);
 
-        $('saveAdminReview').onclick =
+        $('saveEditedReview').onclick =
           async () => {
 
             const saveBtn =
-              $('saveAdminReview');
+              $('saveEditedReview');
 
             const msg =
-              $('adminReviewMsg');
+              $('editReviewMsg');
 
             const rating =
               Number(
-                $('adminReviewRating').value
+                $('editReviewRating').value
               );
 
             const review =
-              $('adminReviewText')
+              $('editReviewText')
                 .value
                 .trim();
 
