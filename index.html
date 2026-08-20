@@ -357,6 +357,29 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
   .quick-action-text{font-size:14px;line-height:1.55}
 }
 
+
+/* V120 Alternative premium mobile UI — design only, functionality unchanged */
+.quick-actions{grid-template-columns:minmax(0,420px);justify-content:center;max-width:520px;margin:24px auto}
+.quick-action{width:100%;min-height:180px;padding:28px 22px;border:1px solid #d8b866;background:linear-gradient(180deg,#fffdf8 0%,#fff7e6 100%);box-shadow:0 14px 32px rgba(48,43,104,.10)}
+.quick-action:before{width:90px;height:3px;margin-bottom:16px;background:linear-gradient(90deg,var(--primary),var(--gold),var(--primary))}
+.quick-action-icon{width:58px;height:58px;display:grid;place-items:center;border-radius:50%;background:radial-gradient(circle,#fff8d9,#efd27d);border:2px solid var(--gold);box-shadow:0 6px 15px rgba(184,134,11,.16);font-size:29px}
+.quick-action-title{font-family:Georgia,"Times New Roman",serif;font-size:23px;color:#7e1818;margin-top:2px}
+.quick-action-text{font-size:14px;color:#6d5b50;margin-bottom:16px}
+.quick-action .btn{min-width:180px;padding:13px 22px}
+.smv-dialog-backdrop{position:fixed;inset:0;background:rgba(28,25,61,.70);display:flex;align-items:center;justify-content:center;padding:14px;z-index:500;backdrop-filter:blur(3px)}
+.smv-dialog{width:min(100%,430px);background:linear-gradient(180deg,#fffdf8,#fff7e8);border:1px solid #d8b866;border-radius:20px;box-shadow:0 24px 65px rgba(28,25,61,.28);padding:24px 20px 18px;color:var(--text)}
+.smv-dialog-icon{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;margin:0 auto 12px;background:radial-gradient(circle,#fff8d9,#efd27d);border:2px solid var(--gold);font-size:23px}
+.smv-dialog h3{margin:0;text-align:center;color:#7e1818;font-family:Georgia,"Times New Roman",serif;font-size:24px}
+.smv-dialog p{margin:10px 0 18px;text-align:center;color:#62554d;line-height:1.65;white-space:pre-line}
+.smv-dialog-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.smv-dialog-actions .btn{width:100%;min-height:46px;margin:0}
+.smv-dialog-actions .btn.danger{background:linear-gradient(135deg,#8d2020,#b43d3d);border-color:#761818;color:#fff}.smv-dialog-actions.single{grid-template-columns:1fr}
+.auth-shell{padding:2px 0 0}.auth-hero{text-align:center;margin-bottom:14px}
+.auth-hero-icon{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;margin:0 auto 10px;background:radial-gradient(circle,#fff8d9,#efd27d);border:2px solid var(--gold);box-shadow:0 6px 16px rgba(184,134,11,.18);font-size:28px}
+.auth-hero h2{margin:0;color:#7e1818;font-family:Georgia,"Times New Roman",serif;font-size:30px}.auth-hero p{margin:5px 0 0;color:#76665c;font-size:13px}
+.auth-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 12px}.auth-tabs .btn{padding:10px 6px;min-height:44px;font-size:12px;box-shadow:none}.auth-tabs .btn.active{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-color:#751515;box-shadow:0 5px 13px rgba(48,43,104,.16)}
+.auth-field-label{display:block;margin:8px 2px 4px;color:#60483c;font-size:12px;font-weight:800}.auth-field{margin:0 0 5px!important;min-height:48px!important}.auth-submit{width:100%;min-height:50px;margin-top:8px!important;font-size:16px!important}.auth-secondary{width:100%;min-height:46px;margin-top:7px!important}.password-wrap{position:relative}.password-wrap input{padding-right:52px}.password-toggle{position:absolute;right:7px;top:7px;height:34px;min-width:38px;border:0;border-radius:8px;background:#f3eadb;color:#5b4336;font-size:16px;cursor:pointer}.auth-note{margin:9px 2px 2px;text-align:center;font-size:12px;color:#75665e;line-height:1.5}
+@media(max-width:520px){.modal{padding:7px}.modalbox{max-height:96vh;padding:18px 13px 15px;border-radius:18px}.modalbox #modalContent{padding-right:26px!important}.auth-hero-icon{width:54px;height:54px;font-size:24px}.auth-hero h2{font-size:27px}.auth-tabs{grid-template-columns:1fr;gap:7px}.auth-tabs .btn{min-height:43px;font-size:13px}.auth-submit,.auth-secondary{font-size:14px!important}.smv-dialog{padding:21px 15px 15px;border-radius:18px}.smv-dialog h3{font-size:22px}.smv-dialog-actions{grid-template-columns:1fr;gap:8px}.smv-dialog-actions .btn{min-height:48px}.quick-actions{grid-template-columns:minmax(0,1fr)!important;max-width:430px;margin:18px auto;padding:0 2px}.quick-action{min-height:170px;padding:24px 16px}}
+
 </style>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <style>
@@ -561,7 +584,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebas
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, deleteUser, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-window.__SMV_BUILD="V119";
+window.__SMV_BUILD="V120-UI";
 const firebaseConfig={apiKey:"AIzaSyCKXyfZ9sjGmej7ygxHpzHNcNysMXHuvSs",authDomain:"smv-astro.firebaseapp.com",projectId:"smv-astro",storageBucket:"smv-astro.firebasestorage.app",messagingSenderId:"299081899217",appId:"1:299081899217:web:8d558df08e86037ea539f0"};
 let app=null, auth=null, db=null, functions=null, httpsCallableFn=null, firebaseInitError=null;
 try{
@@ -612,16 +635,43 @@ let currentUser=null, selectedAstro=null, pendingAfterLogin=null, questionServic
 const $=id=>document.getElementById(id);
 const show=id=>$(id)?.classList.remove("hidden"); const hide=id=>$(id)?.classList.add("hidden");
 const go=id=>$(id)?.scrollIntoView({behavior:"smooth",block:"start"});
+function hideHomeSurface(){
+  ["home","quickActions","approved-astrologers","faq"].forEach(id=>hide(id));
+  document.querySelectorAll('header a[href="#home"], header a[href="#contact"], header a[href="#services"], #contactNav').forEach(el=>hideElement(el));
+}
+function showHomeSurface(){
+  ["home","quickActions","approved-astrologers","faq"].forEach(id=>show(id));
+  document.querySelectorAll('header a[href="#home"], header a[href="#contact"], header a[href="#services"], #contactNav').forEach(el=>showElement(el));
+}
+function hideElement(el){if(el) el.classList.add("hidden");}
+function showElement(el){if(el) el.classList.remove("hidden");}
 function hidePrimarySections(except=""){
   ["register-flow","astro-register-form","astro-flow","ask-flow","appointment","contact","dashboard","admin"].forEach(id=>{if(id!==except) hide(id);});
   if(except!=="dashboard") hide("dashLink");
   if(except!=="admin") hide("adminLink");
+  if(except==="dashboard" || except==="admin") hideHomeSurface();
+  else showHomeSurface();
 }
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
 function message(id,html){if($(id)) $(id).innerHTML=html;}
 function withTimeout(promise,ms=15000){return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("Firebase did not respond within 15 seconds.")),ms))]);}
 window.closeModal=()=>$("modal").classList.add("hidden");
 function openModal(html){$("modalContent").innerHTML=html;$("modal").classList.remove("hidden");}
+function smvNotice(title,message,icon="✓"){
+  const id="smvNoticeDialog"; let el=document.getElementById(id); if(el)el.remove();
+  el=document.createElement("div"); el.id=id; el.className="smv-dialog-backdrop";
+  el.innerHTML=`<div class="smv-dialog"><div class="smv-dialog-icon">${icon}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(message)}</p><div class="smv-dialog-actions single"><button type="button" class="btn">OK</button></div></div>`;
+  document.body.appendChild(el); el.querySelector(".btn").onclick=()=>el.remove(); return el;
+}
+function smvConfirm(title,message,okText="OK",cancelText="CANCEL",danger=false){
+  return new Promise(resolve=>{
+    const id="smvConfirmDialog"; let el=document.getElementById(id); if(el)el.remove();
+    el=document.createElement("div"); el.id=id; el.className="smv-dialog-backdrop";
+    el.innerHTML=`<div class="smv-dialog"><div class="smv-dialog-icon">${danger?"!":"?"}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(message)}</p><div class="smv-dialog-actions"><button type="button" class="btn gray" data-cancel>${escapeHtml(cancelText)}</button><button type="button" class="btn ${danger?"danger":""}" data-ok>${escapeHtml(okText)}</button></div></div>`;
+    document.body.appendChild(el); const finish=value=>{el.remove();resolve(value)};
+    el.querySelector("[data-cancel]").onclick=()=>finish(false); el.querySelector("[data-ok]").onclick=()=>finish(true);
+  });
+}
 
 // ---------- Navigation ----------
 function openRegister(){hidePrimarySections("register-flow");show("register-flow");go("register-flow");}
@@ -688,37 +738,27 @@ async function openAdminEntry(){
 
 function openAuth(mode="login"){
   hide("dashboard"); hide("admin"); hide("dashLink"); hide("adminLink"); hide("appointment"); hide("contact"); hide("ask-flow"); hide("register-flow"); hide("astro-register-form"); hide("astro-flow");
-  closeModal();
-  loginMethod="email";
-  openModal(`<h2>${mode==="login"?"Login":"Create Customer Account"}</h2>
-  <div id="authMsg" class="small"></div>
-  ${mode==="register"?`<input id="name" placeholder="Full name" autocomplete="name"><input id="phone" placeholder="Mobile number" autocomplete="tel">`:""}
-  ${mode==="login"?`<div class="action-row" style="margin-bottom:8px"><button type="button" class="btn gray" id="loginEmailMode">Email Login</button><button type="button" class="btn gray" id="loginCustomerIdMode">Customer ID Login</button><button type="button" class="btn gray" id="loginAstrologerIdMode">Astrologer ID Login</button></div>`:""}
-  <input id="email" type="email" placeholder="Email" autocomplete="email">
-  <input id="password" type="password" placeholder="Password (minimum 6 characters)" autocomplete="${mode==="login"?"current-password":"new-password"}">
-  <button class="btn" id="submitAuth">${mode==="login"?"Login":"Create Account"}</button>
-  ${mode==="login"?`<button class="btn gray" id="forgotAuth">Forgot Password?</button>`:""}
-  <button class="btn gray" id="switchAuth">${mode==="login"?"Create new customer account":"I already have an account"}</button>
-  <button type="button" class="btn gray" id="authClose">Close</button>`);
-  if(mode==="login"){
-    const setMethod=(m)=>{loginMethod=m; const input=$("email"); if(!input)return; const idMode=m!=="email"; input.type=idMode?"text":"email"; input.placeholder=m==="customerId"?"Customer ID (e.g. SMV-CUS-20082026-01)":m==="astrologerId"?"Astrologer ID (e.g. SMV-AST-20082026-01)":"Email"; input.autocomplete=idMode?"username":"email"; $("loginEmailMode")?.classList.toggle("active",m==="email"); $("loginCustomerIdMode")?.classList.toggle("active",m==="customerId"); $("loginAstrologerIdMode")?.classList.toggle("active",m==="astrologerId");};
-    $("loginEmailMode").onclick=()=>setMethod("email");
-    $("loginCustomerIdMode").onclick=()=>setMethod("customerId");
-    $("loginAstrologerIdMode").onclick=()=>setMethod("astrologerId");
-    setMethod("email");
+  closeModal(); loginMethod="email"; const isLogin=mode==="login";
+  openModal(`<div class="auth-shell">
+    <div class="auth-hero"><div class="auth-hero-icon">✦</div><h2>${isLogin?"Welcome Back":"Create Account"}</h2><p>${isLogin?"Sign in to continue to your SMV ASTRO dashboard.":"Create your secure customer account."}</p></div>
+    <div id="authMsg" class="small"></div>
+    ${!isLogin?`<label class="auth-field-label">Full Name</label><input class="auth-field" id="name" placeholder="Your full name" autocomplete="name"><label class="auth-field-label">Mobile Number</label><input class="auth-field" id="phone" placeholder="Your mobile number" autocomplete="tel">`:""}
+    ${isLogin?`<div class="auth-tabs"><button type="button" class="btn gray" id="loginEmailMode">Email Login</button><button type="button" class="btn gray" id="loginCustomerIdMode">Customer ID</button><button type="button" class="btn gray" id="loginAstrologerIdMode">Astrologer ID</button></div>`:""}
+    <label class="auth-field-label">${isLogin?"Email / ID":"Email"}</label><input class="auth-field" id="email" type="email" placeholder="Email" autocomplete="email">
+    <label class="auth-field-label">Password</label><div class="password-wrap"><input class="auth-field" id="password" type="password" placeholder="Minimum 6 characters" autocomplete="${isLogin?"current-password":"new-password"}"><button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">◉</button></div>
+    <button class="btn auth-submit" id="submitAuth">${isLogin?"LOGIN":"CREATE ACCOUNT"}</button>
+    ${isLogin?`<button class="btn gray auth-secondary" id="forgotAuth">Forgot Password?</button>`:""}
+    <button class="btn gray auth-secondary" id="switchAuth">${isLogin?"Create new customer account":"I already have an account"}</button>
+    <p class="auth-note">Secure authentication powered by Firebase.</p>
+  </div>`);
+  const passwordToggle=$("passwordToggle");
+  passwordToggle.onclick=()=>{const p=$("password");const showing=p.type==="text";p.type=showing?"password":"text";passwordToggle.textContent=showing?"◉":"◌";passwordToggle.setAttribute("aria-label",showing?"Show password":"Hide password")};
+  if(isLogin){
+    const setMethod=(m)=>{loginMethod=m; const input=$("email"); if(!input)return; const idMode=m!=="email"; input.type=idMode?"text":"email"; input.placeholder=m==="customerId"?"Customer ID (e.g. SMV-CUS-20082026-01)":m==="astrologerId"?"Astrologer ID (e.g. SMV-AST-20082026-01)":"Email address"; input.autocomplete=idMode?"username":"email"; $("loginEmailMode")?.classList.toggle("active",m==="email"); $("loginCustomerIdMode")?.classList.toggle("active",m==="customerId"); $("loginAstrologerIdMode")?.classList.toggle("active",m==="astrologerId");};
+    $("loginEmailMode").onclick=()=>setMethod("email"); $("loginCustomerIdMode").onclick=()=>setMethod("customerId"); $("loginAstrologerIdMode").onclick=()=>setMethod("astrologerId"); setMethod("email");
   }
-  $("submitAuth").onclick=()=>submitAuth(mode);
-  $("switchAuth").onclick=()=>openAuth(mode==="login"?"register":"login");
-  $("authClose").onclick=closeModal;
-  if($("forgotAuth")) $("forgotAuth").onclick=async()=>{
-    const email=$("email").value.trim(),m=$("authMsg");
-    if(!email){m.innerHTML='<span class="error">Enter your registered email first.</span>';return;}
-    try{
-      const {sendPasswordResetEmail}=await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js");
-      await withTimeout(sendPasswordResetEmail(auth,email));
-      m.innerHTML='<span class="success">Password reset email sent. Please check Inbox and Spam.</span>';
-    }catch(e){m.innerHTML='<span class="error">'+escapeHtml(e.message||String(e))+'</span>';}
-  };
+  $("submitAuth").onclick=()=>submitAuth(mode); $("switchAuth").onclick=()=>openAuth(isLogin?"register":"login");
+  if($("forgotAuth")) $("forgotAuth").onclick=async()=>{const email=$("email").value.trim(),m=$("authMsg"); if(!email){m.innerHTML='<span class="error">Enter your registered email first.</span>';return;} try{const {sendPasswordResetEmail}=await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js");await withTimeout(sendPasswordResetEmail(auth,email));m.innerHTML='<span class="success">Password reset email sent. Please check Inbox and Spam.</span>';}catch(e){m.innerHTML='<span class="error">'+escapeHtml(e.message||String(e))+'</span>';}};
 }
 window.__smvOpenAuth = openAuth; window.__smvOpenAstroRegister = openAstroRegister;
 async function resendVerificationEmail(){
@@ -888,7 +928,22 @@ async function loadAstroCards(){
     items=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
   }
   if(!items.length){box.innerHTML='<div class="empty">No approved astrologers available yet.</div>';return;}
-  box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=()=>{const fn=window.__smvOpenPublicAstrologerProfile;if(typeof fn==='function')fn(a);else {const m=document.getElementById('modal'),c=document.getElementById('modalContent');if(m&&c){c.innerHTML='<h2>SMV ASTRO</h2><p class="error">Profile service is still loading. Please try again.</p><button class="btn gray" id="profileRetryClose">CLOSE</button>';m.classList.remove('hidden');document.getElementById('profileRetryClose')?.addEventListener('click',()=>m.classList.add('hidden'),{once:true});}}};box.appendChild(card);});
+  box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=async()=>{
+  const btn=card.querySelector("[data-profile]");
+  if(btn) { btn.disabled=true; btn.textContent='PROFILE LOADING...'; }
+  try{
+    let fn=window.__smvOpenPublicAstrologerProfile;
+    for(let i=0;!fn&&i<25;i++){ await new Promise(r=>setTimeout(r,120)); fn=window.__smvOpenPublicAstrologerProfile; }
+    if(typeof fn!=='function') throw new Error('Profile service failed to initialize.');
+    await fn(a);
+  }catch(err){
+    console.error('Public astrologer profile open failed:',err);
+    const m=document.getElementById('modal'),c=document.getElementById('modalContent');
+    if(m&&c){c.innerHTML='<h2>SMV ASTRO</h2><p class="error">Unable to load this astrologer profile. Please try again.</p><button class="btn gray" id="profileRetryBtn">TRY AGAIN</button><button class="btn gray" id="profileCloseBtn">CLOSE</button>';m.classList.remove('hidden');document.getElementById('profileRetryBtn')?.addEventListener('click',()=>{m.classList.add('hidden');card.querySelector("[data-profile]")?.click();},{once:true});document.getElementById('profileCloseBtn')?.addEventListener('click',()=>m.classList.add('hidden'),{once:true});}
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='PROFILE & REVIEWS';}
+  }
+};box.appendChild(card);});
  }catch(e){console.error("Approved astrologers load failed:",e);box.innerHTML='<div class="empty error">Approved astrologers are temporarily unavailable.</div>';}
 }
 window.__smvReloadAstrologers=loadAstroCards;
@@ -1013,10 +1068,19 @@ $("astroRegistrationForm")?.addEventListener("submit",async e=>{
  try{
   const photoData=await compressPhoto(photoFile);
   const cred=await withTimeout(createUserWithEmailAndPassword(auth,email,password));const uid=cred.user.uid;
-  const profileResponse=await renderApi("/register-astrologer-profile",{
-    method:"POST",
-    body:JSON.stringify({name,mobile,specialization,experience,bio,bankName,accountName,accountNumber,ifsc,upi,photoData})
-  });
+  let profileResponse;
+  try {
+    profileResponse=await withTimeout(renderApi("/register-astrologer-profile",{
+      method:"POST",
+      body:JSON.stringify({name,mobile,specialization,experience,bio,bankName,accountName,accountNumber,ifsc,upi,photoData})
+    }),30000);
+  } catch(networkErr) {
+    const raw=String(networkErr?.message||networkErr||"");
+    if(/failed to fetch|networkerror|load failed|cors/i.test(raw)) {
+      throw new Error("Server connection failed. The Render backend is not reachable right now. Please wait a few seconds and press SUBMIT REGISTRATION again.");
+    }
+    throw networkErr;
+  }
   if(!profileResponse?.ok) throw new Error(profileResponse?.error||"Astrologer profile setup failed.");
   try{await withTimeout(sendEmailVerification(cred.user));}catch(ve){}
   btn.textContent="SAVING PROFILE...";
@@ -1038,14 +1102,16 @@ async function logoutToHome(reason=''){
   selectedAstro=null;
   try{await signOut(auth);}catch(e){console.warn("Logout failed",e);}
   currentUser=null;
+  window.__smvCurrentUserPresent=false;
+  window.__SMV_LOGGED_OUT=true;
   const authButton=$('authBtn');
   if(authButton) authButton.textContent='Login';
   setTimeout(()=>{if(!auth?.currentUser && $('authBtn')) $('authBtn').textContent='Login';},300);
   setTimeout(()=>{if(!auth?.currentUser && $('authBtn')) $('authBtn').textContent='Login';},1200);
   hide('dashboard'); hide('admin'); hide('dashLink'); hide('adminLink');
   hide('ask-flow'); hide('register-flow'); hide('astro-register-form'); hide('astro-flow'); hide('appointment'); hide('contact');
+  showHomeSurface();
   $('authBtn').textContent='Login'; closeModal(); window.scrollTo({top:0,behavior:'smooth'});
-  intentionalLogout=false;
   window.__SMV_LOGGED_OUT=true;
   try{window.dispatchEvent(new Event('smv:logged-out'));}catch(_){ }
   if(reason) alert(reason);
@@ -1887,13 +1953,13 @@ async function loadAdminPanel(){
   });
   questionApprovalBox.querySelectorAll('[data-board-admin-answer]').forEach(b=>b.onclick=async()=>{
     const id=b.dataset.boardAdminAnswer; const answer=($('boardAdminAnswer_'+id)?.value||'').trim();
-    if(!answer){alert('Enter the Admin answer.');return;}
+    if(!answer){smvNotice('Admin Answer','Enter the Admin answer before submitting.','!');return;}
     b.disabled=true; b.textContent='ANSWERING...';
     try{
       const r=await renderApi('/admin/takeover-answer',{method:'POST',body:JSON.stringify({questionId:id,answer})});
       if(!r?.success) throw new Error(r?.error||'Unable to save Admin answer.');
-      alert('Admin answer submitted. Full payment remains with Admin.'); await loadAdminPanel();
-    }catch(e){alert(e.message||String(e));b.disabled=false;b.textContent='ADMIN ANSWER';}
+      smvNotice('Answer Submitted','Admin answer submitted successfully. Full payment remains with Admin.','✓'); await loadAdminPanel();
+    }catch(e){smvNotice('Unable to Submit',e.message||String(e),'!');b.disabled=false;b.textContent='ADMIN ANSWER';}
   });
   questionApprovalBox.querySelectorAll('[data-reject-question]').forEach(b=>b.onclick=async()=>{
     const id=b.dataset.rejectQuestion;
@@ -2761,10 +2827,12 @@ $('adminReviews')
 
     b.onclick = async () => {
 
-      const choice = confirm(
-        'Reject this customer review?\n\n' +
-        'OK = Reject & Delete\n' +
-        'Cancel = Keep Review'
+      const choice = await smvConfirm(
+        'Reject Customer Review',
+        'This review will be permanently deleted.\n\nChoose Reject & Delete to continue.',
+        'REJECT & DELETE',
+        'CANCEL',
+        true
       );
 
       if (!choice) {
@@ -2787,16 +2855,13 @@ $('adminReviews')
           15000
         );
 
-        alert('Review rejected and deleted successfully.');
+        smvNotice('Review Deleted','The customer review was rejected and deleted successfully.','✓');
 
         await loadAdminPanel();
 
       } catch (e) {
 
-        alert(
-          'Unable to reject review: ' +
-          (e.message || String(e))
-        );
+        smvNotice('Unable to Reject Review',e.message || String(e),'!');
 
         b.disabled = false;
         b.textContent = 'REJECT REVIEW';
@@ -2831,8 +2896,10 @@ if(auth){ onAuthStateChanged(auth,async user=>{
        go('dashboard');
      }
    }else{
+     window.__smvCurrentUserPresent=false;
      clearIdleTimer(); lastAuthUid=null;
      hide('dashLink');hide('adminLink');hide('dashboard');hide('admin');
+     showHomeSurface();
    }
  }); }
 if(firebaseInitError){
@@ -2919,17 +2986,40 @@ window.__SMV_APP_READY=true;
     return modalEl;
   }
   async function openPublicAstrologerProfile(a){
+    const name=a?.name||'Astrologer';
     try{
-      const f=await fb();
-      const reviewResponse=await withTimeout(fetch(RAZORPAY_BACKEND_URL+"/public/astrologers/"+encodeURIComponent(a.id)+"/reviews",{cache:"no-store"}),12000);
-      const reviewData=await reviewResponse.json().catch(()=>({}));
-      if(!reviewResponse.ok) throw new Error(reviewData.error||`Review service returned HTTP ${reviewResponse.status}.`);
-      const reviews=Array.isArray(reviewData.reviews)?reviewData.reviews:[];
+      /* Build the profile from the already-loaded astrologer card first.
+         Do NOT wait for Firebase before opening the profile. */
       const stars=n=>'★'.repeat(Math.max(0,Math.min(5,Number(n||0))))+'☆'.repeat(5-Math.max(0,Math.min(5,Number(n||0))));
-      const photo=a.photoData||a.photoURL||a.photoUrl||'';
-      showPublicProfileModal(`<h2>${esc(a.name||'Astrologer')}</h2>${photo?`<img src="${esc(photo)}" alt="${esc(a.name||'Astrologer')}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);margin-bottom:10px">`:''}<p><b>${esc(a.expertise||a.specialization||'Astrology')}</b></p><p>${esc(a.bio||a.about||'Professional astrologer')}</p><h3 style="margin-top:18px">Verified Reviews for ${esc(a.name||'this astrologer')}</h3>${reviews.length?reviews.map(r=>`<div class="card" style="margin:10px 0"><div class="stars">${stars(r.rating)}</div><p style="white-space:pre-wrap">“${esc(r.review||'')}”</p><p class="small">Verified customer</p></div>`).join(''):'<div class="empty">No approved reviews for this astrologer yet.</div>'}<button class="btn gray" id="profileCloseBtn">CLOSE</button>`);
+      const photo=a?.photoData||a?.photoURL||a?.photoUrl||'';
+      showPublicProfileModal(`<h2>${esc(name)}</h2>${photo?`<img src="${esc(photo)}" alt="${esc(name)}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);margin-bottom:10px">`:''}<p><b>${esc(a?.expertise||a?.specialization||'Astrology')}</b></p><p>${esc(a?.bio||a?.about||'Professional astrologer')}</p><h3 style="margin-top:18px">Verified Reviews for ${esc(name)}</h3><div id="publicProfileReviews"><div class="empty">Loading reviews...</div></div><button class="btn gray" id="profileCloseBtn">CLOSE</button>`);
       $('profileCloseBtn').onclick=closeModal;
-    }catch(e){showPublicProfileModal(`<h2>${esc(a.name||'Astrologer')}</h2><div class="empty error">Unable to load this astrologer profile/reviews right now.</div><button class="btn gray" id="profileCloseBtn">CLOSE</button>`);$('profileCloseBtn').onclick=closeModal;}
+
+      let reviews=[];
+      try{
+        const reviewResponse=await withTimeout(fetch(RAZORPAY_BACKEND_URL+"/public/astrologers/"+encodeURIComponent(a.id)+"/reviews",{cache:"no-store"}),10000);
+        const reviewData=await reviewResponse.json().catch(()=>({}));
+        if(!reviewResponse.ok) throw new Error(reviewData.error||`Review service returned HTTP ${reviewResponse.status}.`);
+        reviews=Array.isArray(reviewData.reviews)?reviewData.reviews:[];
+      }catch(reviewApiError){
+        console.warn('Public review API unavailable; using Firestore fallback:',reviewApiError);
+        try{
+          const f=await fb();
+          const snap=await withTimeout(f.getDocs(f.query(f.collection(db,'smv_reviews'),f.where('astrologerId','==',a.id),f.where('approved','==',true))),10000);
+          reviews=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
+        }catch(firestoreError){
+          console.warn('Firestore review fallback unavailable:',firestoreError);
+          reviews=[];
+        }
+      }
+      const reviewBox=$('publicProfileReviews');
+      if(!reviewBox)return;
+      reviewBox.innerHTML=reviews.length?reviews.map(r=>`<div class="card" style="margin:10px 0"><div class="stars">${stars(r.rating)}</div><p style="white-space:pre-wrap">“${esc(r.review||'Verified customer review')}”</p><p class="small">Verified customer</p></div>`).join(''):'<div class="empty">No approved reviews for this astrologer yet.</div>';
+    }catch(e){
+      console.error('Public astrologer profile open failed:',e);
+      const m=document.getElementById('modal'),c=document.getElementById('modalContent');
+      if(m&&c){c.innerHTML=`<h2>${esc(name)}</h2><div class="empty error">Unable to load this astrologer profile right now.</div><button class="btn gray" id="profileRetryBtn">TRY AGAIN</button><button class="btn gray" id="profileCloseBtn">CLOSE</button>`;m.classList.remove('hidden');document.getElementById('profileRetryBtn')?.addEventListener('click',()=>{m.classList.add('hidden');openPublicAstrologerProfile(a);},{once:true});document.getElementById('profileCloseBtn')?.addEventListener('click',closeModal,{once:true});}
+    }
   }
   window.__smvOpenPublicAstrologerProfile=openPublicAstrologerProfile;
   async function loadReviews(){
@@ -3260,7 +3350,7 @@ document.addEventListener("click",function(e){
       const el=document.querySelector(selector); if(!el||el.dataset.v111Bound==='1')return;
       el.dataset.v111Bound='1';
       el.addEventListener('click',async e=>{
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); e.stopImmediatePropagation();
         try{
                     if(selector==='#astroRegBtn' && typeof window.__smvOpenAstroRegister==='function') return window.__smvOpenAstroRegister();
           if(typeof action==='function') return await action();
