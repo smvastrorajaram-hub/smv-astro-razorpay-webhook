@@ -522,6 +522,62 @@ app.post("/admin/appointment-status", express.json({limit:"5kb"}), async(req,res
   try{const id=String(req.body?.id||"").trim(),status=String(req.body?.status||"").trim();if(!id||!["new","confirmed","completed","cancelled"].includes(status))return res.status(400).json({error:"Invalid appointment update."});await db.collection("smv_appointments").doc(id).update({status,updatedAt:FieldValue.serverTimestamp(),updatedBy:user.uid});return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to update appointment."});}
 });
 
+app.post("/admin/edit-question", express.json({limit:"20kb"}), async (req,res)=>{
+  const user=await requireUser(req,res); if(!user)return;
+  if(!(await isAdminUser(user))) return res.status(403).json({error:"Admin access denied."});
+  try{
+    const questionId=String(req.body?.questionId||"").trim();
+    const question=String(req.body?.question||"").trim();
+    if(!questionId||!question) return res.status(400).json({error:"Question ID and question text are required."});
+    if(question.length>10000) return res.status(400).json({error:"Question is too long."});
+    const ref=db.collection("smv_questions").doc(questionId);
+    const snap=await ref.get(); if(!snap.exists) return res.status(404).json({error:"Question not found."});
+    const q=snap.data()||{};
+    if(["answered","question_rejected"].includes(q.status)) return res.status(409).json({error:"This question can no longer be edited."});
+    await ref.update({question,adminQuestionEditedAt:FieldValue.serverTimestamp(),adminQuestionEditedBy:user.uid});
+    return res.json({success:true,questionId});
+  }catch(e){console.error("Admin edit question error:",e);return res.status(500).json({error:e?.message||"Unable to edit question."});}
+});
+
+app.post("/admin/takeover-answer", express.json({limit:"30kb"}), async (req,res)=>{
+  const user=await requireUser(req,res); if(!user)return;
+  if(!(await isAdminUser(user))) return res.status(403).json({error:"Admin access denied."});
+  try{
+    const questionId=String(req.body?.questionId||"").trim();
+    const answer=String(req.body?.answer||"").trim();
+    if(!questionId||!answer) return res.status(400).json({error:"Question ID and Admin answer are required."});
+    const ref=db.collection("smv_questions").doc(questionId);
+    const snap=await ref.get(); if(!snap.exists) return res.status(404).json({error:"Question not found."});
+    const q=snap.data()||{};
+    if(!q.customerId) return res.status(409).json({error:"Customer information is missing."});
+    if(["answered","question_rejected"].includes(q.status)) return res.status(409).json({error:"This question is already closed."});
+    const wordCount=answer.split(/\s+/).filter(Boolean).length;
+    const minWords=Math.max(1,Number(q.answerMinWords||1));
+    if(wordCount<minWords) return res.status(400).json({error:`Admin answer must contain at least ${minWords} words.`});
+    await ref.update({
+      question: q.question || "",
+      answer,
+      answerWordCount:wordCount,
+      answerAuthorType:"admin",
+      adminAnswered:true,
+      adminAnswerBy:user.uid,
+      adminAnswerAt:FieldValue.serverTimestamp(),
+      status:"answered",
+      astrologerAnswerStatus:"not_required",
+      commissionStatus:"admin_retained",
+      astrologerCommissionAmount:0,
+      commissionAmount:0,
+      commissionCreditedAt:FieldValue.delete(),
+      astrologerPaymentId:FieldValue.delete(),
+      adminTakeover:true,
+      answeredAt:FieldValue.serverTimestamp(),
+      updatedAt:FieldValue.serverTimestamp()
+    });
+    await db.collection("smv_notifications").add({userId:q.customerId,type:"answer_approved",title:"Your astrology answer is ready",message:"SMV ASTRO Admin answered your question directly.",questionId,createdAt:FieldValue.serverTimestamp(),read:false});
+    return res.json({success:true,questionId,answerAuthorType:"admin",adminRetained:true});
+  }catch(e){console.error("Admin takeover answer error:",e);return res.status(500).json({error:e?.message||"Unable to save Admin answer."});}
+});
+
 app.get("/admin-data", async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return;
