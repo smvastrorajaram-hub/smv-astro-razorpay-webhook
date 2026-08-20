@@ -494,8 +494,8 @@ app.post("/appointment-booking", express.json({ limit: "20kb" }), async (req, re
 
 app.get("/public/astrologers", async (req,res)=>{
   try {
-    const snap=await db.collection("smv_astrologers").where("status","==","approved").limit(100).get();
-    const astrologers=snap.docs.map(d=>{const x=d.data()||{};return {id:d.id,name:x.name||"Astrologer",expertise:x.expertise||x.specialization||"Astrology",specialization:x.specialization||x.expertise||"Astrology",experience:x.experience||0,bio:x.bio||x.about||"",about:x.about||x.bio||"",photoData:x.photoData||x.photoURL||x.photoUrl||"",rating:x.rating||x.averageRating||"New",publicId:x.publicId||""};});
+    const snap=await db.collection("smv_astrologers").limit(200).get();
+    const astrologers=snap.docs.map(d=>{const x=d.data()||{};return {id:d.id,name:x.name||"Astrologer",expertise:x.expertise||x.specialization||"Astrology",specialization:x.specialization||x.expertise||"Astrology",experience:x.experience||0,bio:x.bio||x.about||"",about:x.about||x.bio||"",photoData:x.photoData||x.photoURL||x.photoUrl||"",rating:x.rating||x.averageRating||"New",publicId:x.publicId||"",status:x.status||""};}).filter(a=>String(a.status||"").toLowerCase()==="approved");
     return res.json({success:true,astrologers});
   } catch(e) {
     console.error("Public astrologers load failed:",e);
@@ -803,16 +803,17 @@ async function markQuestionPaid(questionId, orderId, paymentId, signature, sourc
     const paymentInfo = nextPaymentIdInTransaction(paymentDateKey, paymentCounterSnap);
     tx.set(paymentCounterRef, { lastNumber: paymentInfo.next, dateKey: paymentDateKey, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     const customerPaymentId = paymentInfo.id;
+    const paymentRecordedAt = new Date().toISOString();
     tx.set(db.collection("smv_payments").doc(customerPaymentId), {
       paymentId: customerPaymentId, type: "customer_payment", customerId: q.customerId, astrologerId: null, questionId, bookingId: q.bookingId || null,
-      razorpayOrderId: orderId, razorpayPaymentId: paymentId, amount, status: "paid", paymentStatus: "paid", source, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp()
+      razorpayOrderId: orderId, razorpayPaymentId: paymentId, amount, status: "paid", paymentStatus: "paid", source, createdAt: FieldValue.serverTimestamp(), paymentRecordedAt, updatedAt: FieldValue.serverTimestamp()
     });
     tx.update(qRef, {
       status: "pending_admin_approval", paymentStatus: "paid", allocationStatus: "awaiting_admin", razorpayPaymentId: paymentId, razorpaySignature: signature,
-      paidAt: q.paidAt || FieldValue.serverTimestamp(), paymentUpdatedAt: FieldValue.serverTimestamp(), paymentConfirmedBy: source, customerPaymentId,
+      paidAt: q.paidAt || FieldValue.serverTimestamp(), paymentUpdatedAt: FieldValue.serverTimestamp(), paymentConfirmedBy: source, customerPaymentId, paymentRecordedAt,
       astrologerPaymentId: FieldValue.delete(), commissionStatus: "awaiting_admin_allocation"
     });
-    return { already: false, customerId: q.customerId, customerPaymentId };
+    return { already: false, customerId: q.customerId, customerPaymentId, paymentRecordedAt };
   });
   if (!result.already) await db.collection("smv_notifications").add({ userId: result.customerId, type: "payment", title: "Payment successful", message: "Your payment was verified. Your question is now waiting for Admin approval.", questionId, createdAt: FieldValue.serverTimestamp(), read: false });
   return result;
@@ -885,7 +886,7 @@ app.post("/verify-payment", express.json(), async (req, res) => {
     }
     const result = await markQuestionPaid(questionId, orderId, paymentId, signature, "render_checkout_verification");
     await db.collection("razorpay_orders").doc(orderId).set({ razorpayPaymentId: paymentId, status: "verified", questionId, verifiedAt: FieldValue.serverTimestamp() }, { merge: true });
-    return res.json({ verified: true, questionId, alreadyProcessed: result.already, customerPaymentId: result.customerPaymentId || null, message: "Payment verified and consultation updated successfully." });
+    return res.json({ verified: true, questionId, alreadyProcessed: result.already, customerPaymentId: result.customerPaymentId || null, paymentRecordedAt: result.paymentRecordedAt || new Date().toISOString(), message: "Payment verified and consultation updated successfully." });
   } catch (e) {
     console.error("Payment verification error:", e);
     return res.status(500).json({ error: e?.error?.description || e?.description || e?.message || "Payment verification failed" });
