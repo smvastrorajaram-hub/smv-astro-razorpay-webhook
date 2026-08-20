@@ -561,7 +561,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebas
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, deleteUser, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { getFirestore, collection, query, where, getDocs, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, writeBatch, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-window.__SMV_BUILD="V114";
+window.__SMV_BUILD="V119";
 const firebaseConfig={apiKey:"AIzaSyCKXyfZ9sjGmej7ygxHpzHNcNysMXHuvSs",authDomain:"smv-astro.firebaseapp.com",projectId:"smv-astro",storageBucket:"smv-astro.firebasestorage.app",messagingSenderId:"299081899217",appId:"1:299081899217:web:8d558df08e86037ea539f0"};
 let app=null, auth=null, db=null, functions=null, httpsCallableFn=null, firebaseInitError=null;
 try{
@@ -888,9 +888,10 @@ async function loadAstroCards(){
     items=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
   }
   if(!items.length){box.innerHTML='<div class="empty">No approved astrologers available yet.</div>';return;}
-  box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=()=>openPublicAstrologerProfile(a);box.appendChild(card);});
+  box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=()=>{const fn=window.__smvOpenPublicAstrologerProfile;if(typeof fn==='function')fn(a);else {const m=document.getElementById('modal'),c=document.getElementById('modalContent');if(m&&c){c.innerHTML='<h2>SMV ASTRO</h2><p class="error">Profile service is still loading. Please try again.</p><button class="btn gray" id="profileRetryClose">CLOSE</button>';m.classList.remove('hidden');document.getElementById('profileRetryClose')?.addEventListener('click',()=>m.classList.add('hidden'),{once:true});}}};box.appendChild(card);});
  }catch(e){console.error("Approved astrologers load failed:",e);box.innerHTML='<div class="empty error">Approved astrologers are temporarily unavailable.</div>';}
 }
+window.__smvReloadAstrologers=loadAstroCards;
 let questionPriceUnsubscribe=null;
 async function loadQuestionPrice(){
   const rateBox=$("askRate");
@@ -1031,15 +1032,22 @@ function clearIdleTimer(){ if(idleTimer){clearTimeout(idleTimer);idleTimer=null;
 function armIdleTimer(){ clearIdleTimer(); if(!currentUser) return; const tick=()=>{ if(!currentUser)return; const idle=Date.now()-lastActivity; if(idle>=SESSION_IDLE_MS){ logoutToHome('Your session expired after 30 minutes of inactivity.'); return;} idleTimer=setTimeout(tick, Math.min(SESSION_IDLE_MS-idle,60000)); }; idleTimer=setTimeout(tick,60000); }
 ['click','touchstart','keydown','scroll','pointerdown'].forEach(ev=>window.addEventListener(ev,()=>{ if(currentUser && Date.now()-lastActivity>SESSION_TOUCH_MS) touchSession(); },{passive:true}));
 window.addEventListener('pageshow',()=>{ if(currentUser){ touchSession(); armIdleTimer(); } });
+window.__smvLogout = logoutToHome;
 async function logoutToHome(reason=''){
   intentionalLogout=true; clearIdleTimer(); sessionStorage.removeItem('smv_last_activity');
   selectedAstro=null;
   try{await signOut(auth);}catch(e){console.warn("Logout failed",e);}
   currentUser=null;
+  const authButton=$('authBtn');
+  if(authButton) authButton.textContent='Login';
+  setTimeout(()=>{if(!auth?.currentUser && $('authBtn')) $('authBtn').textContent='Login';},300);
+  setTimeout(()=>{if(!auth?.currentUser && $('authBtn')) $('authBtn').textContent='Login';},1200);
   hide('dashboard'); hide('admin'); hide('dashLink'); hide('adminLink');
   hide('ask-flow'); hide('register-flow'); hide('astro-register-form'); hide('astro-flow'); hide('appointment'); hide('contact');
   $('authBtn').textContent='Login'; closeModal(); window.scrollTo({top:0,behavior:'smooth'});
   intentionalLogout=false;
+  window.__SMV_LOGGED_OUT=true;
+  try{window.dispatchEvent(new Event('smv:logged-out'));}catch(_){ }
   if(reason) alert(reason);
 }
 
@@ -2803,14 +2811,14 @@ $('adminReviews')
 // Final auth state listener: one source of truth.
 if(auth){ onAuthStateChanged(auth,async user=>{
    const previousUid=lastAuthUid;
-   currentUser=user;
+   currentUser=user; window.__smvCurrentUserPresent=!!user;
    if(authReadyResolve){authReadyResolve();authReadyResolve=null;}
    if(previousUid && (!user || previousUid!==user.uid)){
      hide('dashboard'); hide('admin'); hide('dashLink'); hide('adminLink');
    }
    $('authBtn').textContent=user?'Logout':'Login';
    if(user){
-     lastAuthUid=user.uid; touchSession(); armIdleTimer();
+     lastAuthUid=user.uid; window.__SMV_LOGGED_OUT=false; touchSession(); armIdleTimer(); window.dispatchEvent(new Event('smv:auth-user'));
      if(user.uid!==ADMIN_UID && !user.emailVerified){ await signOut(auth); currentUser=null; clearIdleTimer(); lastAuthUid=null; hide("dashboard"); hide("admin"); hide("dashLink"); hide("adminLink"); $("authBtn").textContent="Login"; return; }
      const adminUser=await isCurrentAdmin();
      if(adminUser){ hide('dashLink'); show('adminLink'); }
@@ -2902,6 +2910,14 @@ window.__SMV_APP_READY=true;
     return fbApi;
   }
   async function loadQuestionPrice(){try{const f=await fb();const snap=await f.getDoc(f.doc(db,'smv_settings','question'));if(!snap.exists())throw new Error('Question price is not configured.');const price=Number(snap.data()?.price);if(!Number.isFinite(price)||price<1)throw new Error('Invalid question price.');if($('publicQuestionPrice'))$('publicQuestionPrice').textContent='₹'+price.toFixed(2);}catch(e){console.warn('Public question price unavailable:',e);if($('publicQuestionPrice'))$('publicQuestionPrice').textContent='Price unavailable';}}
+  function showPublicProfileModal(html){
+    const modalEl=document.getElementById('modal');
+    const contentEl=document.getElementById('modalContent');
+    if(!modalEl||!contentEl) throw new Error('Profile dialog is unavailable.');
+    contentEl.innerHTML=html;
+    modalEl.classList.remove('hidden');
+    return modalEl;
+  }
   async function openPublicAstrologerProfile(a){
     try{
       const f=await fb();
@@ -2911,10 +2927,11 @@ window.__SMV_APP_READY=true;
       const reviews=Array.isArray(reviewData.reviews)?reviewData.reviews:[];
       const stars=n=>'★'.repeat(Math.max(0,Math.min(5,Number(n||0))))+'☆'.repeat(5-Math.max(0,Math.min(5,Number(n||0))));
       const photo=a.photoData||a.photoURL||a.photoUrl||'';
-      modal(`<h2>${esc(a.name||'Astrologer')}</h2>${photo?`<img src="${esc(photo)}" alt="${esc(a.name||'Astrologer')}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);margin-bottom:10px">`:''}<p><b>${esc(a.expertise||a.specialization||'Astrology')}</b></p><p>${esc(a.bio||a.about||'Professional astrologer')}</p><h3 style="margin-top:18px">Verified Reviews for ${esc(a.name||'this astrologer')}</h3>${reviews.length?reviews.map(r=>`<div class="card" style="margin:10px 0"><div class="stars">${stars(r.rating)}</div><p style="white-space:pre-wrap">“${esc(r.review||'')}”</p><p class="small">Verified customer</p></div>`).join(''):'<div class="empty">No approved reviews for this astrologer yet.</div>'}<button class="btn gray" id="profileCloseBtn">CLOSE</button>`);
+      showPublicProfileModal(`<h2>${esc(a.name||'Astrologer')}</h2>${photo?`<img src="${esc(photo)}" alt="${esc(a.name||'Astrologer')}" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);margin-bottom:10px">`:''}<p><b>${esc(a.expertise||a.specialization||'Astrology')}</b></p><p>${esc(a.bio||a.about||'Professional astrologer')}</p><h3 style="margin-top:18px">Verified Reviews for ${esc(a.name||'this astrologer')}</h3>${reviews.length?reviews.map(r=>`<div class="card" style="margin:10px 0"><div class="stars">${stars(r.rating)}</div><p style="white-space:pre-wrap">“${esc(r.review||'')}”</p><p class="small">Verified customer</p></div>`).join(''):'<div class="empty">No approved reviews for this astrologer yet.</div>'}<button class="btn gray" id="profileCloseBtn">CLOSE</button>`);
       $('profileCloseBtn').onclick=closeModal;
-    }catch(e){modal(`<h2>${esc(a.name||'Astrologer')}</h2><div class="empty error">Unable to load this astrologer profile/reviews right now.</div><button class="btn gray" id="profileCloseBtn">CLOSE</button>`);$('profileCloseBtn').onclick=closeModal;}
+    }catch(e){showPublicProfileModal(`<h2>${esc(a.name||'Astrologer')}</h2><div class="empty error">Unable to load this astrologer profile/reviews right now.</div><button class="btn gray" id="profileCloseBtn">CLOSE</button>`);$('profileCloseBtn').onclick=closeModal;}
   }
+  window.__smvOpenPublicAstrologerProfile=openPublicAstrologerProfile;
   async function loadReviews(){
     const box=$('publicReviews');if(!box)return;
     try{
@@ -3168,6 +3185,54 @@ document.addEventListener("click",function(e){
 </script>
 
 <script>
+/* V119: final repair layer — Contact, logout indicator, approved astrologers only. */
+(function(){
+  function openContact(e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    const contact=document.getElementById('contact');
+    if(!contact)return;
+    contact.classList.remove('hidden');
+    try{contact.scrollIntoView({behavior:'smooth',block:'start'});}catch(_){contact.scrollIntoView();}
+  }
+  document.addEventListener('click',function(e){
+    const link=e.target.closest && e.target.closest('#contactNav');
+    if(link)openContact(e);
+  },true);
+  document.addEventListener('DOMContentLoaded',function(){
+    const link=document.getElementById('contactNav');
+    if(link)link.onclick=openContact;
+  },{once:true});
+
+  function forceAuthButtonSync(){
+    const b=document.getElementById('authBtn');
+    if(!b)return;
+    if(window.__SMV_LOGGED_OUT===true){b.textContent='Login';return;}
+    const hasUser = !!(window.__smvCurrentUserPresent===true);
+    if(!hasUser && (b.textContent||'').trim().toLowerCase()==='logout') b.textContent='Login';
+  }
+  window.addEventListener('smv:auth-user',()=>{window.__SMV_LOGGED_OUT=false;forceAuthButtonSync();});
+  window.addEventListener('smv:logged-out',function(){
+    const b=document.getElementById('authBtn');
+    if(b)b.textContent='Login';
+  });
+  setInterval(function(){
+    if(window.__SMV_LOGGED_OUT===true){const b=document.getElementById('authBtn');if(b)b.textContent='Login';}
+  },500);
+  function retryAstrologers(){
+    const box=document.getElementById('astroCards');
+    if(!box)return;
+    const t=(box.textContent||'').toLowerCase();
+    if(t.includes('loading astrologers')||t.includes('loading approved astrologers')){
+      const fn=window.__smvReloadAstrologers;
+      if(typeof fn==='function')Promise.resolve(fn()).catch(err=>console.error('V119 astrologer retry failed',err));
+    }
+  }
+  setTimeout(retryAstrologers,1500);
+  setTimeout(retryAstrologers,5000);
+  setTimeout(retryAstrologers,12000);
+})();
+</script>
+<script>
 /* V111: stable public-button bridge.  This layer never replaces Admin code.
    It waits for the main Firebase module to expose its public actions, then
    binds each public action exactly once. If the module is slow, the user gets
@@ -3186,7 +3251,7 @@ document.addEventListener("click",function(e){
   }
   function bind(){
     const map=[
-      ['#authBtn',()=>window.__smvOpenAuth?.('login')],
+      ['#authBtn',()=>{const b=document.querySelector('#authBtn'); if((b?.textContent||'').trim().toLowerCase().includes('logout')) return window.__smvLogout?.(); return window.__smvOpenAuth?.('login');}],
       ['#customerRegBtn',()=>window.__smvOpenAuth?.('register')],
       ['#astroRegBtn',()=>window.__smvOpenAstroRegister?.()],
       ['#quickAskBtn',()=>window.__smvOpenQuestionService?.()],
