@@ -877,9 +877,10 @@ app.post("/admin/credit-commission", async (req, res) => {
     if (!Number.isFinite(amount) || amount < 0) return res.status(400).json({ error: "Invalid astrologer commission amount." });
     if (q.astrologerPaymentId && q.commissionStatus === "credited") return res.json({ success: true, astrologerPaymentId: q.astrologerPaymentId, commissionAmount: amount, already: true });
     const paymentId = await nextPaymentId();
-    await db.collection("smv_payments").doc(paymentId).set({ paymentId, type:"astrologer_earning", customerId:q.customerId||null, astrologerId:q.astrologerId, questionId, bookingId:q.bookingId||null, grossAmount:Number(q.amount||0), commissionPercent:Number(q.commissionPercent||q.commissionRate||0), commissionAmount:amount, earningAmount:amount, status:"credited", paymentStatus:"pending_withdrawal", source:"admin_answer_approval", createdAt:FieldValue.serverTimestamp(), updatedAt:FieldValue.serverTimestamp() });
-    await qRef.update({ astrologerPaymentId:paymentId, commissionStatus:"credited", commissionCreditedAt:FieldValue.serverTimestamp(), commissionAmount:amount });
-    return res.json({ success:true, astrologerPaymentId:paymentId, commissionAmount:amount });
+    const astrologerPaymentId = paymentId.replace(/^SMV-PAY-/, "SMV-PAT-");
+    await db.collection("smv_payments").doc(astrologerPaymentId).set({ paymentId: astrologerPaymentId, type:"astrologer_earning", customerId:q.customerId||null, astrologerId:q.astrologerId, questionId, bookingId:q.bookingId||null, grossAmount:Number(q.amount||0), commissionPercent:Number(q.commissionPercent||q.commissionRate||0), commissionAmount:amount, earningAmount:amount, status:"credited", paymentStatus:"pending_withdrawal", source:"admin_answer_approval", createdAt:FieldValue.serverTimestamp(), updatedAt:FieldValue.serverTimestamp() });
+    await qRef.update({ astrologerPaymentId:astrologerPaymentId, commissionStatus:"credited", commissionCreditedAt:FieldValue.serverTimestamp(), commissionAmount:amount });
+    return res.json({ success:true, astrologerPaymentId:astrologerPaymentId, commissionAmount:amount });
   } catch(e) { console.error("Commission credit error:",e); return res.status(500).json({ error:e?.message||"Unable to credit commission." }); }
 });
 
