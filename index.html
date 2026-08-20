@@ -395,7 +395,31 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 .timeline-step.done{color:var(--success);font-weight:800;background:#edf8ef}
 .timeline-step span{font-weight:900}
 
-</style><style>#consultation-entry{display:none!important}</style></head>
+</style><style>#consultation-entry{display:none!important}</style><script>
+/* SMV ASTRO V122 - one-time browser fresh start.
+   Clears browser-side app storage/cache only; never touches Firebase/Render/MongoDB data. */
+(function(){
+  const RESET_KEY='smv_astro_browser_reset_v122_done';
+  try{
+    if(localStorage.getItem(RESET_KEY)!=='1'){
+      try{ localStorage.clear(); }catch(e){}
+      try{ sessionStorage.clear(); }catch(e){}
+      try{
+        if(window.caches&&caches.keys){
+          caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).catch(()=>{});
+        }
+      }catch(e){}
+      try{
+        if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){
+          navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{});
+        }
+      }catch(e){}
+      try{ localStorage.setItem(RESET_KEY,'1'); }catch(e){}
+    }
+  }catch(e){}
+})();
+</script>
+</head>
 <body>
 <header>
 <div class="nav">
