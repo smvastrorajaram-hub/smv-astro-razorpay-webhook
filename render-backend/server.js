@@ -423,6 +423,17 @@ app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
 });
 
 
+async function nextQuestionId() {
+  const dateKey = indiaDateKey();
+  const ref = db.collection("smv_counters").doc(`question_${dateKey}`);
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(ref);
+    const next = (snap.exists ? Number(snap.data()?.lastNumber || 0) : 0) + 1;
+    tx.set(ref, { lastNumber: next, dateKey, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return `SMV-QST-${dateKey}-${String(next).padStart(2, "0")}`;
+  });
+}
+
 function nextPaymentIdInTransaction(dateKey, snap) {
   const next = (snap.exists ? Number(snap.data()?.lastNumber || 0) : 0) + 1;
   return {
@@ -500,6 +511,30 @@ app.post("/admin/appointment-status", express.json({limit:"5kb"}), async(req,res
   try{const id=String(req.body?.id||"").trim(),status=String(req.body?.status||"").trim();if(!id||!["new","confirmed","completed","cancelled"].includes(status))return res.status(400).json({error:"Invalid appointment update."});await db.collection("smv_appointments").doc(id).update({status,updatedAt:FieldValue.serverTimestamp(),updatedBy:user.uid});return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to update appointment."});}
 });
 
+app.get("/admin-data", async (req, res) => {
+  const user = await requireUser(req, res);
+  if (!user) return;
+  if (!(await isAdminUser(user))) return res.status(403).json({ error: "Admin access denied." });
+  try {
+    const [usersSnap, astrosSnap, questionsSnap] = await Promise.all([
+      db.collection("smv_users").get(),
+      db.collection("smv_astrologers").get(),
+      db.collection("smv_questions").get()
+    ]);
+    const map = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return res.json({
+      success: true,
+      customers: map(usersSnap).filter(x => String(x.role || "").toLowerCase() === "customer"),
+      users: map(usersSnap),
+      astrologers: map(astrosSnap),
+      questions: map(questionsSnap)
+    });
+  } catch (e) {
+    console.error("Admin data load failed:", e);
+    return res.status(500).json({ error: e?.message || "Unable to load Admin data." });
+  }
+});
+
 app.post("/create-order", express.json(), async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return;
@@ -507,6 +542,7 @@ app.post("/create-order", express.json(), async (req, res) => {
     let questionId = String(req.body?.questionId || "").trim();
     let qRef;
     let q;
+    if (!questionId) questionId = await nextQuestionId();
 
     // Create/read the question on the trusted server. The browser no longer calls
     // Firestore to create the question document, which eliminates the empty
@@ -671,6 +707,8 @@ app.post("/create-order", express.json(), async (req, res) => {
 
 async function markQuestionPaid(questionId, orderId, paymentId, signature, source) {
   const qRef = db.collection("smv_questions").doc(questionId);
+  const commissionSnap = await db.collection("smv_settings").doc("commission").get();
+  const commission = commissionSnap.exists ? commissionSnap.data() : { astroPercent: 20, adminPercent: 80 };
   const result = await db.runTransaction(async tx => {
     const snap = await tx.get(qRef);
     if (!snap.exists) throw new Error("Question not found.");
@@ -681,8 +719,6 @@ async function markQuestionPaid(questionId, orderId, paymentId, signature, sourc
       customerPaymentId: q.customerPaymentId || null, astrologerPaymentId: q.astrologerPaymentId || null
     };
     const amount = Number(q.amount || 0);
-    const commissionSnap = await db.collection("smv_settings").doc("commission").get();
-    const commission = commissionSnap.exists ? commissionSnap.data() : { astroPercent: 20, adminPercent: 80 };
     const astroPercent = Number(commission.astroPercent ?? 20);
     const adminPercent = Number(commission.adminPercent ?? 80);
     if (astroPercent < 0 || adminPercent < 0 || Math.abs(astroPercent + adminPercent - 100) > 0.001) throw new Error("Commission settings are invalid.");
