@@ -1127,7 +1127,7 @@ async function loadDashboard(){
    }
    let inboxSnap={docs:[]}, qs={docs:[]};
    try{
-     inboxSnap=await withTimeout(getDocs(query(collection(db,'smv_questions'),where('status','==','paid'))),12000);
+     inboxSnap=await withTimeout(getDocs(query(collection(db,'smv_questions'),where('status','==','paid'),where('allocationStatus','==','available_to_astrologers'))),12000);
    }catch(e){ console.warn('Astrologer available-questions query skipped:',e); }
    const availableQuestions=inboxSnap.docs.filter(d=>{const q=d.data()||{};return q.status==='paid'&&!q.astrologerId&&!!q.adminQuestionApprovedAt&&(q.allocationStatus==='available_to_astrologers'||!q.allocationStatus);}).map(d=>({id:d.id,...d.data()}));
    try{
@@ -1821,7 +1821,8 @@ async function loadAdminPanel(){
  show('admin');
  setTimeout(()=>window.__smvRefreshAdminSections?.(),0);
  try{
-  const [users,astros,questions]=await Promise.all([withTimeout(getDocs(collection(db,'smv_users'))),withTimeout(getDocs(collection(db,'smv_astrologers'))),withTimeout(getDocs(collection(db,'smv_questions')))]);
+  const safeCollectionDocs = async (name) => { try { return await withTimeout(getDocs(collection(db,name)),15000); } catch (e) { console.error('Admin collection load failed:', name, e); return { docs: [], size: 0 }; } };
+  const [users,astros,questions]=await Promise.all([safeCollectionDocs('smv_users'),safeCollectionDocs('smv_astrologers'),safeCollectionDocs('smv_questions')]);
   const customers=users.docs.filter(d=>d.data().role==='customer').length, pendingDocs=astros.docs.filter(d=>d.data().status==='pending'); const userMap=new Map(users.docs.map(d=>[d.id,d.data()]));
   $('adminSummary').innerHTML=`<div class="stat">Customers <b>${customers}</b></div><div class="stat">Astrologers <b>${astros.size}</b></div><div class="stat">Pending <b>${pendingDocs.length}</b></div><div class="stat">Questions <b>${questions.size}</b></div>`;
   let settings={astroPercent:20,adminPercent:80}; try{const ss=await getDoc(doc(db,'smv_settings','commission'));if(ss.exists())settings=ss.data();}catch(e){}
