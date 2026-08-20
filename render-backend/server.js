@@ -492,6 +492,17 @@ app.post("/appointment-booking", express.json({ limit: "20kb" }), async (req, re
   } catch(e){console.error("Appointment booking failed:",e);return res.status(502).json({error:e?.message||"Unable to create booking right now."});}
 });
 
+app.get("/public/astrologers", async (req,res)=>{
+  try {
+    const snap=await db.collection("smv_astrologers").where("status","==","approved").limit(100).get();
+    const astrologers=snap.docs.map(d=>{const x=d.data()||{};return {id:d.id,name:x.name||"Astrologer",expertise:x.expertise||x.specialization||"Astrology",specialization:x.specialization||x.expertise||"Astrology",experience:x.experience||0,bio:x.bio||x.about||"",about:x.about||x.bio||"",photoData:x.photoData||x.photoURL||x.photoUrl||"",rating:x.rating||x.averageRating||"New",publicId:x.publicId||""};});
+    return res.json({success:true,astrologers});
+  } catch(e) {
+    console.error("Public astrologers load failed:",e);
+    return res.status(500).json({error:e?.message||"Unable to load approved astrologers."});
+  }
+});
+
 app.get("/admin/appointments", async(req,res)=>{
   const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
   try{
