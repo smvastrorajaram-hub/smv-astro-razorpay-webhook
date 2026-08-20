@@ -481,42 +481,6 @@ app.post("/appointment-booking", express.json({ limit: "20kb" }), async (req, re
   } catch(e){console.error("Appointment booking failed:",e);return res.status(502).json({error:e?.message||"Unable to create booking right now."});}
 });
 
-app.get("/public-blogs", async (req,res)=>{
-  try{
-    const snap=await db.collection("smv_blogs").limit(200).get();
-    const blogs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.active!==false)
-      .sort((a,b)=>String(b.updatedAtText||b.createdAtText||"").localeCompare(String(a.updatedAtText||a.createdAtText||"")));
-    return res.json({blogs});
-  }catch(e){console.error("Public blogs read failed:",e?.message||e);return res.status(500).json({error:"Unable to load blogs."});}
-});
-
-app.get("/admin/blogs", async (req,res)=>{
-  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
-  try{const snap=await db.collection("smv_blogs").limit(300).get();const blogs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.updatedAtText||b.createdAtText||"").localeCompare(String(a.updatedAtText||a.createdAtText||"")));return res.json({blogs});}
-  catch(e){return res.status(500).json({error:e?.message||"Unable to load blogs."});}
-});
-
-app.post("/admin/blog", express.json({limit:"30kb"}), async (req,res)=>{
-  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
-  try{
-    const id=String(req.body?.id||"").trim(), title=String(req.body?.title||"").trim(), category=String(req.body?.category||"Astrology").trim()||"Astrology", excerpt=String(req.body?.excerpt||"").trim(), content=String(req.body?.content||"").trim();
-    if(!title||!content)return res.status(400).json({error:"Blog title and content are required."});
-    const now=new Date().toLocaleString("en-IN");
-    if(id){await db.collection("smv_blogs").doc(id).update({title,category,excerpt,content,updatedAtText:now});return res.json({ok:true,id});}
-    const ref=db.collection("smv_blogs").doc();await ref.set({title,category,excerpt,content,active:true,createdAtText:now,updatedAtText:now,createdBy:user.uid});return res.json({ok:true,id:ref.id});
-  }catch(e){return res.status(500).json({error:e?.message||"Unable to save blog."});}
-});
-
-app.post("/admin/blog-status", express.json({limit:"5kb"}), async (req,res)=>{
-  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
-  try{const id=String(req.body?.id||"").trim(),active=!!req.body?.active;if(!id)return res.status(400).json({error:"Blog ID is required."});await db.collection("smv_blogs").doc(id).update({active,updatedAtText:new Date().toLocaleString("en-IN")});return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to update blog."});}
-});
-
-app.delete("/admin/blog/:id", async (req,res)=>{
-  const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
-  try{await db.collection("smv_blogs").doc(req.params.id).delete();return res.json({ok:true});}catch(e){return res.status(500).json({error:e?.message||"Unable to delete blog."});}
-});
-
 app.get("/admin/appointments", async(req,res)=>{
   const user=await requireUser(req,res); if(!user)return; if(!(await isAdminUser(user)))return res.status(403).json({error:"Admin access required."});
   try{
