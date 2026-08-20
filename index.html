@@ -1623,13 +1623,16 @@ ${ad.status === 'rejected' && ad.rejectionReason
 
     try {
       const paymentSnap = await withTimeout(getDocs(query(collection(db,'smv_questions'),where('astrologerId','==',currentUser.uid))),15000);
-      const ids = paymentSnap.docs.map(d=>d.data()?.astrologerPaymentId).filter(Boolean);
-      const uniqueIds = [...new Set(ids)];
-      $('withdrawPaymentIds').innerHTML = uniqueIds.length
-        ? '<b>Payment ID:</b> ' + uniqueIds.map(escapeHtml).join(', ')
+      const eligible = paymentSnap.docs
+        .map(d=>({id:d.id,data:d.data()||{}}))
+        .filter(x=>x.data.commissionStatus==='credited' && x.data.astrologerPaymentId)
+        .sort((a,b)=>Number(b.data.commissionCreditedAt?.seconds||0)-Number(a.data.commissionCreditedAt?.seconds||0));
+      const latestId = eligible[0]?.data?.astrologerPaymentId || '';
+      $('withdrawPaymentIds').innerHTML = latestId
+        ? '<b>Payment ID:</b> ' + escapeHtml(latestId)
         : '<b>Payment ID:</b> Will appear after a credited consultation.';
     } catch(e) {
-      $('withdrawPaymentIds').innerHTML = '<b>Astrologer Payment ID:</b> Unable to load payment ID right now.';
+      $('withdrawPaymentIds').innerHTML = '<b>Payment ID:</b> Unable to load payment ID right now.';
     }
 
     $('confirmWithdraw').onclick = async () => {
@@ -1677,6 +1680,8 @@ ${ad.status === 'rejected' && ad.rejectionReason
 
               amount:
                 Math.round(amount * 100) / 100,
+
+              paymentId: $('withdrawPaymentIds')?.textContent?.replace(/^Payment ID:\s*/i,'').trim() || null,
 
               status:
                 'pending',
@@ -2905,7 +2910,7 @@ window.__SMV_APP_READY=true;
   // ADMIN TAKEOVER: if an allocated astrologer does not answer, Admin can edit the question and answer it.
   const takeoverQuestions = questions.docs.filter(d => {
     const q=d.data()||{};
-    return ['paid','admin_approved','processing','answer_draft','admin_review'].includes(q.status) && q.customerId && !q.answer;
+    return q.customerId && !q.answer && (['paid','admin_approved','processing','answer_draft','admin_review'].includes(q.status) || ['assigned_to_astrologer','reallocated'].includes(q.allocationStatus));
   });
   const takeoverHtml = takeoverQuestions.length ? takeoverQuestions.map(d=>{
     const q=d.data()||{};
@@ -2930,8 +2935,8 @@ window.__SMV_APP_READY=true;
     const takeoverCard=document.createElement('div');
     takeoverCard.className='card';
     takeoverCard.style.marginTop='16px';
-    takeoverCard.innerHTML='<h3>Allocated Questions — Admin Control</h3><p class="small">An allocated question stays visible here until an answer is submitted and approved. For every unanswered question Admin has three choices: <b>KEEP ALLOCATED</b>, <b>RE-ALLOCATE</b> to another approved astrologer, or <b>ADMIN ANSWER</b>.</p>'+takeoverHtml;
-    answerBox.parentElement.appendChild(takeoverCard);
+    takeoverCard.innerHTML='<h3>Allocated Questions — Admin Control</h3><p class="small"><b>Question remains in this Admin Question panel after approval and allocation.</b> It stays here until an answer is submitted and approved. For every unanswered question Admin has three choices: <b>KEEP ALLOCATED</b>, <b>RE-ALLOCATE</b> to another approved astrologer, or <b>ADMIN ANSWER</b>.</p>'+takeoverHtml;
+    answerBox.appendChild(takeoverCard);
     takeoverCard.querySelectorAll('[data-keep-question]').forEach(btn=>btn.onclick=()=>{btn.textContent='KEPT ALLOCATED';btn.disabled=true;alert('Question remains assigned to the current astrologer. It will stay in Admin control until an answer is submitted.');});
     takeoverCard.querySelectorAll('[data-reallocate-question]').forEach(btn=>btn.onclick=async()=>{
       const id=btn.dataset.reallocateQuestion; const astroId=$("reallocAstro_"+id)?.value||''; const pct=Number($("reallocCommission_"+id)?.value);

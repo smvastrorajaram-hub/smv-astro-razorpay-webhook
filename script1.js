@@ -1067,13 +1067,16 @@ ${ad.status === 'rejected' && ad.rejectionReason
 
     try {
       const paymentSnap = await withTimeout(getDocs(query(collection(db,'smv_questions'),where('astrologerId','==',currentUser.uid))),15000);
-      const ids = paymentSnap.docs.map(d=>d.data()?.astrologerPaymentId).filter(Boolean);
-      const uniqueIds = [...new Set(ids)];
-      $('withdrawPaymentIds').innerHTML = uniqueIds.length
-        ? '<b>Astrologer Payment ID:</b> ' + uniqueIds.map(escapeHtml).join(', ')
-        : '<b>Astrologer Payment ID:</b> Will appear after a credited consultation.';
+      const eligible = paymentSnap.docs
+        .map(d=>({id:d.id,data:d.data()||{}}))
+        .filter(x=>x.data.commissionStatus==='credited' && x.data.astrologerPaymentId)
+        .sort((a,b)=>String(b.data.commissionCreditedAt?.seconds||'').localeCompare(String(a.data.commissionCreditedAt?.seconds||'')));
+      const latestId = eligible[0]?.data?.astrologerPaymentId || '';
+      $('withdrawPaymentIds').innerHTML = latestId
+        ? '<b>Payment ID:</b> ' + escapeHtml(latestId)
+        : '<b>Payment ID:</b> Will appear after a credited consultation.';
     } catch(e) {
-      $('withdrawPaymentIds').innerHTML = '<b>Astrologer Payment ID:</b> Unable to load payment ID right now.';
+      $('withdrawPaymentIds').innerHTML = '<b>Payment ID:</b> Unable to load payment ID right now.';
     }
 
     $('confirmWithdraw').onclick = async () => {
@@ -1121,6 +1124,8 @@ ${ad.status === 'rejected' && ad.rejectionReason
 
               amount:
                 Math.round(amount * 100) / 100,
+
+              paymentId: $('withdrawPaymentIds')?.textContent?.replace(/^Payment ID:\s*/i,'').trim() || null,
 
               status:
                 'pending',
