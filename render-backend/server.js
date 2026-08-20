@@ -515,19 +515,34 @@ app.get("/admin-data", async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return;
   if (!(await isAdminUser(user))) return res.status(403).json({ error: "Admin access denied." });
+
+  const readCollection = async (name) => {
+    try {
+      const snap = await db.collection(name).get();
+      return { ok: true, items: snap.docs.map(d => ({ id: d.id, ...d.data() })) };
+    } catch (e) {
+      console.error(`Admin collection ${name} failed:`, e?.message || e);
+      return { ok: false, items: [], error: e?.message || `Unable to read ${name}.` };
+    }
+  };
+
   try {
-    const [usersSnap, astrosSnap, questionsSnap] = await Promise.all([
-      db.collection("smv_users").get(),
-      db.collection("smv_astrologers").get(),
-      db.collection("smv_questions").get()
+    // Read each collection independently. One damaged/missing collection must
+    // never prevent the Admin Dashboard itself from opening.
+    const [users, astrologers, questions] = await Promise.all([
+      readCollection("smv_users"),
+      readCollection("smv_astrologers"),
+      readCollection("smv_questions")
     ]);
-    const map = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const customers = users.items.filter(x => String(x.role || "").toLowerCase() === "customer");
     return res.json({
       success: true,
-      customers: map(usersSnap).filter(x => String(x.role || "").toLowerCase() === "customer"),
-      users: map(usersSnap),
-      astrologers: map(astrosSnap),
-      questions: map(questionsSnap)
+      customers,
+      users: users.items,
+      astrologers: astrologers.items,
+      questions: questions.items,
+      errors: { users: users.error || null, astrologers: astrologers.error || null, questions: questions.error || null }
     });
   } catch (e) {
     console.error("Admin data load failed:", e);
@@ -727,7 +742,7 @@ async function markQuestionPaid(questionId, orderId, paymentId, signature, sourc
     const paymentDateKey = indiaDateKey();
     const paymentCounterRef = db.collection("smv_counters").doc(`payment_${paymentDateKey}`);
     const paymentCounterSnap = await tx.get(paymentCounterRef);
-    const firstPayment = nextPaymentIdInTransaction(tx, paymentDateKey, paymentCounterSnap);
+    const firstPayment = nextPaymentIdInTransaction(paymentDateKey, paymentCounterSnap);
     const secondPayment = {
       id: `SMV-PAY-${paymentDateKey}-${String(firstPayment.next + 1).padStart(2, "0")}`,
       next: firstPayment.next + 1
