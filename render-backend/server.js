@@ -97,13 +97,14 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
+  // The Blogger frontend uses Firebase ID-token Authorization headers, not
+  // cookie credentials, so wildcard CORS is safe for this API and prevents
+  // Blogger/custom-domain deployments from failing with a browser
+  // "Failed to fetch" before the request reaches Express.
   const origin = req.headers.origin;
-  if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin || "*");
-  }
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Vary", "Origin");
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
