@@ -1,13 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "smv_questions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {"fieldPath": "status", "order": "ASCENDING"},
-        {"fieldPath": "allocationStatus", "order": "ASCENDING"}
-      ]
-    }
-  ],
+  "indexes": [],
   "fieldOverrides": []
 }

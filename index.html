@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -387,7 +386,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <nav>
 <a href="#home">Home</a>
 <a href="#contact" id="contactNav">Contact</a>
-<button class="btn gray" id="langToggle" type="button" style="padding:8px 10px">தமிழ்</button>
+<button class="btn gray" id="langToggle" style="padding:8px 10px" type="button">தமிழ்</button>
 <a class="hidden" href="#dashboard" id="dashLink">Dashboard</a>
 <a class="hidden" href="#admin" id="adminLink">Admin</a>
 <button class="btn" id="authBtn">Login</button>
@@ -402,112 +401,83 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <p>Rooted in the time-honoured Indian tradition of Jyotisha, we bring thoughtful astrological guidance for life, relationships, career and important decisions — with trusted astrologers and a private consultation experience.</p>
 <div class="hero-subline"><span>Traditional Wisdom</span><span>•</span><span>Personal Guidance</span><span>•</span><span>Trusted Consultation</span></div>
 </section>
-
 <section id="featureHub" style="margin-top:12px">
-  <div class="card feature-shell">
-    <div class="feature-top">
-      <div>
-        <div class="home-rule"><span>✦</span><span data-i18n="discover">DISCOVER SMV ASTRO</span><span>✦</span></div>
-        <h2 data-i18n="allServices">Services, Guidance & Resources</h2>
-        <p class="small" data-i18n="hubIntro">Explore trusted reviews, astrology articles and more.</p>
-      </div>
-      
-    </div>
+<div class="card feature-shell">
+<div class="feature-top">
+<div>
+<div class="home-rule"><span>✦</span><span data-i18n="discover">DISCOVER SMV ASTRO</span><span>✦</span></div>
+<h2 data-i18n="allServices">Services, Guidance &amp; Resources</h2>
+<p class="small" data-i18n="hubIntro">Explore trusted reviews, astrology articles and more.</p>
+</div>
+</div>
 <div class="feature-grid" id="featureCards">
-      <a class="feature-tile" href="#reviews"><span>⭐</span><b data-i18n="reviews">Customer Reviews</b><small>Verified experiences</small></a>
-      <a class="feature-tile" href="#blog"><span>📝</span><b data-i18n="blog">Astrology Blog</b><small>Read & learn</small></a>
-      <a class="feature-tile" href="#shop"><span>🛍️</span><b>SMV ASTRO Shop</b><small>Products & resources</small></a>
-      <a class="feature-tile" href="#register-flow"><span>👤</span><b data-i18n="account">Customer Account</b><small>Login & registration</small></a>
-      <a class="feature-tile" href="#featureHub"><span>🔔</span><b data-i18n="notifications">Notifications</b><small>Latest updates</small></a>
-      <a class="feature-tile" href="#admin" id="adminFeatureBtn"><span>📊</span><b>Admin Dashboard</b><small>Admin login & management</small></a>
-    </div>
-    
-  </div>
+<a class="feature-tile" href="#reviews"><span>⭐</span><b data-i18n="reviews">Customer Reviews</b><small>Verified experiences</small></a>
+
+
+<a class="feature-tile" href="#register-flow"><span>👤</span><b data-i18n="account">Customer Account</b><small>Login &amp; registration</small></a>
+<a class="feature-tile" href="#featureHub"><span>🔔</span><b data-i18n="notifications">Notifications</b><small>Latest updates</small></a>
+<a class="feature-tile" href="#admin" id="adminFeatureBtn"><span>📊</span><b>Admin Dashboard</b><small>Admin login &amp; management</small></a>
+</div>
+</div>
 </section>
-
-
 <section class="feature-section" id="quickActions">
-  <div class="home-rule">
-    <span>✦</span><span>QUICK CONSULTATION</span><span>✦</span>
-  </div>
-  <div class="quick-actions">
-
-    <div class="card quick-action">
-      <div class="quick-action-icon">💬</div>
-      <div class="quick-action-title">Chat Consultation</div>
-      <div class="quick-action-text">Private guidance through Chat</div>
-      <button class="btn" type="button" data-open-booking="Chat Consultation">BOOK CHAT</button>
-    </div>
-
-    <div class="card quick-action">
-      <div class="quick-action-icon">📞</div>
-      <div class="quick-action-title">Call Consultation</div>
-      <div class="quick-action-text">Personal guidance by Call</div>
-      <button class="btn" type="button" data-open-booking="Call Consultation">BOOK CALL</button>
-    </div>
-
-    <div class="card quick-action">
-      <div class="quick-action-icon">🔮</div>
-      <div class="quick-action-title">Ask Now</div>
-      <div class="quick-action-text">Ask your astrology question</div>
-      <button class="btn" type="button" id="quickAskBtn">ASK NOW</button>
-    </div>
-
-  </div>
+<div class="home-rule">
+<span>✦</span><span>QUICK CONSULTATION</span><span>✦</span>
+</div>
+<div class="quick-actions">
+<div class="card quick-action">
+<div class="quick-action-icon">💬</div>
+<div class="quick-action-title">Chat Consultation</div>
+<div class="quick-action-text">Private guidance through Chat</div>
+<button class="btn" data-open-booking="Chat Consultation" type="button">BOOK CHAT</button>
+</div>
+<div class="card quick-action">
+<div class="quick-action-icon">📞</div>
+<div class="quick-action-title">Call Consultation</div>
+<div class="quick-action-text">Personal guidance by Call</div>
+<button class="btn" data-open-booking="Call Consultation" type="button">BOOK CALL</button>
+</div>
+<div class="card quick-action">
+<div class="quick-action-icon">🔮</div>
+<div class="quick-action-title">Ask Now</div>
+<div class="quick-action-text">Ask your astrology question</div>
+<button class="btn" id="quickAskBtn" type="button">ASK NOW</button>
+</div>
+</div>
+</section>
+<section class="feature-section hidden" id="appointment">
+<div class="card">
+<div class="home-rule"><span>✦</span><span>APPOINTMENT / CONSULTATION BOOKING</span><span>✦</span></div>
+<h2>Book a Private Consultation</h2>
+<p class="small">Choose Chat or Call. Submit your preferred date/time and our admin team will confirm the appointment.</p>
+<form class="grid" id="appointmentForm" style="margin-top:12px">
+<div><label>Name *</label><input id="apName" maxlength="100" placeholder="Full name" required=""/></div>
+<div><label>Email *</label><input id="apEmail" maxlength="160" placeholder="Email" required="" type="email"/></div>
+<div><label>Mobile *</label><input id="apMobile" maxlength="20" placeholder="Mobile number" required="" type="tel"/></div>
+<div><label>Consultation *</label><select id="apType" required=""><option value="Chat Consultation">Chat Consultation</option><option value="Call Consultation">Call Consultation</option></select></div>
+<div><label>Preferred Date *</label><input id="apDate" required="" type="date"/></div>
+<div><label>Preferred Time *</label><input id="apTime" required="" type="time"/></div>
+<div style="grid-column:1/-1"><label>Notes / Topic</label><textarea id="apNotes" maxlength="2000" placeholder="Tell us briefly what you would like guidance on..."></textarea></div>
+<div style="grid-column:1/-1"><button class="btn" id="appointmentSubmit" type="submit">REQUEST APPOINTMENT</button><div class="small" id="appointmentMsg" style="margin-top:10px"></div></div>
+</form>
+</div>
+</section>
+<section class="feature-section" id="reviews">
+<div class="home-rule"><span>✦</span><span>CUSTOMER REVIEWS</span><span>✦</span></div>
+<h2>What Our Customers Say</h2>
+<div class="grid" id="publicReviews"><div class="empty">Loading verified reviews...</div></div>
 </section>
 
-
-
-<section id="appointment" class="feature-section hidden">
-  <div class="card">
-    <div class="home-rule"><span>✦</span><span>APPOINTMENT / CONSULTATION BOOKING</span><span>✦</span></div>
-    <h2>Book a Private Consultation</h2>
-    <p class="small">Choose Chat or Call. Submit your preferred date/time and our admin team will confirm the appointment.</p>
-    <form id="appointmentForm" class="grid" style="margin-top:12px">
-      <div><label>Name *</label><input id="apName" required maxlength="100" placeholder="Full name"/></div>
-      <div><label>Email *</label><input id="apEmail" type="email" required maxlength="160" placeholder="Email"/></div>
-      <div><label>Mobile *</label><input id="apMobile" type="tel" required maxlength="20" placeholder="Mobile number"/></div>
-      <div><label>Consultation *</label><select id="apType" required><option value="Chat Consultation">Chat Consultation</option><option value="Call Consultation">Call Consultation</option></select></div>
-      <div><label>Preferred Date *</label><input id="apDate" type="date" required/></div>
-      <div><label>Preferred Time *</label><input id="apTime" type="time" required/></div>
-      <div style="grid-column:1/-1"><label>Notes / Topic</label><textarea id="apNotes" maxlength="2000" placeholder="Tell us briefly what you would like guidance on..."></textarea></div>
-      <div style="grid-column:1/-1"><button class="btn" id="appointmentSubmit" type="submit">REQUEST APPOINTMENT</button><div id="appointmentMsg" class="small" style="margin-top:10px"></div></div>
-    </form>
-  </div>
-</section>
-
-<section id="reviews" class="feature-section">
-  <div class="home-rule"><span>✦</span><span>CUSTOMER REVIEWS</span><span>✦</span></div>
-  <h2>What Our Customers Say</h2>
-  <div class="grid" id="publicReviews"><div class="empty">Loading verified reviews...</div></div>
-</section>
-
-<section id="blog" class="feature-section">
-  <div class="home-rule"><span>✦</span><span>ASTROLOGY BLOG</span><span>✦</span></div>
-  <h2>Guidance & Astrology Articles</h2>
-  <p class="small">Articles published by SMV ASTRO Admin will appear here.</p>
-  <div class="grid" id="blogList">
-    <div class="empty">Loading articles...</div>
-  </div>
-</section>
-
-<section id="faq" class="feature-section">
-  <div class="home-rule"><span>✦</span><span>FREQUENTLY ASKED QUESTIONS</span><span>✦</span></div>
-  <h2>FAQ</h2>
-  <div class="faq-list">
-    <details><summary>How do I ask an astrology question?</summary><p>Login as a customer, choose Ask Your Questions, enter the birth details and question, then complete the secure payment flow.</p></details>
-    <details><summary>Can I book a Chat or Call consultation?</summary><p>Yes. Use the Appointment / Consultation Booking form and choose Chat Consultation or Call Consultation. Admin will confirm the appointment.</p></details>
-    <details><summary>Are astrologers verified?</summary><p>Astrologer applications are reviewed by SMV ASTRO Admin before their profiles are approved for customer consultations.</p></details>
-    <details><summary>How can I contact SMV ASTRO?</summary><p>Use the Contact Us form to send your query directly.</p></details>
-    <details><summary>Do I need an account?</summary><p>An account is required for secure customer consultation features. You can create one from Customer Registration or the Login button.</p></details>
-  </div>
-</section>
-
-<section id="shop" class="feature-section">
-  <div class="home-rule"><span>✦</span><span>SMV ASTRO SHOP</span><span>✦</span></div>
-  <p class="small" style="text-align:center;max-width:760px;margin:0 auto 16px">Traditional spiritual products, astrology resources and selected items from SMV ASTRO. Product availability and prices are managed by Admin.</p>
-  <div id="shopCategories" class="action-row" style="justify-content:center;margin-bottom:14px"><button type="button" class="btn gray" data-shop-category="">ALL</button></div>
-  <div id="shopProducts" class="grid"><div class="empty">Loading shop...</div></div>
+<section class="feature-section" id="faq">
+<div class="home-rule"><span>✦</span><span>FREQUENTLY ASKED QUESTIONS</span><span>✦</span></div>
+<h2>FAQ</h2>
+<div class="faq-list">
+<details><summary>How do I ask an astrology question?</summary><p>Login as a customer, choose Ask Your Questions, enter the birth details and question, then complete the secure payment flow.</p></details>
+<details><summary>Can I book a Chat or Call consultation?</summary><p>Yes. Use the Appointment / Consultation Booking form and choose Chat Consultation or Call Consultation. Admin will confirm the appointment.</p></details>
+<details><summary>Are astrologers verified?</summary><p>Astrologer applications are reviewed by SMV ASTRO Admin before their profiles are approved for customer consultations.</p></details>
+<details><summary>How can I contact SMV ASTRO?</summary><p>Use the Contact Us form to send your query directly.</p></details>
+<details><summary>Do I need an account?</summary><p>An account is required for secure customer consultation features. You can create one from Customer Registration or the Login button.</p></details>
+</div>
 </section>
 
 <section class="registration-panel homepage-registration" id="register-flow" style="margin-top:8px">
@@ -540,7 +510,6 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 </div>
 </div>
 </section>
-
 <section class="hidden" id="dashboard" style="margin-top:45px">
 <h2 id="dashboardTitle">My Dashboard</h2>
 <div class="small" id="sessionNotice" style="margin:8px 0 14px"></div>
@@ -593,139 +562,43 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <textarea id="questionText" placeholder="Write your astrology question here..." rows="6" style="width:100%;max-width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #d7dde7;border-radius:10px;font:inherit;overflow-wrap:anywhere;word-break:break-word"></textarea>
 <button class="btn" id="submitQuestionBtn" style="margin-top:12px">Proceed to Secure Payment</button>
 <div class="small" id="askMsg" style="margin-top:10px"></div>
-<div id="paymentSuccessPanel" class="card hidden" style="margin-top:16px;border:2px solid #b8860b;background:#fffaf0"><h3 style="margin-top:0">Payment Successful ✓</h3><p>Your payment has been securely verified.</p><div id="paymentSuccessDetails" class="small" style="line-height:1.8"></div><button class="btn" id="continueAfterPayment" type="button">CONTINUE TO DASHBOARD</button></div>
-</div>
-</section>
-<section class="hidden" id="admin" style="margin-top:45px">
-<h2>Admin Dashboard</h2>
-<div class="grid" id="adminSummary"></div>
-<div class="card" style="margin-top:16px">
-<h3>Public Question Price</h3>
-<p class="small">Current fixed price for one public astrology question. Example: ₹5.</p>
-<div class="action-row"><span style="font-weight:700">₹</span><input id="questionPrice" min="1" placeholder="Question price" step="0.01" type="number"/><button class="btn" id="saveQuestionPrice">SAVE PRICE</button></div>
-<div class="small" id="questionPriceMsg"></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Commission Settings</h3>
-<p class="small">Default: 20% Astrologer / 80% Admin. Changeable by Admin; total must equal 100%.</p>
-<div class="action-row"><input id="astroCommission" max="100" min="0" placeholder="Astrologer %" step="0.1" type="number"/><input id="adminCommission" max="100" min="0" placeholder="Admin %" step="0.1" type="number"/><button class="btn" id="saveCommission">SAVE</button></div>
-<div class="small" id="commissionMsg"></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Answer Word Limit</h3>
-<p class="small">Set the minimum answer length required from astrologers for new paid questions.</p>
-<div class="action-row"><input id="minimumAnswerWords" max="10000" min="1" placeholder="Minimum words" step="1" type="number"/><button class="btn" id="saveAnswerWords">SAVE</button></div>
-<div class="small" id="answerWordsMsg"></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Razorpay Connection</h3>
-<p class="small">Use this test to check whether the deployed Firebase Function can reach Razorpay with the configured server credentials.</p>
-<button class="btn" id="testRazorpayBtn">TEST RAZORPAY CONNECTION</button>
-<div class="small" id="razorpayTestMsg" style="margin-top:8px"></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Astrologer Withdrawal Requests</h3>
-<p class="small">Minimum withdrawal is ₹300. Admin arranges payment within 24–48 hours.</p>
-<div id="adminWithdrawals"><div class="empty">Loading withdrawal requests...</div></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Astrologer Applications — Full Verification</h3>
-<div id="pendingAstros"><div class="empty">Loading applications...</div></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Questions Awaiting Admin Approval</h3>
-<p class="small">Paid questions wait here for Admin approval. Only after Admin approves will the question become available to all approved astrologers. The first astrologer to claim it can answer it.</p>
-<div id="adminPendingQuestions"><div class="empty">Loading questions...</div></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Answers Awaiting Approval</h3>
-<div id="adminAnswers"><div class="empty">Loading answers...</div></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Reviews</h3>
-<div id="adminReviews"><div class="empty">Loading reviews...</div></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Appointment Requests</h3>
-<p class="small">Manage Chat and Call consultation requests from customers.</p>
-<div id="adminAppointments"><div class="empty">Loading appointment requests...</div></div>
-</div>
-
-<div id="emailTestMsg" class="small" style="margin-top:8px"></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Astrology Blog Manager</h3>
-<p class="small">Create, edit, publish/unpublish, and delete astrology articles. Published articles appear automatically in the public Blog section.</p>
-<div class="action-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-  <input id="blogId" type="hidden">
-  <input id="blogTitle" placeholder="Blog title">
-  <input id="blogCategory" placeholder="Category e.g. Jyotisha Basics">
-</div>
-<textarea id="blogExcerpt" rows="3" maxlength="500" placeholder="Short description / excerpt" style="width:100%;margin-top:10px"></textarea>
-<textarea id="blogContent" rows="9" maxlength="20000" placeholder="Full blog content" style="width:100%;margin-top:10px"></textarea>
-<div class="action-row">
-  <button class="btn" id="saveBlogBtn" type="button">ADD BLOG</button>
-  <button class="btn gray" id="clearBlogBtn" type="button">CLEAR</button>
-</div>
-<div id="blogAdminMsg" class="small" style="margin-top:8px"></div>
-<div id="adminBlogs" style="margin-top:12px"><div class="empty">Loading blogs...</div></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Shop Management</h3>
-<p class="small">Manage categories and products here. This section is separate from consultation payments.</p>
-<div class="action-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-<input id="shopCategoryId" type="hidden"><input id="shopCategoryName" placeholder="Category name"><input id="shopCategorySort" type="number" min="0" placeholder="Sort order">
-</div>
-<div class="action-row"><button class="btn" id="saveShopCategory" type="button">ADD CATEGORY</button><button class="btn gray" id="clearShopCategory" type="button">CLEAR</button></div>
-<div id="shopCategoryMsg" class="small" style="margin-top:8px"></div><div id="adminShopCategories" style="margin-top:10px"></div>
-<hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
-<div class="action-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-<input id="shopProductId" type="hidden"><input id="shopProductName" placeholder="Product name"><select id="shopProductCategory"><option value="">Select category</option></select><input id="shopProductPrice" type="number" min="0" step="0.01" placeholder="Regular price"><input id="shopProductOfferPrice" type="number" min="0" step="0.01" placeholder="Offer price"><input id="shopProductStock" type="number" min="0" step="1" placeholder="Stock"><input id="shopProductSku" placeholder="SKU / Product code"><div class="card" style="margin:10px 0;padding:14px"><b>Product Photo</b><div class="small" style="margin:5px 0 10px">Upload a product image. A fixed-size preview keeps every product card uniform.</div><input accept="image/*" id="shopProductPhoto" type="file"><div id="shopProductPhotoPreview" style="width:100%;max-width:520px;height:240px;margin-top:10px;border:1px dashed #c9b27a;border-radius:12px;display:grid;place-items:center;overflow:hidden;background:#f7f2e8"><span class="small">No product photo selected</span></div><div class="small" style="margin-top:6px">Image storage/persistence will be connected in the backend/storage stage.</div></div><input id="shopProductImage" placeholder="Image URL (optional)" style="display:none">
-</div>
-<textarea id="shopProductDescription" rows="5" placeholder="Product description"></textarea>
-<div class="action-row"><button class="btn" id="saveShopProduct" type="button">ADD PRODUCT</button><button class="btn gray" id="clearShopProduct" type="button">CLEAR</button></div>
-<div id="shopProductMsg" class="small" style="margin-top:8px"></div><div id="adminShopProducts" style="margin-top:10px"></div>
-</div>
-<div class="card" style="margin-top:16px">
-<h3>Recent Questions</h3>
-<div id="adminQuestions"><div class="empty">Loading questions...</div></div>
+<div class="card hidden" id="paymentSuccessPanel" style="margin-top:16px;border:2px solid #b8860b;background:#fffaf0"><h3 style="margin-top:0">Payment Successful ✓</h3><p>Your payment has been securely verified.</p><div class="small" id="paymentSuccessDetails" style="line-height:1.8"></div><button class="btn" id="continueAfterPayment" type="button">CONTINUE TO DASHBOARD</button></div>
 </div>
 </section>
 
-<section id="contact" class="card contact-section hidden" style="max-width:900px;margin:30px auto;padding:28px 20px;">
-  <h2>Contact Us</h2>
-  <p class="small">Have a question? Send us your details and query. Our admin team will contact you soon.</p>
-  <form id="contactForm" style="display:grid;gap:12px;margin-top:18px;">
-    <div>
-      <label for="contactName">Name *</label>
-      <input id="contactName" name="name" type="text" autocomplete="name" maxlength="100" required placeholder="Your name">
-    </div>
-    <div>
-      <label for="contactEmail">Email *</label>
-      <input id="contactEmail" name="email" type="email" autocomplete="email" maxlength="160" required placeholder="your@email.com">
-    </div>
-    <div>
-      <label for="contactPlace">Place / City *</label>
-      <input id="contactPlace" name="place" type="text" autocomplete="address-level2" maxlength="120" required placeholder="Your place">
-    </div>
-    <div>
-      <label for="contactMobile">Mobile Number *</label>
-      <input id="contactMobile" name="mobile" type="tel" autocomplete="tel" maxlength="20" required placeholder="Your mobile number">
-    </div>
-    <div>
-      <label for="contactQuery">Query *</label>
-      <textarea id="contactQuery" name="query" maxlength="3000" required placeholder="Write your query here..."></textarea>
-    </div>
-    <input id="contactWebsite" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;">
-    <button class="btn" id="contactSubmit" type="submit">SEND QUERY</button>
-    <div id="contactMsg" class="small" role="status" aria-live="polite"></div>
-  </form>
+<section class="card contact-section hidden" id="contact" style="max-width:900px;margin:30px auto;padding:28px 20px;">
+<h2>Contact Us</h2>
+<p class="small">Have a question? Send us your details and query. Our admin team will contact you soon.</p>
+<form id="contactForm" style="display:grid;gap:12px;margin-top:18px;">
+<div>
+<label for="contactName">Name *</label>
+<input autocomplete="name" id="contactName" maxlength="100" name="name" placeholder="Your name" required="" type="text"/>
+</div>
+<div>
+<label for="contactEmail">Email *</label>
+<input autocomplete="email" id="contactEmail" maxlength="160" name="email" placeholder="your@email.com" required="" type="email"/>
+</div>
+<div>
+<label for="contactPlace">Place / City *</label>
+<input autocomplete="address-level2" id="contactPlace" maxlength="120" name="place" placeholder="Your place" required="" type="text"/>
+</div>
+<div>
+<label for="contactMobile">Mobile Number *</label>
+<input autocomplete="tel" id="contactMobile" maxlength="20" name="mobile" placeholder="Your mobile number" required="" type="tel"/>
+</div>
+<div>
+<label for="contactQuery">Query *</label>
+<textarea id="contactQuery" maxlength="3000" name="query" placeholder="Write your query here..." required=""></textarea>
+</div>
+<input aria-hidden="true" autocomplete="off" id="contactWebsite" name="website" style="position:absolute;left:-9999px;" tabindex="-1" type="text"/>
+<button class="btn" id="contactSubmit" type="submit">SEND QUERY</button>
+<div aria-live="polite" class="small" id="contactMsg" role="status"></div>
+</form>
 </section>
-
 <footer>© SMV ASTRO SERVICES</footer>
 <div class="modal hidden" id="modal">
 <div class="modalbox" style="position:relative">
-<button type="button" onclick="closeModal()" aria-label="Close" title="Close" style="position:absolute;top:10px;right:10px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer;padding:4px 8px;color:inherit">×</button>
+<button aria-label="Close" onclick="closeModal()" style="position:absolute;top:10px;right:10px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer;padding:4px 8px;color:inherit" title="Close" type="button">×</button>
 <div id="modalContent" style="padding-right:35px"></div>
 </div>
 </div>
@@ -1224,22 +1097,17 @@ async function loadDashboard(){
  const box=$('dashboardContent'); if(!currentUser){box.innerHTML='<div class="card">Please login to continue.</div>';return;}
  try{
   const u=await withTimeout(getDoc(doc(db,'smv_users',currentUser.uid))), data=u.exists()?u.data():{};
-  const role=data.role||'customer'; $('dashboardTitle').textContent=role==='astrologer'?'Astrologer Dashboard':'Customer Dashboard';
-  if(role==='astrologer'){
-   let ad={};
-   const userStatus=String(data.status||'pending').toLowerCase();
-   if(['active','approved'].includes(userStatus)){
-     // Astrologer profile is optional for rendering the dashboard shell.
-     // A permission/index/network issue must not blank the entire dashboard.
-     try{
-       const a=await withTimeout(getDoc(doc(db,'smv_astrologers',currentUser.uid)),10000);
-       ad=a.exists()?a.data():{};
-     }catch(profileErr){
-       console.warn('Astrologer profile load skipped:',profileErr);
-       ad={};
-     }
+   let role=String(data.role||'').toLowerCase();
+   let preloadedAstro={};
+   if(role!=='astrologer'){try{const a0=await withTimeout(getDoc(doc(db,'smv_astrologers',currentUser.uid)),10000);if(a0.exists()){preloadedAstro=a0.data()||{};role='astrologer';}}catch(_e){}}
+   $('dashboardTitle').textContent=role==='astrologer'?'Astrologer Dashboard':'Customer Dashboard';
+   if(role==='astrologer'){
+   let ad=preloadedAstro||{};
+   const userStatus=String(data.status||ad.status||'pending').toLowerCase();
+   if(['active','approved'].includes(userStatus) && !Object.keys(ad).length){
+     try{const a=await withTimeout(getDoc(doc(db,'smv_astrologers',currentUser.uid)),10000);ad=a.exists()?a.data():{};}catch(profileErr){console.warn('Astrologer profile load skipped:',profileErr);ad={};}
    }
-   const astroStatus=String(data.status||ad.status||'pending').toLowerCase();
+   const astroStatus=String(ad.status||data.status||'pending').toLowerCase();
    if(!['active','approved'].includes(astroStatus)){
     const astroId=data.publicId||ad.publicId||'';
     box.innerHTML=`<div class="card" style="max-width:900px;margin:0 auto">
@@ -1259,9 +1127,9 @@ async function loadDashboard(){
    }
    let inboxSnap={docs:[]}, qs={docs:[]};
    try{
-     inboxSnap=await withTimeout(getDocs(query(collection(db,'smv_questions'),where('status','==','paid'),where('allocationStatus','==','available_to_astrologers'))),12000);
+     inboxSnap=await withTimeout(getDocs(query(collection(db,'smv_questions'),where('status','==','paid'))),12000);
    }catch(e){ console.warn('Astrologer available-questions query skipped:',e); }
-   const availableQuestions=inboxSnap.docs.filter(d=>{const q=d.data();return q.status==='paid'&&!q.astrologerId&&q.allocationStatus==='available_to_astrologers';}).map(d=>({id:d.id,...d.data()}));
+   const availableQuestions=inboxSnap.docs.filter(d=>{const q=d.data()||{};return q.status==='paid'&&!q.astrologerId&&!!q.adminQuestionApprovedAt&&(q.allocationStatus==='available_to_astrologers'||!q.allocationStatus);}).map(d=>({id:d.id,...d.data()}));
    try{
      qs=await withTimeout(getDocs(query(collection(db,'smv_questions'),where('astrologerId','==',currentUser.uid))),12000);
    }catch(e){ console.warn('Astrologer own-questions query skipped:',e); }
@@ -1947,75 +1815,6 @@ function openReview(questionId, astroId) {
     }
   };
 }
-async function loadBlogs(){
- const box=$("blogList"); if(!box)return;
- box.innerHTML='<div class="empty">Loading articles...</div>';
- try{
-  const snap=await withTimeout(getDocs(collection(db,"smv_blogs")),8000);const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.active!==false);
-  rows.sort((a,b)=>String(b.updatedAtText||b.createdAtText||"").localeCompare(String(a.updatedAtText||a.createdAtText||"")));
-  if(!rows.length){box.innerHTML='<div class="empty">No blog articles published yet.</div>';return;}
-    box.innerHTML=rows.map(b=>`<article class="card blog-card">
-    <span class="badge">${escapeHtml(b.category||"Astrology")}</span>
-    <h3>${escapeHtml(b.title||"Untitled")}</h3>
-    <p class="small">${escapeHtml(b.excerpt||"")}</p>
-    <details><summary>Read article</summary><div class="blog-content" style="margin-top:10px">${escapeHtml(b.content||"")}</div></details>
-  </article>`).join("");
- }catch(e){box.innerHTML='<div class="empty error">Unable to load blogs: '+escapeHtml(e.message||String(e))+'</div>';}
-}
-async function loadAdminBlogs(){
- const box=$("adminBlogs"); if(!box)return;
- box.innerHTML='<div class="empty">Loading blogs...</div>';
- try{
-  const snap=await withTimeout(getDocs(collection(db,"smv_blogs")),8000);
-  const rows=snap.docs.map(d=>({id:d.id,...d.data()}));
-  rows.sort((a,b)=>String(b.updatedAtText||b.createdAtText||"").localeCompare(String(a.updatedAtText||a.createdAtText||"")));
-  if(!rows.length){box.innerHTML='<div class="empty">No blogs yet. Add your first article above.</div>';return;}
-  box.innerHTML=rows.map(b=>`<div class="admin-blog-row">
-    <b>${escapeHtml(b.title||"Untitled")}</b> <span class="badge">${b.active===false?"Draft":"Published"}</span>
-    <div class="small">${escapeHtml(b.category||"Astrology")} · ${escapeHtml(b.updatedAtText||"")}</div>
-    <div class="admin-blog-actions">
-      <button class="btn gray" type="button" data-blog-edit="${escapeHtml(b.id)}">EDIT</button>
-      <button class="btn gray" type="button" data-blog-toggle="${escapeHtml(b.id)}">${b.active===false?"PUBLISH":"UNPUBLISH"}</button>
-      <button class="btn gray" type="button" data-blog-delete="${escapeHtml(b.id)}">DELETE</button>
-    </div>
-  </div>`).join("");
-  box.querySelectorAll("[data-blog-edit]").forEach(btn=>btn.onclick=()=>{
-    const b=rows.find(x=>x.id===btn.dataset.blogEdit); if(!b)return;
-    $("blogId").value=b.id;$("blogTitle").value=b.title||"";$("blogCategory").value=b.category||"";$("blogExcerpt").value=b.excerpt||"";$("blogContent").value=b.content||"";$("saveBlogBtn").textContent="UPDATE BLOG";window.scrollTo({top:$("adminBlogs").getBoundingClientRect().top+window.scrollY-100,behavior:"smooth"});
-  });
-  box.querySelectorAll("[data-blog-toggle]").forEach(btn=>btn.onclick=async()=>{
-    try{await updateDoc(doc(db,"smv_blogs",btn.dataset.blogToggle),{active:btn.textContent==="PUBLISH",updatedAtText:new Date().toLocaleString("en-IN")});await loadAdminBlogs();await loadBlogs();}
-    catch(e){$("blogAdminMsg").innerHTML='<span class="error">'+escapeHtml(e.message||String(e))+'</span>';}
-  });
-  box.querySelectorAll("[data-blog-delete]").forEach(btn=>btn.onclick=async()=>{
-    if(!confirm("Delete this blog?"))return;
-    try{await deleteDoc(doc(db,"smv_blogs",btn.dataset.blogDelete));await loadAdminBlogs();await loadBlogs();}
-    catch(e){$("blogAdminMsg").innerHTML='<span class="error">'+escapeHtml(e.message||String(e))+'</span>';}
-  });
- }catch(e){box.innerHTML='<div class="empty error">Unable to load blog manager: '+escapeHtml(e.message||String(e))+'</div>';}
-}
-function clearBlogEditor(){
- $("blogId").value="";$("blogTitle").value="";$("blogCategory").value="";$("blogExcerpt").value="";$("blogContent").value="";$("saveBlogBtn").textContent="ADD BLOG";$("blogAdminMsg").textContent="";
-}
-async function saveBlog(){
- const title=$("blogTitle").value.trim(),category=$("blogCategory").value.trim()||"Astrology",excerpt=$("blogExcerpt").value.trim(),content=$("blogContent").value.trim();
- const msg=$("blogAdminMsg");
- if(!title||!content){msg.innerHTML='<span class="error">Blog title and content are required.</span>';return;}
- try{
-  const id=$("blogId").value.trim(), now=new Date().toLocaleString("en-IN");
-  if(id) await updateDoc(doc(db,"smv_blogs",id),{title,category,excerpt,content,updatedAtText:now});
-  else await addDoc(collection(db,"smv_blogs"),{title,category,excerpt,content,active:true,createdAtText:now,updatedAtText:now,createdBy:currentUser.uid});
-  msg.innerHTML='<span class="success">Blog saved successfully.</span>';clearBlogEditor();await loadAdminBlogs();await loadBlogs();
- }catch(e){msg.innerHTML='<span class="error">'+escapeHtml(e.message||String(e))+'</span>';}
-}
-
-console.log("BLOG FUNCTION READY");
-
-window.__smvLoadBlogs = loadBlogs;
-setTimeout(()=>window.__smvLoadBlogs?.(),1000);
-window.__smvLoadAdminBlogs = loadAdminBlogs;
-window.__smvSaveBlog = saveBlog;
-
 async function loadAdminPanel(){
  if(!currentUser || !(await isCurrentAdmin())){hide('admin');hide('adminLink');return;}
  hidePrimarySections('admin');
@@ -3028,7 +2827,6 @@ if(firebaseInitError){
 
 window.__SMV_APP_READY=true;
 </script>
-
 <script>
 (function(){
   const config={apiKey:"AIzaSyCKXyfZ9sjGmej7ygxHpzHNcNysMXHuvSs",authDomain:"smv-astro.firebaseapp.com",projectId:"smv-astro",storageBucket:"smv-astro.firebasestorage.app",messagingSenderId:"299081899217",appId:"1:299081899217:web:8d558df08e86037ea539f0"};
@@ -3109,8 +2907,6 @@ window.__SMV_APP_READY=true;
   setTimeout(()=>{if(!window.__SMV_APP_READY) bindFallback();},1200);
 })();
 </script>
-
-
 <script>
 (function(){
   const BACKEND_URL = "https://smv-astro-razorpay-webhook.onrender.com";
@@ -3152,9 +2948,6 @@ window.__SMV_APP_READY=true;
   });
 })();
 </script>
-
-
-
 <script type="module">
 (function(){
   const BACKEND="https://smv-astro-razorpay-webhook.onrender.com";
@@ -3225,94 +3018,6 @@ window.__SMV_APP_READY=true;
     try{await fb();const u=auth?.currentUser;if(!u)throw new Error('Please login as Admin.');const token=await u.getIdToken(true);const r=await fetch(BACKEND_URL+'/admin/appointment-status',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({id,status}),cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`Appointment update returned HTTP ${r.status}.`);await loadAdminAppointments();}catch(e){console.error('Appointment update error:',e);alert(e?.message||String(e));buttons.forEach(x=>x.disabled=false);}finally{appointmentUpdating=false;}
   }
 
-  async function loadPublicBlogs(){
-    const box=$('blogList');if(!box)return;
-    box.innerHTML='<div class="empty">Loading articles...</div>';
-    try{
-      const f=await fb();
-      const snap=await withTimeout(f.getDocs(f.collection(db,'smv_blogs')),12000);
-      const rows=snap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.active!==false);
-      rows.sort((a,b)=>String(b.updatedAtText||b.createdAtText||'').localeCompare(String(a.updatedAtText||a.createdAtText||'')));
-      if(!rows.length){box.innerHTML='<div class="empty">No blog articles published yet.</div>';return;}
-      box.innerHTML=rows.map(b=>`<article class="card blog-card"><span class="badge">${esc(b.category||'Astrology')}</span><h3>${esc(b.title||'Untitled')}</h3><p class="small">${esc(b.excerpt||'')}</p><details><summary>Read article</summary><div class="blog-content" style="margin-top:10px;white-space:pre-wrap">${esc(b.content||'')}</div></details></article>`).join('');
-    }catch(e){console.error('Public blog error:',e);box.innerHTML='<div class="empty error">Unable to load blogs: '+esc(e.message||String(e))+'</div>';}
-  }
-
-  async function loadShop(){
-    const productBox=$("shopProducts"), catBox=$("shopCategories");
-    if(!productBox)return;
-    try{
-      const f=await fb();
-      // Public shop queries MUST include the same active=true constraint used by
-      // firestore.rules. An unconstrained collection query is correctly rejected
-      // by Firestore when the rule is based on resource.data.active.
-      const [catsSnap,productsSnap]=await Promise.all([
-        withTimeout(f.getDocs(f.query(f.collection(db,"smv_shop_categories"),f.where("active","==",true))),12000),
-        withTimeout(f.getDocs(f.query(f.collection(db,"smv_products"),f.where("active","==",true))),12000)
-      ]);
-      const cats=catsSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>Number(a.sortOrder||0)-Number(b.sortOrder||0));
-      const activeCategoryIds=new Set(cats.map(c=>c.id));
-      const products=productsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>!p.categoryId || activeCategoryIds.has(p.categoryId)).sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
-      if(catBox)catBox.innerHTML='<button type="button" class="btn gray" data-shop-category="">ALL</button>'+cats.map(c=>`<button type="button" class="btn gray" data-shop-category="${esc(c.id)}">${esc(c.name||"Category")}</button>`).join('');
-      const render=(filter="")=>{
-        const rows=filter?products.filter(p=>p.categoryId===filter):products;
-        if(!rows.length){productBox.innerHTML='<div class="empty">No products in this category yet.</div>';return;}
-        productBox.innerHTML=rows.map(p=>{
-          const price=Number(p.price||0),offer=Number(p.offerPrice||0),finalPrice=offer>0&&offer<price?offer:price;
-          const image=p.imageUrl?`<img src="${esc(p.imageUrl)}" alt="${esc(p.name||'Product')}" style="width:100%;height:220px;object-fit:cover">`:'<div style="font-size:52px">🪔</div>';
-          return `<article class="card"><div style="min-height:220px;display:grid;place-items:center;background:#f7f2e8;border-radius:10px;overflow:hidden">${image}</div><span class="badge" style="margin-top:12px">${esc(cats.find(c=>c.id===p.categoryId)?.name||'SMV ASTRO')}</span><h3>${esc(p.name||'Product')}</h3><p class="small">${esc(p.description||'')}</p><p><b style="font-size:20px">₹${finalPrice.toFixed(2)}</b> ${offer>0&&offer<price?`<del class="small">₹${price.toFixed(2)}</del>`:''}</p><p class="small">${Number(p.stock||0)>0?`In stock: ${Number(p.stock||0)}`:'Currently unavailable'}</p></article>`;
-        }).join('');
-      };
-      render();
-      catBox?.querySelectorAll('[data-shop-category]').forEach(b=>b.onclick=()=>render(b.dataset.shopCategory||""));
-    }catch(e){console.error('Shop load failed',e);productBox.innerHTML='<div class="empty error">Shop is temporarily unavailable: '+esc(e.message||String(e))+'</div>';}
-  }
-
-  async function loadAdminShop(){
-    const catsBox=$("adminShopCategories"),productsBox=$("adminShopProducts");if(!catsBox||!productsBox)return;
-    try{
-      const f=await fb();
-      const [cs,ps]=await Promise.all([withTimeout(f.getDocs(f.collection(db,"smv_shop_categories")),12000),withTimeout(f.getDocs(f.collection(db,"smv_products")),12000)]);
-      const cats=cs.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>Number(a.sortOrder||0)-Number(b.sortOrder||0));
-      const products=ps.docs.map(d=>({id:d.id,...d.data()}));
-      const sel=$("shopProductCategory");if(sel)sel.innerHTML='<option value="">Select category</option>'+cats.map(c=>`<option value="${esc(c.id)}">${esc(c.name||'Category')}</option>`).join('');
-      catsBox.innerHTML=cats.length?cats.map(c=>`<div class="admin-blog-row"><b>${esc(c.name||'Category')}</b> <span class="badge">${c.active===false?'Hidden':'Active'}</span><div class="admin-blog-actions"><button type="button" class="btn gray" data-shop-cat-edit="${esc(c.id)}">EDIT</button><button type="button" class="btn gray" data-shop-cat-toggle="${esc(c.id)}">${c.active===false?'PUBLISH':'HIDE'}</button><button type="button" class="btn gray" data-shop-cat-delete="${esc(c.id)}">DELETE</button></div></div>`).join(''):'<div class="empty">No shop categories yet.</div>';
-      productsBox.innerHTML=products.length?products.map(p=>`<div class="admin-blog-row"><b>${esc(p.name||'Product')}</b> <span class="badge">${p.active===false?'Hidden':'Published'}</span><div class="small">${esc(cats.find(c=>c.id===p.categoryId)?.name||'Uncategorised')} · ₹${Number(p.price||0).toFixed(2)}${Number(p.offerPrice||0)>0?` · Offer ₹${Number(p.offerPrice).toFixed(2)}`:''} · Stock ${Number(p.stock||0)}</div><div class="admin-blog-actions"><button type="button" class="btn gray" data-shop-prod-edit="${esc(p.id)}">EDIT</button><button type="button" class="btn gray" data-shop-prod-toggle="${esc(p.id)}">${p.active===false?'PUBLISH':'HIDE'}</button><button type="button" class="btn gray" data-shop-prod-delete="${esc(p.id)}">DELETE</button></div></div>`).join(''):'<div class="empty">No products yet.</div>';
-      catsBox.querySelectorAll('[data-shop-cat-edit]').forEach(b=>b.onclick=()=>{const c=cats.find(x=>x.id===b.dataset.shopCatEdit);if(!c)return;$("shopCategoryId").value=c.id;$("shopCategoryName").value=c.name||'';$("shopCategorySort").value=Number(c.sortOrder||0);$("saveShopCategory").textContent='UPDATE CATEGORY';});
-      catsBox.querySelectorAll('[data-shop-cat-toggle]').forEach(b=>b.onclick=async()=>{try{await f.updateDoc(f.doc(db,'smv_shop_categories',b.dataset.shopCatToggle),{active:b.textContent==='PUBLISH'});await loadAdminShop();await loadShop();}catch(e){$("shopCategoryMsg").innerHTML='<span class="error">'+esc(e.message||String(e))+'</span>';}});
-      catsBox.querySelectorAll('[data-shop-cat-delete]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this category?'))return;try{await f.deleteDoc(f.doc(db,'smv_shop_categories',b.dataset.shopCatDelete));await loadAdminShop();await loadShop();}catch(e){$("shopCategoryMsg").innerHTML='<span class="error">'+esc(e.message||String(e))+'</span>';}});
-      productsBox.querySelectorAll('[data-shop-prod-edit]').forEach(b=>b.onclick=()=>{const p=products.find(x=>x.id===b.dataset.shopProdEdit);if(!p)return;$("shopProductId").value=p.id;$("shopProductName").value=p.name||'';$("shopProductCategory").value=p.categoryId||'';$("shopProductPrice").value=Number(p.price||0);$("shopProductOfferPrice").value=Number(p.offerPrice||0)||'';$("shopProductStock").value=Number(p.stock||0);$("shopProductSku").value=p.sku||'';$("shopProductImage").value=p.imageUrl||'';$("shopProductDescription").value=p.description||'';$("saveShopProduct").textContent='UPDATE PRODUCT';});
-      productsBox.querySelectorAll('[data-shop-prod-toggle]').forEach(b=>b.onclick=async()=>{try{await f.updateDoc(f.doc(db,'smv_products',b.dataset.shopProdToggle),{active:b.textContent==='PUBLISH'});await loadAdminShop();await loadShop();}catch(e){$("shopProductMsg").innerHTML='<span class="error">'+esc(e.message||String(e))+'</span>';}});
-      productsBox.querySelectorAll('[data-shop-prod-delete]').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this product?'))return;try{await f.deleteDoc(f.doc(db,'smv_products',b.dataset.shopProdDelete));await loadAdminShop();await loadShop();}catch(e){$("shopProductMsg").innerHTML='<span class="error">'+esc(e.message||String(e))+'</span>';}});
-    }catch(e){catsBox.innerHTML='<div class="empty error">Unable to load categories: '+esc(e.message||String(e))+'</div>';productsBox.innerHTML='<div class="empty error">Unable to load products: '+esc(e.message||String(e))+'</div>';}
-  }
-  function clearShopCategory(){$("shopCategoryId").value='';$("shopCategoryName").value='';$("shopCategorySort").value='';$("saveShopCategory").textContent='ADD CATEGORY';$("shopCategoryMsg").textContent='';}
-  async function compressProductImage(file){
-    if(!file || !String(file.type||'').startsWith('image/')) throw new Error('Please select a valid image file.');
-    if(file.size>8*1024*1024) throw new Error('Product image must be 8 MB or smaller.');
-    const dataUrl=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});
-    const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('Unable to read product image.'));i.src=dataUrl;});
-    const maxW=900,maxH=700,scale=Math.min(1,maxW/img.width,maxH/img.height);
-    const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
-    const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height);
-    return c.toDataURL('image/jpeg',0.82);
-  }
-  function previewShopProductPhoto(file){
-    const box=$("shopProductPhotoPreview"); if(!box)return;
-    if(!file){box.innerHTML='<span class="small">No product photo selected</span>';return;}
-    if(!file.type.startsWith('image/')){box.innerHTML='<span class="error">Please select an image file.</span>';return;}
-    const reader=new FileReader();
-    reader.onload=()=>{box.innerHTML=`<img src="${reader.result}" alt="Product preview" style="width:100%;height:100%;object-fit:cover;display:block">`;};
-    reader.onerror=()=>{box.innerHTML='<span class="error">Could not preview this image.</span>';};
-    reader.readAsDataURL(file);
-  }
-    function clearShopProduct(){$("shopProductId").value='';$("shopProductName").value='';$("shopProductCategory").value='';$("shopProductPrice").value='';$("shopProductOfferPrice").value='';$("shopProductStock").value='';$("shopProductSku").value='';$("shopProductImage").value='';$("shopProductPhoto").value='';$("shopProductPhotoPreview").innerHTML='<span class="small">No product photo selected</span>';$("shopProductDescription").value='';$("saveShopProduct").textContent='ADD PRODUCT';$("shopProductMsg").textContent='';}
-  function setupShopAdmin(){
-    $("shopProductPhoto")?.addEventListener("change",e=>previewShopProductPhoto(e.target.files?.[0]));
-    $("clearShopCategory")?.addEventListener('click',clearShopCategory);$("clearShopProduct")?.addEventListener('click',clearShopProduct);
-    $("saveShopCategory")?.addEventListener('click',async()=>{const name=$("shopCategoryName").value.trim(),id=$("shopCategoryId").value.trim(),sort=Math.max(0,Number($("shopCategorySort").value||0)),msg=$("shopCategoryMsg");if(!name){msg.innerHTML='<span class="error">Enter a category name.</span>';return;}try{const f=await fb(),payload={name,sortOrder:sort,active:true,updatedAt:f.serverTimestamp(),updatedBy:auth.currentUser.uid};if(id)await f.updateDoc(f.doc(db,'smv_shop_categories',id),payload);else await f.addDoc(f.collection(db,'smv_shop_categories'),{...payload,createdAt:f.serverTimestamp(),createdBy:auth.currentUser.uid});msg.innerHTML='<span class="success">Category saved.</span>';clearShopCategory();await loadAdminShop();await loadShop();}catch(e){msg.innerHTML='<span class="error">Unable to save category: '+esc(e.message||String(e))+'</span>';}});
-    $("saveShopProduct")?.addEventListener('click',async()=>{const name=$("shopProductName").value.trim(),id=$("shopProductId").value.trim(),categoryId=$("shopProductCategory").value,price=Math.round(Number($("shopProductPrice").value||0)*100)/100,offer=Math.round(Number($("shopProductOfferPrice").value||0)*100)/100,stock=Math.max(0,Math.floor(Number($("shopProductStock").value||0))),sku=$("shopProductSku").value.trim(),imageUrl=$("shopProductImage").value.trim(),description=$("shopProductDescription").value.trim(),msg=$("shopProductMsg");if(!name||!categoryId||!Number.isFinite(price)||price<0){msg.innerHTML='<span class="error">Product name, category and valid price are required.</span>';return;}if(offer<0||(offer>=price&&offer!==0)){msg.innerHTML='<span class="error">Offer price must be lower than regular price.</span>';return;}try{const f=await fb(); let finalImageUrl=imageUrl; const photoFile=$("shopProductPhoto")?.files?.[0]; if(photoFile){ finalImageUrl=await compressProductImage(photoFile); } const payload={name,categoryId,price,offerPrice:offer,stock,sku,imageUrl:finalImageUrl,description,active:true,updatedAt:f.serverTimestamp(),updatedBy:auth.currentUser.uid};if(id)await f.updateDoc(f.doc(db,'smv_products',id),payload);else await f.addDoc(f.collection(db,'smv_products'),{...payload,createdAt:f.serverTimestamp(),createdBy:auth.currentUser.uid});msg.innerHTML='<span class="success">Product saved.</span>';clearShopProduct();await loadAdminShop();await loadShop();}catch(e){msg.innerHTML='<span class="error">Unable to save product: '+esc(e.message||String(e))+'</span>';}});
-  }
   function setupLanguage(){
     const btn=$('langToggle'); if(!btn) return;
     let tamil=false;
@@ -3416,7 +3121,7 @@ window.__SMV_APP_READY=true;
     if(adminRefreshRunning)return;
     adminRefreshRunning=true;
     try{
-      await Promise.allSettled([loadAdminAppointments(),window.__smvLoadAdminBlogs?.(),loadAdminShop()]);
+      await loadAdminAppointments();
     }finally{adminRefreshRunning=false;}
   }
   function hookAdmin(){
@@ -3424,10 +3129,7 @@ window.__SMV_APP_READY=true;
     window.__SMV_ADMIN_HOOKED=true;
     window.__smvRefreshAdminSections=refreshAdminSections;
   }
-  console.log("BLOG START");
-  setupLanguage();setupBooking();setupAsk();loadQuestionPrice().catch(()=>{});loadReviews().catch(()=>{});setupShopAdmin();loadShop().catch(()=>{});console.log("AUTH CHECK:", currentUser);window.__smvLoadBlogs?.();hookAdmin();window.__smvRefreshAdminSections?.();
-  $("saveBlogBtn")?.addEventListener("click",()=>window.__smvSaveBlog?.());
-  $("clearBlogBtn")?.addEventListener("click",clearBlogEditor);
+  setupLanguage();setupBooking();setupAsk();loadQuestionPrice().catch(()=>{});loadReviews().catch(()=>{});console.log("AUTH CHECK:", currentUser);hookAdmin();
   // Admin data loaders are triggered explicitly after Admin authentication.
 })();
   document.getElementById("contactNav")?.addEventListener("click",e=>{e.preventDefault();document.getElementById("contact")?.classList.remove("hidden");document.getElementById("contact")?.scrollIntoView({behavior:"smooth",block:"start"});});

@@ -53,7 +53,7 @@ service cloud.firestore {
       allow write: if request.auth.uid == "TwjeEIFS3Zcf1SxboLZoujm91Ky2";
     }
 
-    match /smv_blogs/{blogId} {
+    {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
@@ -101,12 +101,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    match /smv_shop_categories/{categoryId} {
+    {
       allow read: if resource.data.active == true || isAdmin();
       allow create, update, delete: if isAdmin();
     }
 
-    match /smv_products/{productId} {
+    {
       allow read: if resource.data.active == true || isAdmin();
       allow create, update, delete: if isAdmin();
     }
