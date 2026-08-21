@@ -903,7 +903,7 @@ async function submitAuth(mode){
     }
     return;
   }
-  const name=$("name").value.trim(),phone=$("phone").value.trim();
+  const name=$("name").value.trim(),phone=$("phone").value.trim(),email=rawLogin;
   if(!name||password.length<6){msg.innerHTML='<span class="error">Enter name and a password of at least 6 characters.</span>';return;}
   let cred=null;
   let createdNewAuthUser=false;
