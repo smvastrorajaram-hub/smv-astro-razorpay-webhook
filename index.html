@@ -2342,8 +2342,23 @@ ${ad.status === 'rejected' && ad.rejectionReason
       20000
     );
 
-    alert('Question claimed successfully. You can now write your answer.');
     await loadDashboard();
+
+    // After CLAIM & ANSWER, open the newly claimed answer editor directly.
+    // Give this editor a larger 400px writing area and place the cursor inside it.
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const answerBox = $('ans_' + questionId);
+        if (answerBox) {
+          answerBox.style.minHeight = '400px';
+          answerBox.style.height = '400px';
+          answerBox.style.maxHeight = 'none';
+          answerBox.style.resize = 'vertical';
+          answerBox.focus();
+          answerBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    });
 
   }catch(e){
     console.error('Question claim error:',e);
