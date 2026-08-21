@@ -79,8 +79,9 @@ textarea{min-height:110px;resize:vertical;line-height:1.6;overflow-wrap:anywhere
 .badge{display:inline-block;padding:6px 11px;border-radius:99px;background:#fff0d0;color:var(--maroon);border:1px solid #e4c77e;font-size:12px;font-weight:900;letter-spacing:.3px}
 .small{font-size:13px;color:var(--muted);line-height:1.55;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
 .error{color:var(--danger)}.success{color:var(--success)}
-.modal{position:fixed;inset:0;background:rgba(61,15,15,.68);display:flex;align-items:center;justify-content:center;padding:15px;z-index:200;overflow:auto}
-.modalbox{background:#fffaf0;max-width:480px;width:100%;border-radius:14px;padding:22px;max-height:90vh;overflow:auto;border:1px solid #dfc78e;min-width:0;box-shadow:0 20px 50px rgba(61,15,15,.22)}
+.modal{position:fixed;inset:0;width:100vw;height:100dvh;background:rgba(61,15,15,.68);display:grid;place-items:center;padding:12px;z-index:200;overflow:hidden}
+.modalbox{position:relative;background:#fffaf0;width:min(480px,calc(100vw - 24px));max-width:480px;margin:0 auto;border-radius:14px;padding:22px;max-height:calc(100dvh - 24px);overflow:auto;border:1px solid #dfc78e;min-width:0;box-shadow:0 20px 50px rgba(61,15,15,.22);box-sizing:border-box}
+.modalbox #modalContent{padding-right:0!important;margin:0 auto;width:100%;box-sizing:border-box}
 section{scroll-margin-top:90px;min-width:0}
 section>h2{color:var(--maroon);font-family:Georgia,"Times New Roman",serif}
 .empty{padding:25px;text-align:center;color:var(--muted);overflow-wrap:anywhere;word-break:break-word}
@@ -332,11 +333,12 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
   .quick-actions{grid-template-columns:1fr!important;gap:14px!important}
   .quick-action{padding:20px 16px!important}
   .quick-action .btn{width:100%;min-height:48px}
-  .modal{padding:8px}
+  .modal{padding:8px;place-items:center}
   .modalbox{
-    width:100%;
-    max-width:100%;
-    max-height:94vh;
+    width:calc(100vw - 16px);
+    max-width:calc(100vw - 16px);
+    max-height:calc(100dvh - 16px);
+    margin:0 auto;
     padding:19px 15px;
     border-radius:13px;
   }
@@ -366,8 +368,8 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 .quick-action-title{font-family:Georgia,"Times New Roman",serif;font-size:23px;color:#7e1818;margin-top:2px}
 .quick-action-text{font-size:14px;color:#6d5b50;margin-bottom:16px}
 .quick-action .btn{min-width:180px;padding:13px 22px}
-.smv-dialog-backdrop{position:fixed;inset:0;background:rgba(28,25,61,.70);display:flex;align-items:center;justify-content:center;padding:14px;z-index:500;backdrop-filter:blur(3px)}
-.smv-dialog{width:min(100%,430px);background:linear-gradient(180deg,#fffdf8,#fff7e8);border:1px solid #d8b866;border-radius:20px;box-shadow:0 24px 65px rgba(28,25,61,.28);padding:24px 20px 18px;color:var(--text)}
+.smv-dialog-backdrop{position:fixed;inset:0;width:100vw;height:100dvh;background:rgba(28,25,61,.70);display:grid;place-items:center;padding:14px;z-index:500;backdrop-filter:blur(3px)}
+.smv-dialog{width:min(430px,calc(100vw - 28px));max-width:430px;margin:0 auto;box-sizing:border-box;background:linear-gradient(180deg,#fffdf8,#fff7e8);border:1px solid #d8b866;border-radius:20px;box-shadow:0 24px 65px rgba(28,25,61,.28);padding:24px 20px 18px;color:var(--text)}
 .smv-dialog-icon{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;margin:0 auto 12px;background:radial-gradient(circle,#fff8d9,#efd27d);border:2px solid var(--gold);font-size:23px}
 .smv-dialog h3{margin:0;text-align:center;color:#7e1818;font-family:Georgia,"Times New Roman",serif;font-size:24px}
 .smv-dialog p{margin:10px 0 18px;text-align:center;color:#62554d;line-height:1.65;white-space:pre-line}
@@ -378,7 +380,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 .auth-hero h2{margin:0;color:#7e1818;font-family:Georgia,"Times New Roman",serif;font-size:30px}.auth-hero p{margin:5px 0 0;color:#76665c;font-size:13px}
 .auth-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 12px}.auth-tabs .btn{padding:10px 6px;min-height:44px;font-size:12px;box-shadow:none}.auth-tabs .btn.active{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-color:#751515;box-shadow:0 5px 13px rgba(48,43,104,.16)}
 .auth-field-label{display:block;margin:8px 2px 4px;color:#60483c;font-size:12px;font-weight:800}.auth-field{margin:0 0 5px!important;min-height:48px!important}.auth-submit{width:100%;min-height:50px;margin-top:8px!important;font-size:16px!important}.auth-secondary{width:100%;min-height:46px;margin-top:7px!important}.password-wrap{position:relative}.password-wrap input{padding-right:52px}.password-toggle{position:absolute;right:7px;top:7px;height:34px;min-width:38px;border:0;border-radius:8px;background:#f3eadb;color:#5b4336;font-size:16px;cursor:pointer}.auth-note{margin:9px 2px 2px;text-align:center;font-size:12px;color:#75665e;line-height:1.5}
-@media(max-width:520px){.modal{padding:7px}.modalbox{max-height:96vh;padding:18px 13px 15px;border-radius:18px}.modalbox #modalContent{padding-right:26px!important}.auth-hero-icon{width:54px;height:54px;font-size:24px}.auth-hero h2{font-size:27px}.auth-tabs{grid-template-columns:1fr;gap:7px}.auth-tabs .btn{min-height:43px;font-size:13px}.auth-submit,.auth-secondary{font-size:14px!important}.smv-dialog{padding:21px 15px 15px;border-radius:18px}.smv-dialog h3{font-size:22px}.smv-dialog-actions{grid-template-columns:1fr;gap:8px}.smv-dialog-actions .btn{min-height:48px}.quick-actions{grid-template-columns:minmax(0,1fr)!important;max-width:430px;margin:18px auto;padding:0 2px}.quick-action{min-height:170px;padding:24px 16px}}
+@media(max-width:520px){.modal{padding:7px;place-items:center}.modalbox{width:calc(100vw - 14px);max-width:calc(100vw - 14px);max-height:calc(100dvh - 14px);margin:0 auto;padding:18px 13px 15px;border-radius:18px}.modalbox #modalContent{padding-right:0!important;margin:0 auto}.auth-hero-icon{width:54px;height:54px;font-size:24px}.auth-hero h2{font-size:27px}.auth-tabs{grid-template-columns:1fr;gap:7px}.auth-tabs .btn{min-height:43px;font-size:13px}.auth-submit,.auth-secondary{font-size:14px!important}.smv-dialog{padding:21px 15px 15px;border-radius:18px}.smv-dialog h3{font-size:22px}.smv-dialog-actions{grid-template-columns:1fr;gap:8px}.smv-dialog-actions .btn{min-height:48px}.quick-actions{grid-template-columns:minmax(0,1fr)!important;max-width:430px;margin:18px auto;padding:0 2px}.quick-action{min-height:170px;padding:24px 16px}}
 
 /* Final SMV Astro UI refinement: compact astrologer cards on desktop only. */
 @media (min-width:521px){
@@ -417,6 +419,33 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
   #astroCards .astro-public-card .action-row .btn{
     font-size:12px;
     padding:9px 12px;
+  }
+}
+
+/* FINAL DESKTOP LAYOUT FIX — desktop only; mobile layout remains unchanged. */
+@media (min-width:761px){
+  #astroCards{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:14px!important;
+    align-items:stretch!important;
+  }
+  #astroCards .astro-public-card{
+    width:100%!important;
+    margin-top:0!important;
+    min-width:0!important;
+  }
+  #dashboardContent > .grid{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:16px!important;
+    align-items:stretch!important;
+  }
+  #dashboardContent > .grid > .card{min-width:0!important;}
+  #admin > .card:first-child #adminSummary{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:12px!important;
   }
 }
 
@@ -669,7 +698,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <div class="modal hidden" id="modal">
 <div class="modalbox" style="position:relative">
 <button aria-label="Close" onclick="closeModal()" style="position:absolute;top:10px;right:10px;border:0;background:transparent;font-size:28px;line-height:1;cursor:pointer;padding:4px 8px;color:inherit" title="Close" type="button">×</button>
-<div id="modalContent" style="padding-right:35px"></div>
+<div id="modalContent"></div>
 </div>
 </div>
 <script type="module">
@@ -3588,6 +3617,78 @@ document.addEventListener("click",function(e){
   }
   document.addEventListener('DOMContentLoaded',expose,{once:true});
   setTimeout(expose,250); setTimeout(expose,1000); setTimeout(expose,2500); setTimeout(expose,5000);
+})();
+</script>
+<script>
+/* FINAL SMV LANGUAGE REPAIR — keeps existing functionality and forces reliable EN/TA/HI switching. */
+(function(){
+  const run=()=>{
+    const select=document.getElementById('langSelect');
+    if(!select || select.dataset.finalLangFix==='1') return;
+    select.dataset.finalLangFix='1';
+
+    const TA={
+      'Home':'முகப்பு','Contact':'தொடர்பு','Dashboard':'டாஷ்போர்டு','Admin':'நிர்வாகி','Login':'உள்நுழைவு','Logout':'வெளியேறு','Register':'பதிவு','Close':'மூடு','Back':'பின்','FAQ':'அடிக்கடி கேட்கப்படும் கேள்விகள்',
+      'Ask Now':'இப்போது கேளுங்கள்','ASK NOW':'இப்போது கேளுங்கள்','Our Approved Astrologers':'எங்கள் அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்','Approved Astrologers':'அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்','PROFILE & REVIEWS':'சுயவிவரம் & மதிப்புரைகள்','PROFILE LOADING...':'சுயவிவரம் ஏற்றப்படுகிறது...','Verified Reviews':'சரிபார்க்கப்பட்ட மதிப்புரைகள்','No approved reviews for this astrologer yet.':'இந்த ஜோதிடருக்கு இன்னும் அங்கீகரிக்கப்பட்ட மதிப்புரைகள் இல்லை.','Loading reviews...':'மதிப்புரைகள் ஏற்றப்படுகின்றன...','CLOSE':'மூடுக','TRY AGAIN':'மீண்டும் முயற்சிக்கவும்',
+      'Customer Dashboard':'வாடிக்கையாளர் டாஷ்போர்டு','Astrologer Dashboard':'ஜோதிடர் டாஷ்போர்டு','Admin Dashboard':'நிர்வாக டாஷ்போர்டு','My Questions':'என் கேள்விகள்','My Consultations':'என் ஆலோசனைகள்','Notifications':'அறிவிப்புகள்','Total Earnings':'மொத்த வருமானம்','Public Question Inbox':'பொது கேள்வி பெட்டி','Questions & Answers':'கேள்விகள் & பதில்கள்','Earnings Ledger':'வருமானப் பதிவு',
+      'Trusted Astrological Guidance for a Better Tomorrow':'சிறந்த நாளைக்கான நம்பகமான ஜோதிட வழிகாட்டல்','WELCOME TO SMV ASTRO SERVICES':'SMV ASTRO சேவைகளுக்கு வரவேற்கிறோம்','Traditional Wisdom':'பாரம்பரிய ஞானம்','Personal Guidance':'தனிப்பட்ட வழிகாட்டல்','Trusted Consultation':'நம்பகமான ஆலோசனை','ASTROLOGY CONSULTATION':'ஜோதிட ஆலோசனை',
+      'Frequently Asked Questions':'அடிக்கடி கேட்கப்படும் கேள்விகள்','FREQUENTLY ASKED QUESTIONS':'அடிக்கடி கேட்கப்படும் கேள்விகள்','How do I ask an astrology question?':'ஜோதிடக் கேள்வியை எப்படி கேட்பது?','Can I book a Chat or Call consultation?':'Chat அல்லது Call ஆலோசனையை முன்பதிவு செய்ய முடியுமா?','Are astrologers verified?':'ஜோதிடர்கள் சரிபார்க்கப்பட்டவர்களா?','How can I contact SMV ASTRO?':'SMV ASTRO-வை எப்படி தொடர்பு கொள்வது?','Do I need an account?':'கணக்கு அவசியமா?','How are astrologers selected and verified?':'ஜோதிடர்கள் எவ்வாறு தேர்வு செய்யப்பட்டு சரிபார்க்கப்படுகிறார்கள்?','When will I receive my astrology answer?':'எனது ஜோதிடப் பதில் எப்போது கிடைக்கும்?','Is there a refund or cancellation policy?':'பணத்தைத் திரும்பப் பெறுதல் அல்லது ரத்து கொள்கை உள்ளதா?','What happens if my question is not suitable for the astrology service?':'எனது கேள்வி ஜோதிட சேவைக்கு ஏற்றதாக இல்லாவிட்டால் என்ன ஆகும்?','Are astrology answers guaranteed?':'ஜோதிடப் பதில்கள் உறுதியானவையா?',
+      'Customer':'வாடிக்கையாளர்','ASTROLOGER':'ஜோதிடர்','Email Login':'மின்னஞ்சல் உள்நுழைவு','Customer ID':'வாடிக்கையாளர் ID','Astrologer ID':'ஜோதிடர் ID','Email / ID':'மின்னஞ்சல் / ID','Password':'கடவுச்சொல்','Forgot Password?':'கடவுச்சொல்லை மறந்துவிட்டீர்களா?','Create new customer account':'புதிய வாடிக்கையாளர் கணக்கை உருவாக்கவும்','Welcome Back':'மீண்டும் வரவேற்கிறோம்','Secure authentication powered by Firebase.':'Firebase மூலம் பாதுகாப்பான அங்கீகாரம்.',
+      'Payment Successful':'கட்டணம் வெற்றிகரமாக முடிந்தது','Payment Received':'கட்டணம் பெறப்பட்டது','Answer Ready':'பதில் தயாராக உள்ளது','Admin Approval':'நிர்வாக அனுமதி','Astrologer Answer':'ஜோதிடர் பதில்','Question Approved':'கேள்வி அங்கீகரிக்கப்பட்டது','Astrologer Answer Submitted':'ஜோதிடர் பதில் சமர்ப்பிக்கப்பட்டது','Your Question':'உங்கள் கேள்வி','Ask Your Question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்','Proceed to Secure Payment':'பாதுகாப்பான கட்டணத்திற்குத் தொடர்க','24 hours':'24 மணி நேரம்','48 hours':'48 மணி நேரம்','within 24 hours':'24 மணி நேரத்திற்குள்','within 48 hours':'48 மணி நேரத்திற்குள்'
+    };
+    const HI={
+      'Home':'होम','Contact':'संपर्क','Dashboard':'डैशबोर्ड','Admin':'एडमिन','Login':'लॉगिन','Logout':'लॉगआउट','Register':'पंजीकरण','Close':'बंद करें','Back':'वापस','FAQ':'अक्सर पूछे जाने वाले प्रश्न',
+      'Ask Now':'अभी पूछें','ASK NOW':'अभी पूछें','Our Approved Astrologers':'हमारे स्वीकृत ज्योतिषी','Approved Astrologers':'स्वीकृत ज्योतिषी','PROFILE & REVIEWS':'प्रोफ़ाइल और समीक्षाएँ','PROFILE LOADING...':'प्रोफ़ाइल लोड हो रही है...','Verified Reviews':'सत्यापित समीक्षाएँ','No approved reviews for this astrologer yet.':'इस ज्योतिषी के लिए अभी कोई स्वीकृत समीक्षा नहीं है।','Loading reviews...':'समीक्षाएँ लोड हो रही हैं...','CLOSE':'बंद करें','TRY AGAIN':'फिर से प्रयास करें',
+      'Customer Dashboard':'ग्राहक डैशबोर्ड','Astrologer Dashboard':'ज्योतिषी डैशबोर्ड','Admin Dashboard':'एडमिन डैशबोर्ड','My Questions':'मेरे प्रश्न','My Consultations':'मेरे परामर्श','Notifications':'सूचनाएँ','Total Earnings':'कुल कमाई','Public Question Inbox':'सार्वजनिक प्रश्न इनबॉक्स','Questions & Answers':'प्रश्न और उत्तर','Earnings Ledger':'कमाई विवरण',
+      'Trusted Astrological Guidance for a Better Tomorrow':'बेहतर कल के लिए विश्वसनीय ज्योतिषीय मार्गदर्शन','WELCOME TO SMV ASTRO SERVICES':'SMV ASTRO सेवाओं में आपका स्वागत है','Traditional Wisdom':'पारंपरिक ज्ञान','Personal Guidance':'व्यक्तिगत मार्गदर्शन','Trusted Consultation':'विश्वसनीय परामर्श','ASTROLOGY CONSULTATION':'ज्योतिष परामर्श',
+      'Frequently Asked Questions':'अक्सर पूछे जाने वाले प्रश्न','FREQUENTLY ASKED QUESTIONS':'अक्सर पूछे जाने वाले प्रश्न','How do I ask an astrology question?':'मैं ज्योतिष का प्रश्न कैसे पूछूँ?','Can I book a Chat or Call consultation?':'क्या मैं चैट या कॉल परामर्श बुक कर सकता/सकती हूँ?','Are astrologers verified?':'क्या ज्योतिषी सत्यापित हैं?','How can I contact SMV ASTRO?':'मैं SMV ASTRO से कैसे संपर्क करूँ?','Do I need an account?':'क्या खाता आवश्यक है?','How are astrologers selected and verified?':'ज्योतिषियों का चयन और सत्यापन कैसे किया जाता है?','When will I receive my astrology answer?':'मुझे अपने ज्योतिषीय प्रश्न का उत्तर कब मिलेगा?','Is there a refund or cancellation policy?':'क्या रिफंड या रद्दीकरण नीति है?','What happens if my question is not suitable for the astrology service?':'यदि मेरा प्रश्न ज्योतिष सेवा के लिए उपयुक्त नहीं है तो क्या होगा?','Are astrology answers guaranteed?':'क्या ज्योतिषीय उत्तर निश्चित होते हैं?',
+      'Customer':'ग्राहक','ASTROLOGER':'ज्योतिषी','Email Login':'ईमेल लॉगिन','Customer ID':'ग्राहक ID','Astrologer ID':'ज्योतिषी ID','Email / ID':'ईमेल / ID','Password':'पासवर्ड','Forgot Password?':'पासवर्ड भूल गए?','Create new customer account':'नया ग्राहक खाता बनाएँ','Welcome Back':'वापसी पर स्वागत है','Secure authentication powered by Firebase.':'Firebase द्वारा सुरक्षित प्रमाणीकरण।',
+      'Payment Successful':'भुगतान सफल','Payment Received':'भुगतान प्राप्त','Answer Ready':'उत्तर तैयार है','Admin Approval':'एडमिन अनुमोदन','Astrologer Answer':'ज्योतिषी का उत्तर','Question Approved':'प्रश्न स्वीकृत','Astrologer Answer Submitted':'ज्योतिषी का उत्तर जमा किया गया','Your Question':'आपका प्रश्न','Ask Your Question':'अपना ज्योतिषीय प्रश्न पूछें','Proceed to Secure Payment':'सुरक्षित भुगतान के लिए आगे बढ़ें','24 hours':'24 घंटे','48 hours':'48 घंटे','within 24 hours':'24 घंटे के भीतर','within 48 hours':'48 घंटे के भीतर'
+    };
+    const dicts={en:{},ta:TA,hi:HI};
+    const originals=new WeakMap();
+    const attrs=['placeholder','aria-label','title'];
+    function replaceText(text,dict){
+      if(!text||!dict)return text;
+      let out=text;
+      Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{if(out.includes(k))out=out.split(k).join(dict[k]);});
+      return out;
+    }
+    function translate(root,lang){
+      const dict=dicts[lang]||{};
+      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+      let n;
+      while(n=walker.nextNode()){
+        if(!n.nodeValue.trim()||n.parentElement?.closest('script,style'))continue;
+        if(!originals.has(n)) originals.set(n,n.nodeValue);
+        n.nodeValue=replaceText(originals.get(n),dict);
+      }
+      root.querySelectorAll?.('*').forEach(el=>attrs.forEach(a=>{
+        if(!el.hasAttribute(a))return;
+        const key='__smvOrig_'+a;
+        if(!el.dataset[key])el.dataset[key]=el.getAttribute(a);
+        el.setAttribute(a,replaceText(el.dataset[key],dict));
+      }));
+    }
+    function apply(lang){
+      select.value=lang;
+      document.documentElement.lang=lang;
+      document.body.classList.toggle('lang-tamil',lang==='ta');
+      translate(document.body,lang);
+      try{localStorage.setItem('smvLanguage',lang);}catch(_e){}
+    }
+    select.addEventListener('change',()=>apply(select.value));
+    const observer=new MutationObserver(muts=>{
+      const lang=select.value;
+      if(lang==='en')return;
+      muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)translate(n,lang);}));
+    });
+    observer.observe(document.body,{childList:true,subtree:true});
+    let saved='en';try{saved=localStorage.getItem('smvLanguage')||'en';}catch(_e){}
+    apply(['en','ta','hi'].includes(saved)?saved:'en');
+    window.__smvFinalLanguageApply=apply;
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 })();
 </script>
 </body>
