@@ -1097,6 +1097,102 @@ app.post("/admin/credit-commission", async (req, res) => {
   } catch(e) { console.error("Commission credit error:",e); return res.status(500).json({ error:e?.message||"Unable to credit commission." }); }
 });
 
+
+app.post("/admin/approve-answer", express.json({limit:"20kb"}), async (req, res) => {
+  const user = await requireUser(req, res); if (!user) return;
+  if (!(await isAdminUser(user))) return res.status(403).json({ error: "Admin access denied." });
+  const questionId = String(req.body?.questionId || "").trim();
+  try {
+    if (!questionId) return res.status(400).json({ error: "Question ID is required." });
+    const qRef = db.collection("smv_questions").doc(questionId);
+    const snap = await qRef.get();
+    if (!snap.exists) return res.status(404).json({ error: "Question not found." });
+    const q = snap.data() || {};
+    if (!q.astrologerId) return res.status(400).json({ error: "Astrologer is not assigned." });
+    if (!String(q.answer || "").trim()) return res.status(400).json({ error: "No answer found." });
+    const alreadyApproved = String(q.status || "") === "answered" && String(q.astrologerAnswerStatus || "") === "approved";
+    // IMPORTANT: An answer may have been approved before email delivery was fixed.
+    // Do not return early in that case. Re-run the email notification so Admin can
+    // safely approve/retry and the customer still receives the message.
+    const amount = Number(q.astrologerCommissionAmount || q.commissionAmount || 0);
+    if (!Number.isFinite(amount) || amount < 0) return res.status(400).json({ error: "Invalid astrologer commission amount." });
+
+    let astrologerPaymentId = q.astrologerPaymentId || "";
+    if (!alreadyApproved && (!astrologerPaymentId || String(q.commissionStatus || "") !== "credited")) {
+      const paymentId = await nextPaymentId();
+      astrologerPaymentId = paymentId.replace(/^SMV-PAY-/, "SMV-PAT-");
+      await db.collection("smv_payments").doc(astrologerPaymentId).set({
+        paymentId: astrologerPaymentId, type:"astrologer_earning", customerId:q.customerId||null,
+        astrologerId:q.astrologerId, questionId, bookingId:q.bookingId||null,
+        grossAmount:Number(q.amount||0), commissionPercent:Number(q.commissionPercent||q.commissionRate||0),
+        commissionAmount:amount, earningAmount:amount, status:"credited", paymentStatus:"pending_withdrawal",
+        source:"admin_answer_approval", createdAt:FieldValue.serverTimestamp(), updatedAt:FieldValue.serverTimestamp()
+      });
+    }
+
+    if (!alreadyApproved) {
+      await qRef.update({
+        status:"answered",
+        astrologerAnswerStatus:"approved",
+        commissionStatus:"credited",
+        answerApprovedAt:FieldValue.serverTimestamp(),
+        adminAnswerApprovedAt:FieldValue.serverTimestamp(),
+        answerApprovedBy:user.uid,
+        commissionCreditedAt:q.commissionCreditedAt || FieldValue.serverTimestamp(),
+        commissionAmount:amount,
+        astrologerCommissionAmount:amount,
+        astrologerPaymentId,
+        updatedAt:FieldValue.serverTimestamp(),
+        answerApprovalEmailStatus:{state:"pending",updatedAt:FieldValue.serverTimestamp(),retry:true}
+      });
+
+      await db.collection("smv_notifications").add({
+        userId:q.astrologerId,type:"answer_approved",title:"Answer Approved",
+        message:`Your answer has been approved. Commission credited: ₹${amount.toFixed(2)}`,
+        questionId,commissionAmount:amount,createdAt:FieldValue.serverTimestamp(),read:false
+      });
+    } else {
+      await qRef.set({
+        answerApprovalEmailStatus:{state:"pending",updatedAt:FieldValue.serverTimestamp(),retry:true},
+        updatedAt:FieldValue.serverTimestamp()
+      }, {merge:true});
+    }
+
+    const customerEmail = String(q.customerEmail || await getUserEmail(q.customerId) || "").trim();
+    const astrologerEmail = String(await getUserEmail(q.astrologerId) || "").trim();
+    const customerName = String(q.customerName || q.birthName || "Customer");
+    const astrologerName = String(q.astrologerName || "Astrologer");
+    const subject = "SMV ASTRO — Astrology answer approved";
+    const results = {};
+    const recipients = uniqueRecipients([customerEmail, astrologerEmail, ADMIN_EMAIL]);
+    for (const recipient of recipients) {
+      const key = recipient.toLowerCase();
+      const isCustomer = key === customerEmail.toLowerCase();
+      const isAstrologer = key === astrologerEmail.toLowerCase();
+      const text = isCustomer
+        ? `Dear ${customerName},\n\nYour astrology answer has been approved by SMV ASTRO Admin and is now ready to view.\n\nQuestion: ${q.question || ""}\nQuestion ID: ${questionId}\n\nRegards,\nSMV ASTRO`
+        : isAstrologer
+          ? `Dear ${astrologerName},\n\nYour submitted astrology answer has been approved by SMV ASTRO Admin.\n\nQuestion ID: ${questionId}\nCommission credited: ₹${amount.toFixed(2)}\n\nRegards,\nSMV ASTRO`
+          : `SMV ASTRO answer approval notification.\n\nQuestion ID: ${questionId}\nCustomer Email: ${customerEmail || "N/A"}\nAstrologer Email: ${astrologerEmail || "N/A"}\nCommission: ₹${amount.toFixed(2)}`;
+      const result = await sendSystemEmail({to:[recipient],replyTo:ADMIN_EMAIL,subject,text});
+      if (result?.failed) {
+        results[key] = {status:"failed",error:String(result.error || "Unknown email error")};
+        console.error(`ANSWER APPROVAL EMAIL FAILED | Question ID: ${questionId} | Recipient Email: ${recipient} | Reason: ${result.error || "Unknown email error"}`);
+      } else {
+        results[key] = {status:"sent",messageId:result?.id || null};
+        console.log(`ANSWER APPROVAL EMAIL SENT | Question ID: ${questionId} | Recipient Email: ${recipient}`);
+      }
+    }
+    const vals = Object.values(results);
+    const emailState = !vals.length ? "failed" : vals.every(x=>x.status==="sent") ? "sent" : vals.every(x=>x.status==="failed") ? "failed" : "partial";
+    await qRef.set({answerApprovalEmailStatus:{state:emailState,recipients:results,updatedAt:FieldValue.serverTimestamp()}},{merge:true});
+    return res.json({success:true,questionId,already:alreadyApproved,commissionAmount:amount,emailState,recipients:recipients.length,emailFailedCount:vals.filter(x=>x.status==="failed").length});
+  } catch (e) {
+    console.error(`Admin answer approval failed | Question ID: ${questionId || "N/A"} | Reason:`, e?.message || e);
+    return res.status(500).json({error:e?.message || "Unable to approve answer."});
+  }
+});
+
 app.post("/verify-payment", express.json(), async (req, res) => {
   const user = await requireUser(req, res);
   if (!user) return;
