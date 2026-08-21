@@ -1322,6 +1322,9 @@ try{
   console.error("SMV ASTRO Firebase initialization failed",initError);
 }
 const RAZORPAY_BACKEND_URL="https://smv-astro-razorpay-webhook.onrender.com";
+// Single backend URL used by all protected API calls, including astrologer answer submission.
+// Keep this in the main Firebase module so it is available to the answer-submit handler.
+const BACKEND=RAZORPAY_BACKEND_URL;
 let firebaseFunctionsPromise=null;
 async function ensureFirebaseFunctions(){
   if(functions && httpsCallableFn) return {functions,httpsCallable:httpsCallableFn};
@@ -2417,37 +2420,30 @@ ${ad.status === 'rejected' && ad.rejectionReason
           commissionPercent
         ) / 100;
 
-      const token = await currentUser.getIdToken();
-      const response = await withTimeout(
-        fetch(BACKEND + '/submit-answer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({
-            questionId: questionId,
-            answer: answer
-          })
-        }),
-        20000
-      );
-
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result?.ok) {
+      // Use the same authenticated Render API helper used by Admin actions.
+      // This avoids the previous 'BACKEND is not defined' browser error and
+      // ensures the Firebase ID token is always attached to the request.
+      const result = await renderApi('/submit-answer', {
+        method: 'POST',
+        body: JSON.stringify({
+          questionId: questionId,
+          answer: answer
+        })
+      });
+      if (!result?.ok) {
         throw new Error(result?.error || 'Unable to submit answer.');
       }
 
       if (result.emailState === 'sent') {
         console.info(
           'ANSWER EMAIL SENT',
-          'Question ID:', id,
+          'Question ID:', questionId,
           'Recipients:', result.recipients
         );
       } else if (result.emailState === 'partial' || result.emailState === 'failed') {
         console.warn(
           'ANSWER EMAIL FAILED',
-          'Question ID:', id,
+          'Question ID:', questionId,
           'Email state:', result.emailState,
           'Failed recipients:', result.emailFailedCount
         );
