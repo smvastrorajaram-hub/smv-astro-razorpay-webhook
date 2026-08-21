@@ -724,7 +724,17 @@ async function openQuestionService(){
   const questionProfile=await getUserProfile(currentUser.uid);
   const questionRole=String(questionProfile?.role||"").toLowerCase();
   if(questionRole!=="customer"||!currentUser.emailVerified){await logoutToHome();openAuth("login");return;}
-  hidePrimarySections("ask-flow");
+
+  // ASK NOW / Consultation must keep the customer dashboard visible and
+  // open the question form below it. Normal Login continues to open only
+  // the appropriate Customer / Astrologer / Admin dashboard.
+  hideHomeSurface();
+  hide("register-flow");hide("astro-register-form");hide("astro-flow");
+  hide("appointment");hide("contact");hide("admin");
+  show("dashLink");
+  show("dashboard");
+  await loadDashboard();
+  // loadDashboard may refresh visibility; always show the question form after it.
   show("ask-flow");
   selectedAstro=null;$("askTitle").textContent="Ask Your Question";
   await loadQuestionPrice();
@@ -867,6 +877,12 @@ async function submitAuth(mode){
     pendingAfterLogin=null;
     closeModal();
     if(goToQuestion){
+      // ASK NOW login path: open Customer Dashboard + Question Form.
+      // Do not fall through to the normal dashboard-only login path.
+      if(loginRole==="customer" && loginCred.user.emailVerified){
+        await openQuestionService();
+        return;
+      }
       await openQuestionService();
       return;
     }
