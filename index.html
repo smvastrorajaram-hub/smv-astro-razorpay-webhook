@@ -1204,7 +1204,13 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <textarea id="questionText" placeholder="Write your astrology question here..." rows="6" style="width:100%;max-width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #d7dde7;border-radius:10px;font:inherit;overflow-wrap:anywhere;word-break:break-word"></textarea>
 <button class="btn" id="submitQuestionBtn" style="margin-top:12px">Proceed to Secure Payment</button>
 <div class="small" id="askMsg" style="margin-top:10px"></div>
-<div class="card hidden" id="paymentSuccessPanel" style="margin-top:16px;border:2px solid #b8860b;background:#fffaf0"><h3 style="margin-top:0">Payment Successful ✓</h3><p>Your payment has been securely verified.</p><div class="small" id="paymentSuccessDetails" style="line-height:1.8"></div><button class="btn hidden" id="continueAfterPayment" type="button" tabindex="-1" aria-hidden="true">CONTINUE TO DASHBOARD</button></div>
+<div class="card hidden" id="paymentSuccessPanel" style="margin-top:16px;border:2px solid #b8860b;background:#fffaf0">
+ <h3 style="margin-top:0">Payment Successful</h3>
+ <div class="small" id="paymentSuccessDetails"></div>
+ <p style="font-weight:700;margin:12px 0 0">Your payment is successfully verified and your question has been submitted.</p>
+ <button class="btn" id="continueAfterPayment" type="button" style="margin-top:12px">CONTINUE TO DASHBOARD</button>
+</div>
+
 </div>
 </section>
 
@@ -1369,8 +1375,7 @@ function openAstroFlow(){openQuestionService();}
 async function returnCurrentAccountAfterAskDenied(){
   try{
     hide("ask-flow");
-    hide("paymentSuccessPanel");
-    hide("astro-flow");
+        hide("astro-flow");
     hide("appointment");
     hide("contact");
 
@@ -1423,8 +1428,10 @@ async function openQuestionService(){
    * 1) Guest -> Login.
    * 2) Login -> Question Form only (NOT Customer Dashboard).
    * 3) Registration from this login keeps the same protected destination.
-   * 4) After successful payment, the existing Continue to Dashboard button
-   *    opens the Customer Dashboard so the customer can see the question status.
+   * 4) After successful payment, the separate Customer Dashboard section
+   *    opens directly. Dashboard data loads in the background.
+   *    After loading completes, a Payment Successful box is shown at the top.
+   *    There is no old scroll-slide or extra dashboard button.
    */
   if(!currentUser){
     pendingAfterLogin="question";
@@ -1843,54 +1850,115 @@ $("submitQuestionBtn")?.addEventListener("click",async()=>{
      if(vr?.verified){
       const customerPay=vr.customerPaymentId||'Pending';
       const astroPay=null;
-      message("askMsg",'<span class="success"><b>Payment verified successfully.</b><br><span class="payment-help">Your payment is confirmed and your question has been submitted for Admin approval.</span></span>');
-      btn.disabled=false;btn.textContent="PAID ✓";
-      const successPanel=$("paymentSuccessPanel"), successDetails=$("paymentSuccessDetails");
-      if(successDetails) successDetails.innerHTML='<b>Question ID:</b> '+escapeHtml(pendingQuestionId)+'<br><b>Payment ID:</b> '+escapeHtml(customerPay)+'<br><b>Payment Date & Time:</b> '+escapeHtml(smvDateTime(vr.paymentRecordedAt||new Date()))+'<br><b>Status:</b> Waiting for Admin question approval';
+
+      // IMPORTANT: preserve the question ID before clearing it.
+      // Render has completed payment verification and returned the IDs.
+      const completedQuestionId=String(pendingQuestionId||vr.questionId||'').trim();
+
+      // Keep the existing payment-success screen until the customer presses
+      // CONTINUE TO DASHBOARD. This is the only point where dashboard routing
+      // is allowed to begin.
+      try{
+        sessionStorage.setItem('smv_payment_success_box',JSON.stringify({
+          customerUid:(auth?.currentUser?.uid||currentUser?.uid||''),
+          questionId:completedQuestionId,
+          paymentId:String(customerPay||''),
+          createdAt:Date.now()
+        }));
+      }catch(_e){}
+
+      btn.disabled=false;
+      btn.textContent="PAID ✓";
+
+      const successPanel=$("paymentSuccessPanel");
+      const successDetails=$("paymentSuccessDetails");
+      if(successDetails){
+        successDetails.innerHTML=
+          '<b>Question ID:</b> '+escapeHtml(completedQuestionId)+
+          '<br><b>Payment ID:</b> '+escapeHtml(customerPay)+
+          '<br><b>Payment Date & Time:</b> '+escapeHtml(smvDateTime(vr.paymentRecordedAt||new Date()))+
+          '<br><b>Status:</b> Waiting for Admin question approval';
+      }
       if(successPanel) show("paymentSuccessPanel");
-      pendingQuestionId="";
 
-      // PAYMENT SUCCESS -> CUSTOMER DASHBOARD DIRECTLY.
-      // Load the dashboard first so the customer never sees a blank dashboard
-      // while Firebase is still fetching the consultation data.
-      setTimeout(async()=>{
-        dashboardTransitionInProgress=true;
-        try{
-          currentUser=auth?.currentUser||currentUser;
-          hide("paymentSuccessPanel");
-          hide("ask-flow");
-          hide("astro-flow");
-          hide("appointment");
-          hide("contact");
-          hide("register-flow");
-          hide("astro-register-form");
-          show("dashboard");
+      const continueBtn=$("continueAfterPayment");
+      if(continueBtn){
+        continueBtn.disabled=false;
+        continueBtn.textContent="CONTINUE TO DASHBOARD";
+        continueBtn.onclick=async()=>{
+          if(continueBtn.dataset.busy==="1") return;
+          continueBtn.dataset.busy="1";
+          continueBtn.disabled=true;
+          continueBtn.textContent="OPENING CUSTOMER DASHBOARD...";
 
-          const dashBox=$("dashboardContent");
-          if(dashBox) dashBox.innerHTML='<div class="card"><h3>Customer Dashboard</h3><p class="small">Payment confirmed. Loading your dashboard...</p></div>';
+          dashboardTransitionInProgress=true;
+          try{
+            currentUser=auth?.currentUser||currentUser;
+            if(!currentUser) throw new Error("Customer login session expired. Please login again.");
 
-          await loadDashboard();
-          go("dashboard");
-        }catch(dashErr){
-          console.error("Customer dashboard open after payment failed:",dashErr);
-          const dashBox=$("dashboardContent");
-          if(dashBox) dashBox.innerHTML='<div class="card error"><b>Payment was successful.</b><p class="small">Your question has been saved. The dashboard could not be loaded right now.</p><button class="btn gray" id="paymentDashboardRetry">OPEN CUSTOMER DASHBOARD</button></div>';
-          $("paymentDashboardRetry")?.addEventListener("click",async()=>{
-            dashboardTransitionInProgress=true;
-            try{
-              currentUser=auth?.currentUser||currentUser;
-              await loadDashboard();
-              go("dashboard");
-            }finally{
-              dashboardTransitionInProgress=false;
+            // FINAL DASHBOARD ROUTE:
+            // 1. Stop the old payment section.
+            // 2. Hide every other app section.
+            // 3. Show Customer Dashboard immediately.
+            // 4. Do NOT call go(), scrollIntoView(), smooth scrolling, or
+            //    wait for loadDashboard() before opening the dashboard.
+            hide("paymentSuccessPanel");
+            ["home","quickActions","approved-astrologers","faq","ask-flow","astro-flow","appointment","contact","register-flow","astro-register-form","admin"].forEach(id=>hide(id));
+            hide("adminLink");
+            show("dashboard");
+            show("dashLink");
+
+            // Replace the old dashboard contents with a loading state first.
+            // This prevents the page from looking stuck/blank while Firestore
+            // data is being read.
+            const dashBox=$("dashboardContent");
+            if(!dashBox) throw new Error("Customer Dashboard section is missing.");
+            dashBox.innerHTML='<div class="card"><h3>Customer Dashboard</h3><p class="small">Payment confirmed. Loading your dashboard...</p></div>';
+
+            // No navigation helper here. The old smooth-scroll path is fully
+            // bypassed. This is a section switch, not a scroll-to-dashboard.
+            document.documentElement.scrollTop=0;
+            document.body.scrollTop=0;
+
+            // Start the dashboard load AFTER it is already visible.
+            // Do not block the route on Firebase/notification loading.
+            Promise.resolve().then(async()=>{
+              try{
+                await loadDashboard();
+                document.documentElement.scrollTop=0;
+                document.body.scrollTop=0;
+              }catch(loadErr){
+                console.error("Customer dashboard load failed:",loadErr);
+              }
+            });
+          }catch(dashErr){
+            console.error("Customer dashboard route failed:",dashErr);
+            const dashBox=$("dashboardContent");
+            if(dashBox){
+              dashBox.innerHTML='<div class="card error"><b>Payment was successful.</b><p class="small">Your question and payment were saved. Please open Customer Dashboard again.</p><button class="btn gray" id="paymentDashboardRetry" type="button">OPEN CUSTOMER DASHBOARD</button></div>';
+              $("paymentDashboardRetry")?.addEventListener("click",async()=>{
+                currentUser=auth?.currentUser||currentUser;
+                if(!currentUser) return;
+                hide("ask-flow");
+                show("dashboard");
+                document.documentElement.scrollTop=0;
+                document.body.scrollTop=0;
+                try{await loadDashboard();}catch(e){console.error(e);}
+              });
             }
-          });
-          show("dashboard");
-          go("dashboard");
-        }finally{
-          dashboardTransitionInProgress=false;
-        }
-      },300);
+            show("dashboard");
+          }finally{
+            dashboardTransitionInProgress=false;
+            continueBtn.dataset.busy="0";
+            continueBtn.disabled=false;
+            continueBtn.textContent="CONTINUE TO DASHBOARD";
+          }
+        };
+      }
+
+      // Clear the working question ID only AFTER the success panel and
+      // Continue-to-Dashboard handler have captured it.
+      pendingQuestionId="";
      }else{throw new Error("Payment verification failed.");}
     }catch(err){const detail=err?.message||String(err)||"Payment verification failed.";message("askMsg",'<span class="error"><b>Payment confirmation is pending.</b><br><span class="payment-help">Do not make another payment if your bank/account was already debited. Please try verification again. If the payment was not completed, you can retry payment safely.</span><br><small>'+escapeHtml(detail)+'</small></span>');btn.disabled=false;btn.textContent="RETRY VERIFICATION";}
    },
@@ -1982,6 +2050,38 @@ async function renderNotifications(targetId){
     box.innerHTML=docs.length?docs.map(d=>{const n=d.data();return `<div style="padding:9px 0;border-bottom:1px solid #eee"><b>${escapeHtml(n.title||'Notification')}</b><div class="small">${escapeHtml(n.message||'')}</div></div>`}).join(''):'<div class="empty">No notifications.</div>';
   }catch(e){box.innerHTML='<div class="empty">Notifications unavailable.</div>';}
 }
+function showPaymentSuccessDashboardBox(){
+  const box=$('dashboardContent');
+  if(!box) return;
+
+  let info=null;
+  try{
+    info=JSON.parse(sessionStorage.getItem('smv_payment_success_box')||'null');
+  }catch(_e){ info=null; }
+
+  if(!info || info.customerUid!==currentUser?.uid) return;
+
+  document.getElementById('paymentSuccessDashboardBox')?.remove();
+
+  const safeQuestionId=escapeHtml(info.questionId||'');
+  const card=document.createElement('div');
+  card.id='paymentSuccessDashboardBox';
+  card.className='card';
+  card.style.cssText='margin:0 0 16px 0;border:2px solid #d4af37;background:linear-gradient(180deg,#fffdf5,#fff8dc);box-shadow:0 3px 12px rgba(0,0,0,.08);';
+  card.innerHTML=`<div style="display:flex;align-items:flex-start;gap:12px">
+    <div style="font-size:30px;line-height:1">✓</div>
+    <div style="flex:1;min-width:0">
+      <h3 style="margin:0 0 7px;color:#166534">Payment Successful</h3>
+      <p style="margin:0 0 6px;font-weight:700">Your payment has been successfully verified.</p>
+      <p style="margin:0;font-weight:700">You Will Get Your Answer Within 24 hrs - 48 hrs.</p>
+      ${safeQuestionId?`<p class="small" style="margin:8px 0 0">Question ID: ${safeQuestionId}</p>`:''}
+    </div>
+  </div>`;
+
+  // Insert only after the complete dashboard data has been rendered.
+  box.insertBefore(card,box.firstChild);
+}
+
 async function loadDashboard(){
  const box=$('dashboardContent');
  if(!currentUser){box.innerHTML='<div class="card">Please login to continue.</div>';return;}
@@ -2682,7 +2782,12 @@ ${ad.status === 'rejected' && ad.rejectionReason
    <div class="card" style="margin-top:16px"><h3>My Consultations</h3>${qs.empty?'<div class="empty">No consultations yet. Start a private consultation to choose an astrologer.</div>':qs.docs.slice(0,20).map(d=>{const q=d.data(); const reviewButton=q.status==='answered'&&!q.reviewed?`<button class="btn" data-review="${d.id}" data-astro="${q.astrologerId}">Rate & Review</button>`:''; const statusMap={awaiting_payment:'Payment Pending',payment_failed:'Payment Failed',paid:'Waiting for Answers',admin_approved:'Waiting for Answers',processing:'Processing',answer_draft:'Processing',admin_review:'Processing',revision_required:'Revision Required',answered:'Answer Ready',admin_rejected:'Question Rejected'}; const astroName=q.astrologerName||'Selected Astrologer'; const statusText=q.status==='paid'||q.status==='admin_approved'?`Waiting for Answers — ${astroName}`:q.status==='processing'||q.status==='answer_draft'||q.status==='admin_review'?`Processing — ${astroName} answer received and under Admin review`:q.status==='answered'?'Answer Ready':(statusMap[q.status]||q.status||'Processing'); const steps=[['Payment Received',['paid','admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Question Approved',['admin_approved','processing','answer_draft','admin_review','answered'].includes(q.status)],['Astrologer Answer Submitted',['processing','answer_draft','admin_review','answered'].includes(q.status)],['Admin Approval',['answered'].includes(q.status)],['Answer Ready',['answered'].includes(q.status)]]; const timeline=`<div class="timeline">${steps.map(x=>`<div class="timeline-step ${x[1]?'done':''}"><span>${x[1]?'✓':'○'}</span>${x[0]}</div>`).join('')}</div>`; const paymentLine=q.customerPaymentId?`<div class="small"><b>Customer Payment ID:</b> ${escapeHtml(q.customerPaymentId)} · <b>Payment Date & Time:</b> ${escapeHtml(smvDateTime(q.paidAt||q.paymentUpdatedAt))}</div>`:''; return `<div style="padding:14px 0;border-bottom:1px solid #eee"><b>${escapeHtml(q.question||'Question')}</b><div class="small">Astrologer: <b>${escapeHtml(astroName)}</b> · Status: <b>${escapeHtml(statusText)}</b></div>${paymentLine}${timeline}${q.answer&&q.status==='answered'?`<div class="card" style="margin-top:10px"><b>${q.answerAuthorType==='admin'||q.adminAnswered?'Admin Answer':'Astrologer Answer'}</b><p style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word">${escapeHtml(q.answer)}</p>${q.answerAuthorType==='admin'||q.adminAnswered?'<p class="small success"><b>Answered directly by SMV ASTRO Admin.</b></p>':''}</div>`:''}${reviewButton}</div>`}).join('')}</div>`;
    document.querySelectorAll('[data-review]').forEach(b=>b.onclick=()=>openReview(b.dataset.review,b.dataset.astro));
   }
-  const note=document.createElement('div'); note.className='card'; note.style.marginTop='16px'; note.innerHTML='<h3>Notifications</h3><div id="userNotifications"><div class="small">Loading...</div></div>'; box.appendChild(note); await renderNotifications('userNotifications'); show('dashboard'); touchSession(); armIdleTimer();
+  const note=document.createElement('div'); note.className='card'; note.style.marginTop='16px'; note.innerHTML='<h3>Notifications</h3><div id="userNotifications"><div class="small">Loading...</div></div>'; box.appendChild(note); await renderNotifications('userNotifications');
+
+   // Show Payment Successful only AFTER all Customer Dashboard data is loaded.
+   showPaymentSuccessDashboardBox();
+
+   show('dashboard'); touchSession(); armIdleTimer();
    delete box.dataset.smvDashboardLoading;
  }catch(e){
    delete box.dataset.smvDashboardLoading;
