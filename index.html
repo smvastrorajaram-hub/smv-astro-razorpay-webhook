@@ -449,24 +449,6 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
   }
 }
 
-/* ASTROLOGER DASHBOARD: horizontal summary cards on desktop only.
-   Customer dashboard and mobile layout are intentionally untouched. */
-@media (min-width:761px){
-  #dashboardContent .astro-dashboard-summary{
-    display:grid!important;
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    gap:16px!important;
-    width:100%!important;
-    align-items:stretch!important;
-  }
-  #dashboardContent .astro-dashboard-summary > .card{
-    min-width:0!important;
-    width:100%!important;
-    margin:0!important;
-    box-sizing:border-box!important;
-  }
-}
-
 /* Profile & Reviews opens as a clean, centered premium dialog. */
 .profile-dialog{text-align:center;padding:4px 0 0;}
 .profile-dialog .profile-photo{width:104px;height:104px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);box-shadow:0 6px 18px rgba(184,134,11,.18);margin:4px auto 10px;display:block;}
@@ -524,7 +506,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 #dashboard.hidden,#admin.hidden,#register-flow.hidden,#astro-register-form.hidden,
 #astro-flow.hidden,#ask-flow.hidden,#appointment.hidden,#contact.hidden{display:none!important}
 
-#langSelect{margin-left:2px;min-height:42px;padding:9px 12px;border:1px solid #d8b56a;border-radius:10px;background:linear-gradient(180deg,#fffaf0,#f8e8bc);color:#3b236d;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(170,120,20,.14)}
+#langSelect{display:none!important;margin-left:2px;min-height:42px;padding:9px 12px;border:1px solid #d8b56a;border-radius:10px;background:linear-gradient(180deg,#fffaf0,#f8e8bc);color:#3b236d;font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(170,120,20,.14)}
 @media(max-width:760px){#langSelect{min-height:44px;padding:9px 8px;font-size:12px}}
 </style><style id="smv-register-header-style">
 #registerNav{margin-left:2px}
@@ -556,7 +538,535 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
   /* Preserve existing mobile layouts. */
   #astroCards, #dashboardContent > .grid, #adminSummary{width:100%;min-width:0;}
 }
-</style></head>
+</style>
+<style id="smv-final-desktop-layout-lock">
+/* FINAL LOCK: desktop only. Do not affect the existing mobile layout. */
+@media (min-width:761px){
+  #astroCards{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:16px!important;
+    align-items:stretch!important;
+    width:100%!important;
+  }
+  #astroCards .astro-public-card{
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  #astroCards .astro-public-card .action-row{margin-top:auto!important;}
+
+  #dashboardContent .astro-dashboard-summary{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:16px!important;
+    width:100%!important;
+    align-items:stretch!important;
+  }
+  #dashboardContent .astro-dashboard-summary>.card{
+    width:100%!important;
+    min-width:0!important;
+  }
+
+  #adminSummary.admin-summary-grid{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:16px!important;
+    width:100%!important;
+    align-items:stretch!important;
+  }
+  #adminSummary.admin-summary-grid>.stat{
+    width:100%!important;
+    min-width:0!important;
+  }
+}
+</style>
+
+<style id="smv-final-astro-dashboard-desktop-layout">
+/* FINAL ASTROLOGER DASHBOARD FIX
+   Desktop only. Mobile/tablet layout is intentionally unchanged. */
+@media (min-width:761px){
+  /* ASTROLOGER DASHBOARD: desktop = 3 cards in one horizontal row */
+  #dashboardContent .astro-dashboard-summary{
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    align-items:stretch!important;
+    justify-content:stretch!important;
+    gap:18px!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+  }
+
+  #dashboardContent .astro-dashboard-summary > .card{
+    display:flex!important;
+    flex:1 1 0!important;
+    flex-direction:column!important;
+    box-sizing:border-box!important;
+    width:0!important;
+    min-width:0!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+
+  #dashboardContent .astro-dashboard-summary > .card .action-row{
+    margin-top:auto!important;
+  }
+}
+
+@media (max-width:900px){
+  /* Mobile/tablet: keep the three astrologer summary cards vertical. */
+}
+</style>
+
+<style id="smv-astro-dashboard-final-responsive-fix">
+/* ASTROLOGER DASHBOARD ONLY — three cards always fit in one horizontal row. */
+#dashboardContent .astro-dashboard-summary{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  grid-auto-flow:row!important;
+  width:100%!important;
+  max-width:100%!important;
+  gap:10px!important;
+  align-items:stretch!important;
+  box-sizing:border-box!important;
+}
+#dashboardContent .astro-dashboard-summary > .card{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+#dashboardContent .astro-dashboard-summary > .card h3{
+  font-size:clamp(11px,2vw,18px)!important;
+  margin:4px 0 7px!important;
+  line-height:1.25!important;
+}
+#dashboardContent .astro-dashboard-summary > .card p{
+  margin:5px 0!important;
+  line-height:1.3!important;
+  font-size:clamp(8px,1.45vw,13px)!important;
+}
+#dashboardContent .astro-dashboard-summary > .card .small{
+  font-size:clamp(7px,1.2vw,11px)!important;
+  line-height:1.3!important;
+  overflow-wrap:anywhere!important;
+}
+#dashboardContent .astro-dashboard-summary > .card img{
+  width:clamp(42px,7vw,64px)!important;
+  height:clamp(42px,7vw,64px)!important;
+  margin:0 0 4px!important;
+}
+#dashboardContent .astro-dashboard-summary > .card .badge{
+  font-size:clamp(6px,1vw,9px)!important;
+  padding:2px 5px!important;
+}
+#dashboardContent .astro-dashboard-summary > .card .action-row{
+  margin-top:6px!important;
+}
+#dashboardContent .astro-dashboard-summary > .card .btn{
+  padding:6px 7px!important;
+  font-size:clamp(7px,1.1vw,12px)!important;
+  max-width:100%!important;
+}
+@media (max-width:900px){
+  #dashboardContent .astro-dashboard-summary{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:7px!important;
+  }
+  #dashboardContent .astro-dashboard-summary > .card{
+    padding:8px!important;
+  }
+}
+@media (max-width:380px){
+  #dashboardContent .astro-dashboard-summary{gap:5px!important;}
+  #dashboardContent .astro-dashboard-summary > .card{padding:6px!important;}
+}
+</style>
+
+<style id="smv-astro-summary-final-layout">
+/* FINAL: Astrologer Dashboard summary cards only.
+   Phone/tablet = vertical. Desktop = one horizontal row. */
+#dashboardContent .astro-dashboard-summary{
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+
+@media (max-width:760px){
+  #dashboardContent .astro-dashboard-summary{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-auto-flow:row!important;
+    gap:10px!important;
+  }
+  #dashboardContent .astro-dashboard-summary > .card{
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+  }
+}
+
+@media (min-width:761px){
+  #dashboardContent .astro-dashboard-summary{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-auto-flow:row!important;
+    gap:16px!important;
+    align-items:stretch!important;
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+  #dashboardContent .astro-dashboard-summary > .card{
+    display:flex!important;
+    flex-direction:column!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    margin:0!important;
+    box-sizing:border-box!important;
+  }
+}
+
+
+</style>
+
+<style id="smv-astro-summary-final-correct">
+/* SMV ASTRO — FINAL RESPONSIVE RULE
+   Mobile/tablet: normal vertical cards.
+   Desktop: exactly 3 horizontal cards.
+   Public Question Inbox remains full width. */
+#dashboardContent .astro-dashboard-summary{
+  display:grid !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  gap:16px !important;
+}
+#dashboardContent .astro-dashboard-summary > .card{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  margin:0 !important;
+}
+
+/* MOBILE / TABLET */
+@media (max-width:767px){
+  #dashboardContent .astro-dashboard-summary{
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+  }
+  #dashboardContent .astro-dashboard-summary > .card{
+    width:100% !important;
+    padding:17px 15px !important;
+  }
+}
+
+/* DESKTOP ONLY */
+@media (min-width:768px){
+  #dashboardContent .astro-dashboard-summary{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:16px !important;
+    align-items:stretch !important;
+  }
+  #dashboardContent .astro-dashboard-summary > .card{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+
+/* Public Question Inbox: same content width, one full-width card */
+#dashboardContent .astro-dashboard-summary + .card{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+</style>
+
+<style id="smv-normal-mobile-all-sections-final">
+/* SMV ASTRO — NORMAL MOBILE VIEW FOR ALL SECTIONS EXCEPT THE 3 ASTRO SUMMARY CARDS
+   Mobile/tablet only. Desktop layout is untouched. */
+@media (max-width: 767px){
+  html,body{overflow-x:hidden!important}
+  .container{width:100%!important;max-width:100%!important;padding-left:10px!important;padding-right:10px!important;box-sizing:border-box!important}
+
+  /* Normal dashboard heading/notice */
+  #dashboard{margin-top:24px!important}
+  #dashboardTitle{font-size:24px!important;line-height:1.25!important;margin:0 0 8px!important}
+  #sessionNotice{font-size:12px!important;line-height:1.45!important}
+
+  /* IMPORTANT: leave .astro-dashboard-summary itself to its existing mobile layout. */
+  #dashboardContent>.card{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    box-sizing:border-box!important;margin:0 0 12px!important;
+    padding:14px 12px!important;border-radius:12px!important;
+    overflow:hidden!important;
+  }
+  #dashboardContent>.card h2{font-size:20px!important;line-height:1.3!important;margin:0 0 8px!important}
+  #dashboardContent>.card h3{font-size:17px!important;line-height:1.3!important;margin:4px 0 8px!important}
+  #dashboardContent>.card p{font-size:13px!important;line-height:1.55!important;margin:6px 0!important}
+  #dashboardContent>.card .small{font-size:11px!important;line-height:1.45!important}
+  #dashboardContent>.card .empty{padding:18px 8px!important;font-size:13px!important}
+  #dashboardContent>.card .card{
+    padding:11px!important;margin-top:9px!important;border-radius:10px!important;
+  }
+  #dashboardContent>.card .card h3{font-size:16px!important}
+  #dashboardContent>.card .card p{font-size:13px!important;line-height:1.5!important}
+  #dashboardContent>.card .action-row{gap:7px!important;flex-wrap:wrap!important}
+  #dashboardContent>.card .action-row .btn{width:auto!important;min-height:40px!important;padding:9px 12px!important;font-size:12px!important}
+
+  /* Astrologer public/profile/question cards outside the dashboard */
+  #astroCards{width:100%!important;max-width:100%!important;grid-template-columns:1fr!important;gap:10px!important}
+  #astroCards .astro-public-card{
+    width:100%!important;min-width:0!important;box-sizing:border-box!important;
+    padding:12px!important;margin:0!important;border-radius:12px!important;
+  }
+  #astroCards .astro-public-card h3{font-size:17px!important;line-height:1.3!important}
+  #astroCards .astro-public-card p{font-size:12px!important;line-height:1.45!important}
+  #astroCards .astro-public-card img{width:56px!important;height:56px!important}
+
+  /* Admin dashboard — normal mobile sizing */
+  #admin{margin-top:24px!important}
+  #admin>.card{
+    width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+    padding:14px 12px!important;margin:0 0 12px!important;border-radius:12px!important;overflow:hidden!important;
+  }
+  #admin h2{font-size:21px!important;line-height:1.3!important}
+  #admin h3{font-size:17px!important;line-height:1.3!important}
+  #admin p,#admin label{font-size:13px!important;line-height:1.5!important}
+  #admin .small{font-size:11px!important;line-height:1.45!important}
+  #adminSummary{grid-template-columns:1fr!important;gap:8px!important;width:100%!important}
+  #adminSummary .stat{width:100%!important;min-width:0!important;padding:12px!important;box-sizing:border-box!important}
+  #adminSummary .stat b{font-size:22px!important}
+  #admin table{font-size:11px!important;max-width:100%!important}
+
+  /* Question form */
+  #ask-flow{margin-top:20px!important}
+  #ask-flow>.card{
+    width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+    padding:14px 12px!important;border-radius:12px!important;overflow:hidden!important;
+  }
+  #ask-flow h2{font-size:22px!important;line-height:1.3!important}
+  #ask-flow h3{font-size:17px!important;line-height:1.3!important}
+  #ask-flow p,#ask-flow label{font-size:13px!important;line-height:1.5!important}
+
+  /* Contact form */
+  #contact{
+    width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+    margin:20px 0!important;padding:16px 12px!important;border-radius:12px!important;
+  }
+  #contact h2{font-size:22px!important;line-height:1.3!important}
+  #contact p,#contact label{font-size:13px!important;line-height:1.5!important}
+
+  /* All registration/auth screens */
+  #register-flow,#astro-register-form{margin-top:20px!important}
+  #register-flow .container{padding:0 10px!important}
+  #register-flow .card,#astro-register-form .card{
+    width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+    padding:15px 12px!important;border-radius:12px!important;overflow:hidden!important;
+  }
+  #register-flow h2,#astro-register-form h2{font-size:22px!important;line-height:1.3!important}
+  #register-flow h3,#astro-register-form h3{font-size:17px!important;line-height:1.3!important}
+  #register-flow p,#astro-register-form p{font-size:13px!important;line-height:1.5!important}
+  #register-flow .registration-options{grid-template-columns:1fr!important;gap:10px!important}
+  #register-flow .registration-option{min-height:0!important;padding:16px 12px!important;border-radius:12px!important}
+  #register-flow .registration-option h3{font-size:19px!important}
+  #register-flow .registration-option p{font-size:12px!important;line-height:1.5!important;margin-bottom:10px!important}
+  #register-flow .registration-icon{width:58px!important;height:58px!important}
+
+  /* Login / customer registration / authentication panels */
+  .auth-shell{padding:0!important}
+  .auth-hero{margin-bottom:10px!important}
+  .auth-hero-icon{width:50px!important;height:50px!important;font-size:22px!important}
+  .auth-hero h2{font-size:23px!important;line-height:1.3!important}
+  .auth-hero p{font-size:12px!important;line-height:1.45!important}
+  .auth-tabs{gap:5px!important;margin:10px 0!important}
+  .auth-tabs .btn{min-height:40px!important;padding:8px 6px!important;font-size:12px!important}
+  .auth-field-label{font-size:11px!important;margin:6px 2px 3px!important}
+  .auth-field,input,select,textarea{
+    min-height:42px!important;padding:9px 11px!important;font-size:14px!important;
+    box-sizing:border-box!important;max-width:100%!important;
+  }
+  textarea{min-height:90px!important}
+  .auth-submit,.auth-secondary{min-height:42px!important;font-size:13px!important;padding:9px 12px!important}
+
+  /* General mobile forms/buttons */
+  form{max-width:100%!important}
+  form input,form select,form textarea{width:100%;box-sizing:border-box}
+  .btn{min-height:40px!important;padding:9px 12px!important;font-size:13px!important}
+  .modalbox{width:calc(100vw - 24px)!important;max-width:calc(100vw - 24px)!important;padding:14px 12px!important;border-radius:12px!important}
+  .modalbox .btn{min-height:40px!important}
+}
+</style>
+
+<style id="smv-final-normal-mobile-only">
+/* SMV ASTRO FINAL MOBILE NORMALIZATION
+   Mobile/tablet only. Desktop styles are intentionally untouched. */
+@media (max-width: 767px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden!important}
+  body{font-size:14px!important;line-height:1.45!important}
+  .container{width:100%!important;max-width:100%!important;margin:0 auto!important;padding:14px 10px!important}
+  section{width:100%!important;max-width:100%!important;min-width:0!important}
+
+  /* Header / navigation: normal compact mobile sizing */
+  .nav{width:100%!important;max-width:100%!important;padding:8px 10px!important;gap:8px!important}
+  .brand{gap:7px!important;max-width:55%!important}
+  .brand-logo{width:38px!important;height:38px!important}
+  .logo{font-size:17px!important;letter-spacing:.6px!important}
+  .brand-sub{font-size:7px!important;letter-spacing:1px!important;margin-top:2px!important}
+  nav{gap:4px!important}
+  nav a{font-size:11px!important;padding:7px 6px!important}
+  nav .btn,.nav .btn{min-height:38px!important;padding:8px 10px!important;font-size:11px!important}
+  #langSelect{min-height:38px!important;padding:7px 8px!important;font-size:11px!important;max-width:120px!important}
+
+  /* Normal mobile headings */
+  h1{font-size:30px!important;line-height:1.2!important}
+  h2{font-size:22px!important;line-height:1.3!important}
+  h3{font-size:18px!important;line-height:1.3!important}
+  h4{font-size:16px!important;line-height:1.3!important}
+  section>h2{font-size:22px!important;line-height:1.3!important}
+  .hero{padding:28px 8px 24px!important}
+  .hero h1{font-size:32px!important;line-height:1.18!important;margin:10px 0 12px!important}
+  .hero p{font-size:14px!important;line-height:1.6!important}
+
+  /* Normal cards everywhere */
+  .card{width:100%!important;max-width:100%!important;min-width:0!important;padding:14px!important;border-radius:12px!important;box-sizing:border-box!important}
+  .card h2,.card h3,.card h4{margin-top:4px!important}
+  .card p{font-size:13px!important;line-height:1.5!important}
+  .small{font-size:11px!important;line-height:1.45!important}
+  .empty{padding:18px 8px!important;font-size:13px!important}
+
+  /* ASTROLOGER DASHBOARD — first 3 boxes normal vertical mobile only */
+  #dashboardContent .astro-dashboard-summary{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+  }
+  #dashboardContent .astro-dashboard-summary>.card{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:14px!important;
+    box-sizing:border-box!important;
+  }
+  #dashboardContent .astro-dashboard-summary>.card h3{font-size:17px!important}
+  #dashboardContent .astro-dashboard-summary>.card p{font-size:13px!important}
+  #dashboardContent .astro-dashboard-summary>.card .small{font-size:11px!important}
+  #dashboardContent .astro-dashboard-summary>.card img{max-width:56px!important;max-height:56px!important}
+  #dashboardContent .astro-dashboard-summary>.card .btn{font-size:12px!important;min-height:40px!important;padding:9px 12px!important}
+
+  /* All other Astrologer dashboard sections — normal single-column mobile */
+  #dashboardContent{width:100%!important;max-width:100%!important;min-width:0!important}
+  #dashboardContent>.card,
+  #dashboardContent .astro-dashboard-summary + .card{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    margin:0 0 10px!important;padding:14px!important;box-sizing:border-box!important;
+  }
+  #dashboardContent>.grid:not(.astro-dashboard-summary){
+    display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important;
+  }
+  #dashboardContent>.grid:not(.astro-dashboard-summary)>.card{width:100%!important;min-width:0!important}
+
+  /* Admin dashboard */
+  #admin{width:100%!important;max-width:100%!important;margin-top:18px!important}
+  #admin>.card{width:100%!important;max-width:100%!important;padding:14px!important;margin:0 0 10px!important}
+  #adminSummary{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;width:100%!important}
+  #adminSummary .stat{width:100%!important;min-width:0!important;padding:12px!important}
+  #adminSummary .stat b{font-size:22px!important}
+  #pendingAstros,#adminAnswers,#adminReviews,#adminQuestions{width:100%!important;max-width:100%!important}
+  #pendingAstros>div,#adminAnswers>div,#adminReviews>div,#adminQuestions>div{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+
+  /* Astrologer list / question cards */
+  #astroCards{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important;max-width:100%!important}
+  #astroCards .astro-public-card{width:100%!important;min-width:0!important;padding:12px!important;margin:0!important;box-sizing:border-box!important}
+  #astroCards .astro-public-card h3{font-size:17px!important}
+  #astroCards .astro-public-card p{font-size:12px!important;line-height:1.45!important}
+  #astroCards .astro-public-card img{width:56px!important;height:56px!important}
+
+  /* Question form / answer form / contact */
+  #ask-flow,#appointment,#contact{width:100%!important;max-width:100%!important;min-width:0!important;margin-top:18px!important}
+  #ask-flow>.card,#appointment>.card,#contact>.card{width:100%!important;max-width:100%!important;padding:14px!important;box-sizing:border-box!important}
+  #ask-flow h2,#appointment h2,#contact h2{font-size:22px!important}
+  #ask-flow h3,#appointment h3,#contact h3{font-size:17px!important}
+  #ask-flow p,#appointment p,#contact p,#ask-flow label,#appointment label,#contact label{font-size:13px!important;line-height:1.5!important}
+
+  /* Registration / login / auth forms */
+  #register-flow,#astro-register-form{width:100%!important;max-width:100%!important;margin-top:18px!important}
+  #register-flow .card,#astro-register-form .card{width:100%!important;max-width:100%!important;padding:14px!important;box-sizing:border-box!important}
+  #register-flow .registration-options{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
+  #register-flow .registration-option{width:100%!important;min-height:0!important;padding:14px 12px!important}
+  #register-flow .registration-option h3{font-size:18px!important}
+  #register-flow .registration-option p{font-size:12px!important;line-height:1.5!important}
+
+  .auth-shell{width:100%!important;padding:0!important}
+  .auth-hero h2{font-size:24px!important}
+  .auth-hero p{font-size:12px!important}
+  .auth-tabs{grid-template-columns:1fr!important;gap:6px!important}
+  .auth-tabs .btn{min-height:42px!important;font-size:12px!important}
+
+  /* Normal mobile controls */
+  input,select,textarea{width:100%!important;max-width:100%!important;min-width:0!important;min-height:42px!important;padding:9px 11px!important;font-size:14px!important;box-sizing:border-box!important}
+  textarea{min-height:90px!important}
+  .btn{min-height:40px!important;padding:9px 12px!important;font-size:12px!important;max-width:100%!important}
+  .action-row{gap:7px!important;flex-wrap:wrap!important}
+  .action-row .btn{min-height:40px!important}
+
+  /* Homepage/feature/quick-action sections */
+  .feature-section{width:100%!important;max-width:100%!important;margin:22px auto!important;padding:0 10px!important}
+  .feature-shell{padding:14px!important}
+  .feature-grid{grid-template-columns:1fr!important}
+  .quick-actions{width:100%!important;max-width:100%!important;grid-template-columns:1fr!important;gap:10px!important;margin:16px 0!important;padding:0!important}
+  .quick-action{width:100%!important;min-height:0!important;padding:18px 14px!important}
+  .quick-action-title{font-size:18px!important}
+  .quick-action-text{font-size:13px!important;line-height:1.5!important}
+  .quick-action .btn{width:100%!important;min-height:42px!important}
+
+  /* Tables and long text stay inside the mobile viewport */
+  table{width:100%!important;max-width:100%!important;font-size:11px!important;display:block!important;overflow-x:auto!important}
+  img,video,iframe{max-width:100%!important}
+  .modalbox{width:calc(100vw - 20px)!important;max-width:calc(100vw - 20px)!important;padding:14px!important}
+}
+</style>
+
+<style id="smv-safe-ui-polish">
+/* SAFE UI POLISH — mobile/tablet only. Desktop is intentionally untouched. */
+@media (max-width:767px){
+  #dashboardContent textarea[id^="ans_"]{min-height:360px!important;height:360px!important;line-height:1.65!important;padding:14px!important;resize:vertical!important;overflow-y:auto!important;}
+  #adminAnswers textarea,#adminAnswers textarea[id^="ans_"],#adminAnswers textarea[id^="answer_"],textarea[id^="boardAdminAnswer_"]{min-height:300px!important;height:300px!important;line-height:1.65!important;padding:14px!important;resize:vertical!important;overflow-y:auto!important;}
+  #dashboardContent>.card,#adminDashboard>.card{margin-top:14px!important;padding:14px!important;}
+  #dashboardContent .card h3,#adminDashboard .card h3{line-height:1.35!important;margin-top:0!important;}
+  #dashboardContent .action-row,#adminDashboard .action-row{width:100%!important;gap:8px!important;}
+  #dashboardContent .action-row .btn,#adminDashboard .action-row .btn{flex:1 1 140px!important;min-width:0!important;}
+  #dashboardContent .card,#adminDashboard .card,#adminAnswers>div,#adminQuestions>div{overflow-wrap:anywhere!important;word-break:break-word!important;max-width:100%!important;}
+  #dashboardContent p,#adminDashboard p,#adminAnswers p,#adminQuestions p{overflow-wrap:anywhere!important;word-break:break-word!important;}
+  #dashboardContent .grid,#adminDashboard .grid{grid-template-columns:1fr!important;gap:10px!important;}
+}
+@media (max-width:380px){
+  #dashboardContent textarea[id^="ans_"]{min-height:320px!important;height:320px!important;}
+  #adminAnswers textarea,textarea[id^="boardAdminAnswer_"]{min-height:270px!important;height:270px!important;}
+  #dashboardContent>.card,#adminDashboard>.card{padding:12px!important;}
+}
+</style>
+<style id="smv-payment-ux">
+#askMsg .payment-help{margin-top:8px;line-height:1.55}
+#askMsg .payment-help b{display:block;margin-bottom:4px}
+</style>
+</head>
 <body>
 <header>
 <div class="nav">
@@ -728,7 +1238,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 </form>
 </section>
 <section class="hidden" id="admin" style="margin-top:45px">
-<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0">Admin Dashboard</h2><p class="small" style="margin:6px 0 0">SMV ASTRO administration and approval center</p></div><button class="btn gray" id="adminCloseBtn" type="button">← Home</button></div><div id="adminDataLoadMsg" style="margin-top:12px"></div><div id="adminSummary" class="stats-grid" style="margin-top:16px"></div></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0">Admin Dashboard</h2><p class="small" style="margin:6px 0 0">SMV ASTRO administration and approval center</p></div><button class="btn gray" id="adminCloseBtn" type="button">← Home</button></div><div id="adminDataLoadMsg" style="margin-top:12px"></div><div id="adminSummary" class="stats-grid admin-summary-grid" style="margin-top:16px"></div></div>
 <div class="card" style="margin-top:16px"><h3>Public Question Approval</h3><div id="adminPendingQuestions"><div class="empty">Loading questions...</div></div></div>
 <div class="card" style="margin-top:16px"><h3>Astrologer Applications</h3><div id="pendingAstros"><div class="empty">Loading applications...</div></div></div>
 <div class="card" style="margin-top:16px"><h3>Answers Awaiting Approval</h3><div id="adminAnswers"><div class="empty">Loading answers...</div></div></div>
@@ -856,23 +1366,73 @@ function openRegister(){hidePrimarySections("register-flow");show("register-flow
 function openAstroRegister(){hidePrimarySections("astro-register-form");show("astro-register-form");go("astro-register-form");}
 function openAstroFlow(){openQuestionService();}
 async function openQuestionService(){
-  if(!currentUser){pendingAfterLogin="question";openAuth("login");return;}
-  const questionProfile=await getUserProfile(currentUser.uid);
-  const questionRole=String(questionProfile?.role||"").toLowerCase();
-  if(questionRole!=="customer"||!currentUser.emailVerified){await logoutToHome();openAuth("login");return;}
+  /*
+   * ASK NOW destination:
+   * 1) Guest -> Login.
+   * 2) Login -> Question Form only (NOT Customer Dashboard).
+   * 3) Registration from this login keeps the same protected destination.
+   * 4) After successful payment, the existing Continue to Dashboard button
+   *    opens the Customer Dashboard so the customer can see the question status.
+   */
+  if(!currentUser){
+    pendingAfterLogin="question";
+    openAuth("login");
+    return;
+  }
 
-  // ASK NOW flow: keep the Customer Dashboard visible and open the Question Form
-  // below it. Normal Login continues to use the dashboard-only path in submitAuth().
-  hidePrimarySections("dashboard");
-  show("dashboard");
-  hide("home");hide("quickActions");hide("approved-astrologers");hide("faq");
-  hide("register-flow");hide("astro-register-form");hide("astro-flow");hide("appointment");hide("contact");hide("admin");
+  await currentUser.reload();
+  const freshUser=auth?.currentUser||currentUser;
+  if(!freshUser){
+    currentUser=null;
+    pendingAfterLogin="question";
+    openAuth("login");
+    return;
+  }
+
+  const questionProfile=await getUserProfile(freshUser.uid);
+  const questionRole=String(questionProfile?.role||"").toLowerCase();
+
+  if(questionRole!=="customer"){
+    smvNotice("Customer Login Required","Please login with a Customer account to ask an astrology question.","!");
+    return;
+  }
+
+  if(!freshUser.emailVerified){
+    await signOut(auth);
+    currentUser=null;
+    pendingAfterLogin="question";
+    openAuth("login");
+    return;
+  }
+
+  currentUser=freshUser;
+  pendingAfterLogin=null;
+
+  /* IMPORTANT:
+     Do NOT show/load the Customer Dashboard here.
+     Ask Now must open the question form directly. */
+  hideHomeSurface();
+  hide("dashboard");
+  hide("dashboardContent");
+  hide("ask-flow");
+  hide("register-flow");
+  hide("astro-register-form");
+  hide("astro-flow");
+  hide("appointment");
+  hide("contact");
   show("ask-flow");
-  selectedAstro=null;$("askTitle").textContent="Ask Your Question";
+
+  selectedAstro=null;
+  $("askTitle").textContent="Ask Your Question";
   await loadQuestionPrice();
-  $("birthName").value="";$("birthDate").value="";$("birthTime").value="";$("birthPlace").value="";$("birthGender").value="";$("questionText").value="";
+  $("birthName").value="";
+  $("birthDate").value="";
+  $("birthTime").value="";
+  $("birthPlace").value="";
+  $("birthGender").value="";
+  $("questionText").value="";
   message("askMsg","");
-  await loadDashboard();
+  try{window.__smvTranslateCurrentLanguage?.();}catch(_e){}
   go("ask-flow");
 }
   function smvDateTime(value){ try { if(!value) return '—'; const d=value?.toDate ? value.toDate() : (value?.seconds ? new Date(Number(value.seconds)*1000) : new Date(value)); if(Number.isNaN(d.getTime())) return '—'; return d.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}); } catch(e){ return '—'; } }
@@ -936,7 +1496,7 @@ function openAuth(mode="login"){
     <label class="auth-field-label">Password</label><div class="password-wrap"><input class="auth-field" id="password" type="password" placeholder="Minimum 6 characters" autocomplete="${isLogin?"current-password":"new-password"}"><button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">◉</button></div>
     <button class="btn auth-submit" id="submitAuth">${isLogin?"LOGIN":"CREATE ACCOUNT"}</button>
     ${isLogin?`<button class="btn gray auth-secondary" id="forgotAuth">Forgot Password?</button>`:""}
-    <button class="btn gray auth-secondary" id="switchAuth">${isLogin?"Create new customer account":"I already have an account"}</button>
+    <button class="btn gray auth-secondary" id="switchAuth">${isLogin?(pendingAfterLogin==="question"?"New customer? Create account":"Create new customer account"):"I already have an account"}</button>
     <p class="auth-note">Secure authentication powered by Firebase.</p>
   </div>`);
   const passwordToggle=$("passwordToggle");
@@ -1224,7 +1784,7 @@ $("submitQuestionBtn")?.addEventListener("click",async()=>{
      if(vr?.verified){
       const customerPay=vr.customerPaymentId||'Pending';
       const astroPay=null;
-      message("askMsg",'<span class="success"><b>Payment verified successfully.</b></span>');
+      message("askMsg",'<span class="success"><b>Payment verified successfully.</b><br><span class="payment-help">Your payment is confirmed and your question has been submitted for Admin approval.</span></span>');
       btn.disabled=false;btn.textContent="PAID ✓";
       const successPanel=$("paymentSuccessPanel"), successDetails=$("paymentSuccessDetails");
       if(successDetails) successDetails.innerHTML='<b>Question ID:</b> '+escapeHtml(pendingQuestionId)+'<br><b>Payment ID:</b> '+escapeHtml(customerPay)+'<br><b>Payment Date & Time:</b> '+escapeHtml(smvDateTime(vr.paymentRecordedAt||new Date()))+'<br><b>Status:</b> Waiting for Admin question approval';
@@ -1233,12 +1793,12 @@ $("submitQuestionBtn")?.addEventListener("click",async()=>{
       const continueBtn=$("continueAfterPayment");
       if(continueBtn) continueBtn.onclick=async()=>{ hide("paymentSuccessPanel"); hide("ask-flow"); show("dashboard"); await loadDashboard(); go("dashboard"); };
      }else{throw new Error("Payment verification failed.");}
-    }catch(err){const detail=err?.message||String(err)||"Payment verification failed.";message("askMsg",'<span class="error">Payment received, but verification failed.<br><small>'+escapeHtml(detail)+'</small><br>Please retry verification.</span>');btn.disabled=false;btn.textContent="RETRY VERIFICATION";}
+    }catch(err){const detail=err?.message||String(err)||"Payment verification failed.";message("askMsg",'<span class="error"><b>Payment confirmation is pending.</b><br><span class="payment-help">Do not make another payment if your bank/account was already debited. Please try verification again. If the payment was not completed, you can retry payment safely.</span><br><small>'+escapeHtml(detail)+'</small></span>');btn.disabled=false;btn.textContent="RETRY VERIFICATION";}
    },
-   modal:{ondismiss:function(){message("askMsg",'<span class="small">Payment window closed. Your question is still awaiting payment. You can retry.</span>');btn.disabled=false;btn.textContent="RETRY PAYMENT";}}
+   modal:{ondismiss:function(){message("askMsg",'<span class="small"><b>Payment window closed.</b><br><span class="payment-help">Your question remains pending payment. No payment is marked successful by this screen. You can retry when ready.</span></span>');btn.disabled=false;btn.textContent="RETRY PAYMENT";}}
   };
   const rzp=new Razorpay(options);
-  rzp.on("payment.failed",function(resp){message("askMsg",'<span class="error">Payment failed: '+escapeHtml(resp.error?.description||"Please try again.")+'</span>');btn.disabled=false;btn.textContent="RETRY PAYMENT";});
+  rzp.on("payment.failed",function(resp){message("askMsg",'<span class="error"><b>Payment was not completed.</b><br><span class="payment-help">No successful payment is recorded by this step. You can safely try the payment again.</span><br><small>'+escapeHtml(resp.error?.description||"Please try again.")+'</small></span>');btn.disabled=false;btn.textContent="RETRY PAYMENT";});
   rzp.open();
  }catch(e){
    const detail=e?.message||e?.details||e?.error?.message||String(e);
@@ -3083,6 +3643,9 @@ if(auth){ onAuthStateChanged(auth,async user=>{
    if(user){
      lastAuthUid=user.uid; window.__SMV_LOGGED_OUT=false; touchSession(); armIdleTimer(); window.dispatchEvent(new Event('smv:auth-user'));
      if(user.uid!==ADMIN_UID && !user.emailVerified){ await signOut(auth); currentUser=null; clearIdleTimer(); lastAuthUid=null; hide("dashboard"); hide("admin"); hide("dashLink"); hide("adminLink"); $("authBtn").textContent="Login"; return; }
+     // ASK NOW login has a protected destination. Let submitAuth() continue
+     // to Customer Dashboard + Question Form instead of this normal dashboard-only path.
+     if(pendingAfterLogin==='question'){ armIdleTimer(); return; }
      const adminUser=await isCurrentAdmin();
      if(adminUser){ hide('dashLink'); show('adminLink'); }
      else {
@@ -3340,27 +3903,7 @@ window.__SMV_APP_READY=true;
       'Customer Dashboard':'வாடிக்கையாளர் டாஷ்போர்டு','Astrologer Dashboard':'ஜோதிடர் டாஷ்போர்டு','Admin Dashboard':'நிர்வாக டாஷ்போர்டு','My Dashboard':'என் டாஷ்போர்டு','Customer':'வாடிக்கையாளர்','ASTROLOGER':'ஜோதிடர்','My Questions':'என் கேள்விகள்','My Consultations':'என் ஆலோசனைகள்','Notifications':'அறிவிப்புகள்','Total Earnings':'மொத்த வருமானம்','Public Question Inbox':'பொது கேள்வி பெட்டி','Questions & Answers':'கேள்விகள் & பதில்கள்','Earnings Ledger':'வருமானப் பதிவு','Status':'நிலை','Approved profile':'அங்கீகரிக்கப்பட்ட சுயவிவரம்','Approved':'அங்கீகரிக்கப்பட்டது','Rejected':'நிராகரிக்கப்பட்டது','Waiting for Admin':'நிர்வாக அனுமதிக்காக காத்திருக்கிறது','Application Status':'விண்ணப்ப நிலை','Pending Admin Approval':'நிர்வாக அனுமதி நிலுவையில்','Waiting for Admin Approval':'நிர்வாக அனுமதிக்காக காத்திருக்கிறது','Refresh Status':'நிலையைப் புதுப்பிக்கவும்','REFRESH STATUS':'நிலையைப் புதுப்பிக்கவும்','Your customer/payment contact details remain private.':'உங்கள் வாடிக்கையாளர்/கட்டண தொடர்பு விவரங்கள் தனிப்பட்டதாக பாதுகாக்கப்படும்.','Change Payment Method':'கட்டண முறையை மாற்றவும்','active question(s)':'செயலில் உள்ள கேள்விகள்','Reach ₹300 to request a withdrawal.':'திரும்பப் பெற ₹300 அடைய வேண்டும்.','You can withdraw':'நீங்கள் தொகையைத் திரும்பப் பெறலாம்','WITHDRAW':'திரும்பப் பெறுக','Minimum withdrawal':'குறைந்தபட்ச திரும்பப் பெறும் தொகை','Commission is credited only after Admin approves the submitted answer.':'சமர்ப்பிக்கப்பட்ட பதிலை நிர்வாகம் அங்கீகரித்த பிறகே கமிஷன் வரவு வைக்கப்படும்.','No questions yet.':'இன்னும் கேள்விகள் இல்லை.','No paid public questions are available right now.':'தற்போது பணம் செலுத்தப்பட்ட பொது கேள்விகள் எதுவும் இல்லை.','CLAIM & ANSWER':'பெற்று பதிலளிக்கவும்','Submit for Admin Approval':'நிர்வாக அனுமதிக்குச் சமர்ப்பிக்கவும்','Resubmit for Admin Approval':'நிர்வாக அனுமதிக்காக மீண்டும் சமர்ப்பிக்கவும்','Birth details':'பிறப்பு விவரங்கள்','Question ID':'கேள்வி ID','Customer paid':'வாடிக்கையாளர் செலுத்தியது','Your commission':'உங்கள் கமிஷன்','Earnings Ledger':'வருமானப் பதிவு',
       'Customers':'வாடிக்கையாளர்கள்','Astrologers':'ஜோதிடர்கள்','Pending':'நிலுவையில்','Questions':'கேள்விகள்','Customer Reviews':'வாடிக்கையாளர் மதிப்புரைகள்','Pending Astrologers':'நிலுவையில் உள்ள ஜோதிடர்கள்','Admin Answers':'நிர்வாக பதில்கள்','Admin Reviews':'நிர்வாக மதிப்புரைகள்','Question Approval':'கேள்வி அனுமதி','Answer Approval':'பதில் அனுமதி','Approve':'அனுமதிக்கவும்','Reject':'நிராகரிக்கவும்','APPROVE & ALLOCATE':'அனுமதித்து ஒதுக்கவும்','REJECT QUESTION':'கேள்வியை நிராகரிக்கவும்','Save':'சேமிக்கவும்','SAVE':'சேமிக்கவும்','SAVING...':'சேமிக்கப்படுகிறது...','Test Razorpay Connection':'Razorpay இணைப்பைச் சோதிக்கவும்','TEST RAZORPAY CONNECTION':'Razorpay இணைப்பைச் சோதிக்கவும்','Commission Settings':'கமிஷன் அமைப்புகள்','Question Price':'கேள்வி கட்டணம்','Minimum Answer Words':'குறைந்தபட்ச பதில் சொற்கள்',
       'Email Login':'மின்னஞ்சல் உள்நுழைவு','Customer ID':'வாடிக்கையாளர் ID','Astrologer ID':'ஜோதிடர் ID','Email / ID':'மின்னஞ்சல் / ID','Email address':'மின்னஞ்சல் முகவரி','Password':'கடவுச்சொல்','Minimum 6 characters':'குறைந்தது 6 எழுத்துகள்','Forgot Password?':'கடவுச்சொல்லை மறந்துவிட்டீர்களா?','Create new customer account':'புதிய வாடிக்கையாளர் கணக்கை உருவாக்கவும்','Welcome Back':'மீண்டும் வரவேற்கிறோம்','Sign in to continue to your SMV ASTRO dashboard.':'SMV ASTRO டாஷ்போர்டைத் தொடர உள்நுழையவும்.','Secure authentication powered by Firebase.':'Firebase மூலம் பாதுகாப்பான அங்கீகாரம்.','LOGIN':'உள்நுழைக','CREATE ACCOUNT':'கணக்கை உருவாக்கவும்','Create Account':'கணக்கை உருவாக்கவும்','Full Name':'முழு பெயர்','Mobile Number':'மொபைல் எண்','Email':'மின்னஞ்சல்','Register as Customer':'வாடிக்கையாளராக பதிவு செய்யவும்','Register as Astrologer':'ஜோதிடராக பதிவு செய்யவும்','Customer Registration':'வாடிக்கையாளர் பதிவு','Astrologer Registration':'ஜோதிடர் பதிவு','Choose Your Path':'உங்கள் பாதையைத் தேர்ந்தெடுக்கவும்','BEGIN YOUR JOURNEY WITH SMV ASTRO':'SMV ASTRO உடன் உங்கள் பயணத்தைத் தொடங்குங்கள்',
-      'Payment Successful':'கட்டணம் வெற்றிகரமாக முடிந்தது','Payment Received':'கட்டணம் பெறப்பட்டது','Question Approved':'கேள்வி அங்கீகரிக்கப்பட்டது','Astrologer Answer Submitted':'ஜோதிடர் பதில் சமர்ப்பிக்கப்பட்டது','Admin Approval':'நிர்வாக அனுமதி','Answer Ready':'பதில் தயாராக உள்ளது','Astrologer Answer':'ஜோதிடர் பதில்','Your Question':'உங்கள் கேள்வி','Ask Your Question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்','Proceed to Secure Payment':'பாதுகாப்பான கட்டணத்திற்குத் தொடர்க','24 hours':'24 மணி நேரம்','48 hours':'48 மணி நேரம்','within 24 hours':'24 மணி நேரத்திற்குள்','within 48 hours':'48 மணி நேரத்திற்குள்',
-      'Home':'முகப்பு','Contact':'தொடர்பு','Dashboard':'டாஷ்போர்டு','Admin':'நிர்வாகம்','Login':'உள்நுழைவு','Register':'பதிவு',
-      'VEDA • JYOTISHA • GUIDANCE':'வேதம் • ஜோதிடம் • வழிகாட்டுதல்','WELCOME TO SMV ASTRO SERVICES':'SMV ASTRO சேவைகளுக்கு வரவேற்கிறோம்',
-      'Trusted Astrological Guidance for a Better Tomorrow':'சிறந்த நாளைக்கான நம்பகமான ஜோதிட வழிகாட்டுதல்',
-      'Rooted in the time-honoured Indian tradition of Jyotisha, we bring thoughtful astrological guidance for life, relationships, career and important decisions — with trusted astrologers and a private consultation experience.':'பாரம்பரியமான இந்திய ஜோதிட மரபில் வேரூன்றிய நாங்கள், வாழ்க்கை, உறவுகள், தொழில் மற்றும் முக்கிய முடிவுகளுக்காக நம்பகமான ஜோதிடர்களுடன் தனிப்பட்ட ஆலோசனை அனுபவத்தையும் அர்த்தமுள்ள ஜோதிட வழிகாட்டுதலையும் வழங்குகிறோம்.',
-      'Traditional Wisdom':'பாரம்பரிய ஞானம்','Personal Guidance':'தனிப்பட்ட வழிகாட்டுதல்','Trusted Consultation':'நம்பகமான ஆலோசனை',
-      'QUICK CONSULTATION':'விரைவு ஆலோசனை','Ask Now':'இப்போதே கேளுங்கள்','Ask your astrology question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்','ASK NOW':'இப்போதே கேளுங்கள்',
-      'APPROVED ASTROLOGERS':'அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்','Our Approved Astrologers':'எங்கள் அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்','Choose an approved astrologer to view their profile and verified reviews.':'ஜோதிடரின் முழு சுயவிவரத்தையும் சரிபார்க்கப்பட்ட மதிப்புரைகளையும் பார்க்க அங்கீகரிக்கப்பட்ட ஜோதிடரைத் தேர்ந்தெடுக்கவும்.',
-      'PROFILE & REVIEWS':'சுயவிவரம் & மதிப்புரைகள்','PROFILE LOADING...':'சுயவிவரம் ஏற்றப்படுகிறது...','years experience':'ஆண்டுகள் அனுபவம்','Astrologer':'ஜோதிடர்','Professional astrologer':'தொழில்முறை ஜோதிடர்','Verified Reviews':'சரிபார்க்கப்பட்ட மதிப்புரைகள்','No approved reviews for this astrologer yet.':'இந்த ஜோதிடருக்கான அங்கீகரிக்கப்பட்ட மதிப்புரைகள் இன்னும் இல்லை.','CLOSE':'மூடு',
-      'FREQUENTLY ASKED QUESTIONS':'அடிக்கடி கேட்கப்படும் கேள்விகள்','FAQ':'அடிக்கடி கேட்கப்படும் கேள்விகள்',
-      'How do I ask an astrology question?':'ஜோதிடக் கேள்வியை எப்படி கேட்பது?','Login as a customer, choose Ask Your Questions, enter the birth details and question, then complete the secure payment flow.':'வாடிக்கையாளராக உள்நுழைந்து, உங்கள் கேள்வியைத் தேர்ந்தெடுத்து, பிறந்த விவரங்கள் மற்றும் கேள்வியை உள்ளிட்டு, பாதுகாப்பான கட்டணத்தை முடிக்கவும்.',
-      'Can I book a Chat or Call consultation?':'Chat அல்லது Call ஆலோசனையை முன்பதிவு செய்ய முடியுமா?','Yes. Use the Appointment / Consultation Booking form and choose Chat Consultation or Call Consultation. Admin will confirm the appointment.':'ஆம். Appointment / Consultation Booking படிவத்தைப் பயன்படுத்தி Chat அல்லது Call Consultation-ஐத் தேர்ந்தெடுக்கவும். நிர்வாகி முன்பதிவை உறுதிப்படுத்துவார்.',
-      'Are astrologers verified?':'ஜோதிடர்கள் சரிபார்க்கப்பட்டவர்களா?','All astrologers are carefully reviewed and verified by SMV ASTRO before being approved for consultation services.':'அனைத்து ஜோதிடர்களும் ஆலோசனை சேவைக்கு அங்கீகரிக்கப்படுவதற்கு முன் SMV ASTRO மூலம் கவனமாக மதிப்பாய்வு செய்து சரிபார்க்கப்படுகிறார்கள்.',
-      'How can I contact SMV ASTRO?':'SMV ASTRO-வை எப்படி தொடர்புகொள்வது?','Use the Contact Us form to send your query directly.':'உங்கள் கேள்வியை நேரடியாக அனுப்ப Contact Us படிவத்தைப் பயன்படுத்தவும்.','Do I need an account?':'கணக்கு தேவையா?','An account is required for secure customer consultation features. You can create one from Customer Registration or the Login button.':'பாதுகாப்பான வாடிக்கையாளர் ஆலோசனை வசதிகளுக்கு கணக்கு தேவை. Customer Registration அல்லது Login மூலம் கணக்கை உருவாக்கலாம்.',
-      'How are astrologers selected and verified?':'ஜோதிடர்கள் எவ்வாறு தேர்வு செய்யப்பட்டு சரிபார்க்கப்படுகிறார்கள்?','When will I receive my astrology answer?':'என் ஜோதிடப் பதில் எப்போது கிடைக்கும்?','After successful payment and submission, your astrology question will normally be answered within 24 hours.':'வெற்றிகரமான கட்டணம் மற்றும் கேள்வி சமர்ப்பித்த பிறகு, உங்கள் ஜோதிடக் கேள்விக்கு பொதுவாக 24 மணி நேரத்திற்குள் பதில் வழங்கப்படும்.',
-      'Is there a refund or cancellation policy?':'ரீஃபண்ட் அல்லது ரத்து கொள்கை உள்ளதா?','Payments are generally non-refundable once an accepted question enters the consultation process. If SMV ASTRO cannot provide the purchased service, a refund may be considered.':'ஏற்றுக்கொள்ளப்பட்ட கேள்வி ஆலோசனை செயல்முறைக்குச் சென்ற பிறகு கட்டணம் பொதுவாக திருப்பித் தரப்படாது. SMV ASTRO வாங்கிய சேவையை வழங்க முடியாத நிலையில் ரீஃபண்ட் பரிசீலிக்கப்படலாம்.',
-      'What happens if my question is not suitable for the astrology service?':'என் கேள்வி ஜோதிட சேவைக்கு பொருத்தமாக இல்லாவிட்டால் என்ன ஆகும்?','Questions that are unrelated to astrology, inappropriate, abusive, or involve matters that SMV ASTRO cannot responsibly provide guidance on may be rejected. If the question is rejected before consultation is provided, the customer may be eligible for a refund, normally processed within 48 hours of the rejection decision.':'ஜோதிடத்துடன் தொடர்பில்லாத, பொருத்தமற்ற, அவமதிப்பான அல்லது SMV ASTRO பொறுப்புடன் வழிகாட்ட முடியாத விஷயங்கள் நிராகரிக்கப்படலாம். ஆலோசனை வழங்குவதற்கு முன் கேள்வி நிராகரிக்கப்பட்டால், வாடிக்கையாளர் ரீஃபண்ட் பெற தகுதியுடையவராக இருக்கலாம்; அது பொதுவாக நிராகரிப்பு முடிவிலிருந்து 48 மணி நேரத்திற்குள் செயல்படுத்தப்படும்.',
-      'Are astrology answers guaranteed?':'ஜோதிடப் பதில்கள் உறுதியானவையா?','No. Astrology is a traditional form of guidance and interpretation. It is not a guarantee of future events or outcomes. Customers are free to accept, consider, or disagree with the guidance provided.':'இல்லை. ஜோதிடம் என்பது பாரம்பரிய வழிகாட்டுதல் மற்றும் விளக்கத்தின் ஒரு வடிவமாகும். இது எதிர்கால நிகழ்வுகள் அல்லது முடிவுகளுக்கான உத்தரவாதம் அல்ல. வழங்கப்படும் வழிகாட்டுதலை வாடிக்கையாளர்கள் ஏற்றுக்கொள்ளலாம், பரிசீலிக்கலாம் அல்லது ஏற்காமல் இருக்கலாம்.',
-      'Choose Your Path':'உங்கள் பாதையைத் தேர்ந்தெடுக்கவும்','Customer Registration':'வாடிக்கையாளர் பதிவு','Astrologer Registration':'ஜோதிடர் பதிவு','Register as Customer':'வாடிக்கையாளராக பதிவு செய்யவும்','Register as Astrologer':'ஜோதிடராக பதிவு செய்யவும்','FOR SEEKERS OF GUIDANCE':'வழிகாட்டுதலைத் தேடுபவர்களுக்கு','FOR ASTROLOGY PROFESSIONALS':'ஜோதிட நிபுணர்களுக்காக',
-      'Astrologer Dashboard':'ஜோதிடர் டாஷ்போர்டு','My Questions':'என் கேள்விகள்','Total Earnings':'மொத்த வருமானம்','Public Question Inbox':'பொது கேள்வி இன்பாக்ஸ்','Questions & Answers':'கேள்விகள் & பதில்கள்','Earnings Ledger':'வருமான விவரங்கள்','Payment Method':'கட்டண முறை','Change Payment Method':'கட்டண முறையை மாற்றவும்','Your astrologer profile must be approved by Admin before you can claim questions.':'கேள்விகளைப் பெறுவதற்கு முன் உங்கள் ஜோதிடர் சுயவிவரத்தை நிர்வாகி அங்கீகரிக்க வேண்டும்.','Waiting for Admin Approval':'நிர்வாகி அங்கீகாரத்திற்காக காத்திருக்கிறது','REFRESH STATUS':'நிலையைப் புதுப்பிக்கவும்','CLAIM & ANSWER':'பெற்று பதிலளிக்கவும்','Submit for Admin Approval':'நிர்வாகி அங்கீகாரத்திற்கு சமர்ப்பிக்கவும்','Resubmit for Admin Approval':'நிர்வாகி அங்கீகாரத்திற்கு மீண்டும் சமர்ப்பிக்கவும்',
-      'Ask Your Question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்','Birth Details':'பிறந்த விவரங்கள்','Your Question':'உங்கள் கேள்வி','Proceed to Secure Payment':'பாதுகாப்பான கட்டணத்திற்கு தொடரவும்','Payment Successful':'கட்டணம் வெற்றிகரமாக முடிந்தது','CONTINUE TO DASHBOARD':'டாஷ்போர்டுக்கு தொடரவும்'
+      'Payment Successful':'கட்டணம் வெற்றிகரமாக முடிந்தது','Payment Received':'கட்டணம் பெறப்பட்டது','Question Approved':'கேள்வி அங்கீகரிக்கப்பட்டது','Astrologer Answer Submitted':'ஜோதிடர் பதில் சமர்ப்பிக்கப்பட்டது','Admin Approval':'நிர்வாக அனுமதி','Answer Ready':'பதில் தயாராக உள்ளது','Astrologer Answer':'ஜோதிடர் பதில்','Your Question':'உங்கள் கேள்வி','Ask Your Question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்','Proceed to Secure Payment':'பாதுகாப்பான கட்டணத்திற்குத் தொடர்க','24 hours':'24 மணி நேரம்','48 hours':'48 மணி நேரம்','within 24 hours':'24 மணி நேரத்திற்குள்','within 48 hours':'48 மணி நேரத்திற்குள்'
     };
     const H={
       'Home':'होम','Contact':'संपर्क','Dashboard':'डैशबोर्ड','Admin':'एडमिन','Login':'लॉगिन','Logout':'लॉगआउट','Register':'पंजीकरण','Close':'बंद करें','Back':'वापस','← Back':'← वापस','← Back to Home':'← होम पर वापस जाएँ','FAQ':'अक्सर पूछे जाने वाले प्रश्न',
@@ -3370,28 +3913,12 @@ window.__SMV_APP_READY=true;
       'Customer Dashboard':'ग्राहक डैशबोर्ड','Astrologer Dashboard':'ज्योतिषी डैशबोर्ड','Admin Dashboard':'एडमिन डैशबोर्ड','My Dashboard':'मेरा डैशबोर्ड','Customer':'ग्राहक','ASTROLOGER':'ज्योतिषी','My Questions':'मेरे प्रश्न','My Consultations':'मेरे परामर्श','Notifications':'सूचनाएँ','Total Earnings':'कुल कमाई','Public Question Inbox':'सार्वजनिक प्रश्न इनबॉक्स','Questions & Answers':'प्रश्न और उत्तर','Earnings Ledger':'कमाई विवरण','Status':'स्थिति','Approved profile':'स्वीकृत प्रोफ़ाइल','Approved':'स्वीकृत','Rejected':'अस्वीकृत','Waiting for Admin':'एडमिन की प्रतीक्षा','Application Status':'आवेदन स्थिति','Pending Admin Approval':'एडमिन स्वीकृति लंबित','Waiting for Admin Approval':'एडमिन स्वीकृति की प्रतीक्षा','REFRESH STATUS':'स्थिति अपडेट करें','Your customer/payment contact details remain private.':'आपके ग्राहक/भुगतान संपर्क विवरण निजी रखे जाते हैं।','Change Payment Method':'भुगतान विधि बदलें','active question(s)':'सक्रिय प्रश्न','Reach ₹300 to request a withdrawal.':'निकासी का अनुरोध करने के लिए ₹300 तक पहुँचें।','You can withdraw':'आप निकासी कर सकते हैं','WITHDRAW':'निकासी करें','Minimum withdrawal':'न्यूनतम निकासी','Commission is credited only after Admin approves the submitted answer.':'जमा किए गए उत्तर को एडमिन द्वारा स्वीकृत करने के बाद ही कमीशन जमा किया जाता है।','No questions yet.':'अभी कोई प्रश्न नहीं है।','No paid public questions are available right now.':'अभी कोई भुगतान किए गए सार्वजनिक प्रश्न उपलब्ध नहीं हैं।','CLAIM & ANSWER':'प्राप्त करें और उत्तर दें','Submit for Admin Approval':'एडमिन स्वीकृति के लिए जमा करें','Resubmit for Admin Approval':'एडमिन स्वीकृति के लिए फिर जमा करें','Birth details':'जन्म विवरण','Question ID':'प्रश्न ID','Customer paid':'ग्राहक द्वारा भुगतान','Your commission':'आपका कमीशन',
       'Customers':'ग्राहक','Astrologers':'ज्योतिषी','Pending':'लंबित','Questions':'प्रश्न','Customer Reviews':'ग्राहक समीक्षाएँ','Pending Astrologers':'लंबित ज्योतिषी','Admin Answers':'एडमिन उत्तर','Admin Reviews':'एडमिन समीक्षाएँ','Question Approval':'प्रश्न स्वीकृति','Answer Approval':'उत्तर स्वीकृति','Approve':'स्वीकृत करें','Reject':'अस्वीकार करें','APPROVE & ALLOCATE':'स्वीकृत करके आवंटित करें','REJECT QUESTION':'प्रश्न अस्वीकार करें','Save':'सहेजें','SAVE':'सहेजें','SAVING...':'सहेजा जा रहा है...','TEST RAZORPAY CONNECTION':'Razorpay कनेक्शन जाँचें','Commission Settings':'कमीशन सेटिंग्स','Question Price':'प्रश्न मूल्य','Minimum Answer Words':'न्यूनतम उत्तर शब्द',
       'Email Login':'ईमेल लॉगिन','Customer ID':'ग्राहक ID','Astrologer ID':'ज्योतिषी ID','Email / ID':'ईमेल / ID','Email address':'ईमेल पता','Password':'पासवर्ड','Minimum 6 characters':'कम से कम 6 अक्षर','Forgot Password?':'पासवर्ड भूल गए?','Create new customer account':'नया ग्राहक खाता बनाएँ','Welcome Back':'वापसी पर स्वागत है','Sign in to continue to your SMV ASTRO dashboard.':'अपने SMV ASTRO डैशबोर्ड पर जाने के लिए लॉगिन करें।','Secure authentication powered by Firebase.':'Firebase द्वारा सुरक्षित प्रमाणीकरण।','LOGIN':'लॉगिन','CREATE ACCOUNT':'खाता बनाएँ','Create Account':'खाता बनाएँ','Full Name':'पूरा नाम','Mobile Number':'मोबाइल नंबर','Email':'ईमेल','Register as Customer':'ग्राहक के रूप में पंजीकरण करें','Register as Astrologer':'ज्योतिषी के रूप में पंजीकरण करें','Customer Registration':'ग्राहक पंजीकरण','Astrologer Registration':'ज्योतिषी पंजीकरण','Choose Your Path':'अपना मार्ग चुनें','BEGIN YOUR JOURNEY WITH SMV ASTRO':'SMV ASTRO के साथ अपनी यात्रा शुरू करें',
-      'Payment Successful':'भुगतान सफल','Payment Received':'भुगतान प्राप्त','Question Approved':'प्रश्न स्वीकृत','Astrologer Answer Submitted':'ज्योतिषी का उत्तर जमा किया गया','Admin Approval':'एडमिन स्वीकृति','Answer Ready':'उत्तर तैयार','Astrologer Answer':'ज्योतिषी का उत्तर','Your Question':'आपका प्रश्न','Ask Your Question':'अपना ज्योतिषीय प्रश्न पूछें','Proceed to Secure Payment':'सुरक्षित भुगतान के लिए आगे बढ़ें','24 hours':'24 घंटे','48 hours':'48 घंटे','within 24 hours':'24 घंटे के भीतर','within 48 hours':'48 घंटे के भीतर',
-      'Home':'होम','Contact':'संपर्क','Dashboard':'डैशबोर्ड','Admin':'एडमिन','Login':'लॉगिन','Register':'पंजीकरण',
-      'VEDA • JYOTISHA • GUIDANCE':'वेद • ज्योतिष • मार्गदर्शन','WELCOME TO SMV ASTRO SERVICES':'SMV ASTRO सेवाओं में आपका स्वागत है',
-      'Trusted Astrological Guidance for a Better Tomorrow':'बेहतर कल के लिए विश्वसनीय ज्योतिषीय मार्गदर्शन',
-      'Rooted in the time-honoured Indian tradition of Jyotisha, we bring thoughtful astrological guidance for life, relationships, career and important decisions — with trusted astrologers and a private consultation experience.':'भारतीय ज्योतिष की प्राचीन परंपरा से जुड़े हुए, हम जीवन, रिश्तों, करियर और महत्वपूर्ण निर्णयों के लिए विश्वसनीय ज्योतिषियों के साथ विचारपूर्ण ज्योतिषीय मार्गदर्शन और निजी परामर्श अनुभव प्रदान करते हैं।',
-      'Traditional Wisdom':'पारंपरिक ज्ञान','Personal Guidance':'व्यक्तिगत मार्गदर्शन','Trusted Consultation':'विश्वसनीय परामर्श',
-      'QUICK CONSULTATION':'त्वरित परामर्श','Ask Now':'अभी पूछें','Ask your astrology question':'अपना ज्योतिषीय प्रश्न पूछें','ASK NOW':'अभी पूछें',
-      'APPROVED ASTROLOGERS':'स्वीकृत ज्योतिषी','Our Approved Astrologers':'हमारे स्वीकृत ज्योतिषी','Choose an approved astrologer to view their profile and verified reviews.':'प्रोफ़ाइल और सत्यापित समीक्षाएँ देखने के लिए एक स्वीकृत ज्योतिषी चुनें।',
-      'PROFILE & REVIEWS':'प्रोफ़ाइल और समीक्षाएँ','PROFILE LOADING...':'प्रोफ़ाइल लोड हो रही है...','years experience':'वर्षों का अनुभव','Astrologer':'ज्योतिषी','Professional astrologer':'पेशेवर ज्योतिषी','Verified Reviews':'सत्यापित समीक्षाएँ','No approved reviews for this astrologer yet.':'इस ज्योतिषी के लिए अभी कोई स्वीकृत समीक्षा नहीं है।','CLOSE':'बंद करें',
-      'FREQUENTLY ASKED QUESTIONS':'अक्सर पूछे जाने वाले प्रश्न','FAQ':'अक्सर पूछे जाने वाले प्रश्न',
-      'How do I ask an astrology question?':'मैं ज्योतिष का प्रश्न कैसे पूछूँ?','Login as a customer, choose Ask Your Questions, enter the birth details and question, then complete the secure payment flow.':'ग्राहक के रूप में लॉगिन करें, अपना प्रश्न चुनें, जन्म विवरण और प्रश्न दर्ज करें, फिर सुरक्षित भुगतान पूरा करें।',
-      'Can I book a Chat or Call consultation?':'क्या मैं चैट या कॉल परामर्श बुक कर सकता/सकती हूँ?','Yes. Use the Appointment / Consultation Booking form and choose Chat Consultation or Call Consultation. Admin will confirm the appointment.':'हाँ। Appointment / Consultation Booking फ़ॉर्म में Chat या Call Consultation चुनें। एडमिन अपॉइंटमेंट की पुष्टि करेगा।',
-      'Are astrologers verified?':'क्या ज्योतिषी सत्यापित हैं?','All astrologers are carefully reviewed and verified by SMV ASTRO before being approved for consultation services.':'सभी ज्योतिषियों की परामर्श सेवा के लिए स्वीकृति से पहले SMV ASTRO द्वारा सावधानीपूर्वक समीक्षा और सत्यापन किया जाता है।',
-      'How can I contact SMV ASTRO?':'मैं SMV ASTRO से कैसे संपर्क करूँ?','Use the Contact Us form to send your query directly.':'अपना प्रश्न सीधे भेजने के लिए Contact Us फ़ॉर्म का उपयोग करें।','Do I need an account?':'क्या खाता आवश्यक है?','An account is required for secure customer consultation features. You can create one from Customer Registration or the Login button.':'सुरक्षित ग्राहक परामर्श सुविधाओं के लिए खाता आवश्यक है। आप Customer Registration या Login से खाता बना सकते हैं।',
-      'How are astrologers selected and verified?':'ज्योतिषियों का चयन और सत्यापन कैसे किया जाता है?','When will I receive my astrology answer?':'मुझे अपना ज्योतिषीय उत्तर कब मिलेगा?','After successful payment and submission, your astrology question will normally be answered within 24 hours.':'सफल भुगतान और प्रश्न जमा करने के बाद आपके ज्योतिषीय प्रश्न का उत्तर सामान्यतः 24 घंटे के भीतर दिया जाएगा।',
-      'Is there a refund or cancellation policy?':'क्या रिफंड या रद्दीकरण नीति है?','Payments are generally non-refundable once an accepted question enters the consultation process. If SMV ASTRO cannot provide the purchased service, a refund may be considered.':'स्वीकृत प्रश्न के परामर्श प्रक्रिया में जाने के बाद भुगतान सामान्यतः वापस नहीं किया जाता। यदि SMV ASTRO खरीदी गई सेवा प्रदान नहीं कर सकता, तो रिफंड पर विचार किया जा सकता है।',
-      'What happens if my question is not suitable for the astrology service?':'यदि मेरा प्रश्न ज्योतिष सेवा के लिए उपयुक्त नहीं है तो क्या होगा?','Questions that are unrelated to astrology, inappropriate, abusive, or involve matters that SMV ASTRO cannot responsibly provide guidance on may be rejected. If the question is rejected before consultation is provided, the customer may be eligible for a refund, normally processed within 48 hours of the rejection decision.':'ज्योतिष से असंबंधित, अनुचित, अपमानजनक प्रश्न या ऐसे विषय जिन पर SMV ASTRO जिम्मेदारी से मार्गदर्शन नहीं दे सकता, अस्वीकार किए जा सकते हैं। यदि परामर्श देने से पहले प्रश्न अस्वीकार किया जाता है, तो ग्राहक रिफंड के लिए पात्र हो सकता है और यह सामान्यतः अस्वीकृति के 48 घंटे के भीतर संसाधित किया जाएगा।',
-      'Are astrology answers guaranteed?':'क्या ज्योतिषीय उत्तर निश्चित होते हैं?','No. Astrology is a traditional form of guidance and interpretation. It is not a guarantee of future events or outcomes. Customers are free to accept, consider, or disagree with the guidance provided.':'नहीं। ज्योतिष पारंपरिक मार्गदर्शन और व्याख्या का एक रूप है। यह भविष्य की घटनाओं या परिणामों की गारंटी नहीं है। ग्राहक दिए गए मार्गदर्शन को स्वीकार, विचार या असहमत कर सकते हैं।',
-      'Choose Your Path':'अपना मार्ग चुनें','Customer Registration':'ग्राहक पंजीकरण','Astrologer Registration':'ज्योतिषी पंजीकरण','Register as Customer':'ग्राहक के रूप में पंजीकरण करें','Register as Astrologer':'ज्योतिषी के रूप में पंजीकरण करें','FOR SEEKERS OF GUIDANCE':'मार्गदर्शन चाहने वालों के लिए','FOR ASTROLOGY PROFESSIONALS':'ज्योतिष पेशेवरों के लिए',
-      'Astrologer Dashboard':'ज्योतिषी डैशबोर्ड','My Questions':'मेरे प्रश्न','Total Earnings':'कुल कमाई','Public Question Inbox':'सार्वजनिक प्रश्न इनबॉक्स','Questions & Answers':'प्रश्न और उत्तर','Earnings Ledger':'कमाई विवरण','Payment Method':'भुगतान विधि','Change Payment Method':'भुगतान विधि बदलें','Your astrologer profile must be approved by Admin before you can claim questions.':'प्रश्न प्राप्त करने से पहले आपके ज्योतिषी प्रोफ़ाइल को एडमिन द्वारा स्वीकृत किया जाना चाहिए।','Waiting for Admin Approval':'एडमिन स्वीकृति की प्रतीक्षा','REFRESH STATUS':'स्थिति अपडेट करें','CLAIM & ANSWER':'प्राप्त करें और उत्तर दें','Submit for Admin Approval':'एडमिन स्वीकृति के लिए जमा करें','Resubmit for Admin Approval':'एडमिन स्वीकृति के लिए फिर जमा करें',
-      'Ask Your Question':'अपना ज्योतिषीय प्रश्न पूछें','Birth Details':'जन्म विवरण','Your Question':'आपका प्रश्न','Proceed to Secure Payment':'सुरक्षित भुगतान के लिए आगे बढ़ें','Payment Successful':'भुगतान सफल','CONTINUE TO DASHBOARD':'डैशबोर्ड पर जाएँ'
+      'Payment Successful':'भुगतान सफल','Payment Received':'भुगतान प्राप्त','Question Approved':'प्रश्न स्वीकृत','Astrologer Answer Submitted':'ज्योतिषी का उत्तर जमा किया गया','Admin Approval':'एडमिन स्वीकृति','Answer Ready':'उत्तर तैयार','Astrologer Answer':'ज्योतिषी का उत्तर','Your Question':'आपका प्रश्न','Ask Your Question':'अपना ज्योतिषीय प्रश्न पूछें','Proceed to Secure Payment':'सुरक्षित भुगतान के लिए आगे बढ़ें','24 hours':'24 घंटे','48 hours':'48 घंटे','within 24 hours':'24 घंटे के भीतर','within 48 hours':'48 घंटे के भीतर'
     };
+    const UI_T={
+      'Profile':'சுயவிவரம்','My Questions':'என் கேள்விகள்','Total Earnings':'மொத்த வருமானம்','Public Question Inbox':'பொது கேள்வி பெட்டி','Questions & Answers':'கேள்விகள் மற்றும் பதில்கள்','Earnings Ledger':'வருமானப் பதிவு','Payment Method':'கட்டண முறை','Change Payment Method':'கட்டண முறையை மாற்றவும்','Status':'நிலை','Application Status':'விண்ணப்ப நிலை','Approved profile':'அங்கீகரிக்கப்பட்ட சுயவிவரம்','Waiting for Admin':'நிர்வாக அனுமதிக்காக காத்திருக்கிறது','Pending Admin Approval':'நிர்வாக அனுமதி நிலுவையில்','Your Question':'உங்கள் கேள்வி','Ask Your Question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்','Birth Details':'பிறப்பு விவரங்கள்','Question ID':'கேள்வி ID','Customer paid':'வாடிக்கையாளர் செலுத்தியது','Your commission':'உங்கள் கமிஷன்','Available to Withdraw':'திரும்பப் பெறக்கூடிய தொகை','Minimum withdrawal':'குறைந்தபட்ச திரும்பப் பெறும் தொகை','Commission':'கமிஷன்','Credited':'வரவு வைக்கப்பட்டது','Consultation':'ஆலோசனை','Question':'கேள்வி','Answer':'பதில்','Answer Ready':'பதில் தயாராக உள்ளது','Payment Received':'கட்டணம் பெறப்பட்டது','Question Approved':'கேள்வி அங்கீகரிக்கப்பட்டது','Astrologer Answer Submitted':'ஜோதிடர் பதில் சமர்ப்பிக்கப்பட்டது','Admin Approval':'நிர்வாக அங்கீகாரம்','Notifications':'அறிவிப்புகள்','My Consultations':'என் ஆலோசனைகள்','Email verification':'மின்னஞ்சல் சரிபார்ப்பு','Verified':'சரிபார்க்கப்பட்டது','Private':'தனிப்பட்டது','years experience':'ஆண்டுகள் அனுபவம்','Expertise':'நிபுணத்துவம்','PROFILE & REVIEWS':'சுயவிவரம் & மதிப்புரைகள்','Verified Reviews':'சரிபார்க்கப்பட்ட மதிப்புரைகள்','Loading reviews...':'மதிப்புரைகள் ஏற்றப்படுகின்றன...','No approved reviews for this astrologer yet.':'இந்த ஜோதிடருக்கு இன்னும் அங்கீகரிக்கப்பட்ட மதிப்புரைகள் இல்லை.','Astrologer Dashboard':'ஜோதிடர் டாஷ்போர்டு','Customer Dashboard':'வாடிக்கையாளர் டாஷ்போர்டு','Admin Dashboard':'நிர்வாக டாஷ்போர்டு','Customers':'வாடிக்கையாளர்கள்','Astrologers':'ஜோதிடர்கள்','Pending':'நிலுவையில்','Questions':'கேள்விகள்','Customer Reviews':'வாடிக்கையாளர் மதிப்புரைகள்','Pending Astrologers':'நிலுவையில் உள்ள ஜோதிடர்கள்','Admin Answers':'நிர்வாக பதில்கள்','Admin Reviews':'நிர்வாக மதிப்புரைகள்','Question Approval':'கேள்வி அங்கீகாரம்','Answer Approval':'பதில் அங்கீகாரம்','Approve':'அங்கீகரிக்கவும்','Reject':'நிராகரிக்கவும்','SAVE':'சேமிக்கவும்','WITHDRAW':'திரும்பப் பெறுக','CLAIM & ANSWER':'பெற்று பதிலளிக்கவும்','Submit for Admin Approval':'நிர்வாக அங்கீகாரத்திற்கு சமர்ப்பிக்கவும்','Resubmit for Admin Approval':'நிர்வாக அங்கீகாரத்திற்கு மீண்டும் சமர்ப்பிக்கவும்','Proceed to Secure Payment':'பாதுகாப்பான கட்டணத்திற்குத் தொடர்க','Forgot Password?':'கடவுச்சொல்லை மறந்துவிட்டீர்களா?','Create new customer account':'புதிய வாடிக்கையாளர் கணக்கை உருவாக்கவும்','Email Login':'மின்னஞ்சல் உள்நுழைவு','Customer ID':'வாடிக்கையாளர் ID','Astrologer ID':'ஜோதிடர் ID','Email / ID':'மின்னஞ்சல் / ID','Email address':'மின்னஞ்சல் முகவரி','Password':'கடவுச்சொல்','LOGIN':'உள்நுழைக','CREATE ACCOUNT':'கணக்கை உருவாக்குக','Register':'பதிவு','Logout':'வெளியேறு','Login':'உள்நுழைவு','Close':'மூடு','Back':'பின்','Home':'முகப்பு','Contact':'தொடர்பு','Dashboard':'டாஷ்போர்டு'};
+    const UI_H={
+      'Profile':'प्रोफ़ाइल','My Questions':'मेरे प्रश्न','Total Earnings':'कुल कमाई','Public Question Inbox':'सार्वजनिक प्रश्न इनबॉक्स','Questions & Answers':'प्रश्न और उत्तर','Earnings Ledger':'कमाई विवरण','Payment Method':'भुगतान विधि','Change Payment Method':'भुगतान विधि बदलें','Status':'स्थिति','Application Status':'आवेदन स्थिति','Approved profile':'स्वीकृत प्रोफ़ाइल','Waiting for Admin':'एडमिन की प्रतीक्षा','Pending Admin Approval':'एडमिन स्वीकृति लंबित','Your Question':'आपका प्रश्न','Ask Your Question':'अपना ज्योतिषीय प्रश्न पूछें','Birth Details':'जन्म विवरण','Question ID':'प्रश्न ID','Customer paid':'ग्राहक द्वारा भुगतान','Your commission':'आपका कमीशन','Available to Withdraw':'निकासी के लिए उपलब्ध','Minimum withdrawal':'न्यूनतम निकासी','Commission':'कमीशन','Credited':'जमा किया गया','Consultation':'परामर्श','Question':'प्रश्न','Answer':'उत्तर','Answer Ready':'उत्तर तैयार','Payment Received':'भुगतान प्राप्त','Question Approved':'प्रश्न स्वीकृत','Astrologer Answer Submitted':'ज्योतिषी का उत्तर जमा किया गया','Admin Approval':'एडमिन स्वीकृति','Notifications':'सूचनाएँ','My Consultations':'मेरे परामर्श','Email verification':'ईमेल सत्यापन','Verified':'सत्यापित','Private':'निजी','years experience':'वर्षों का अनुभव','Expertise':'विशेषज्ञता','PROFILE & REVIEWS':'प्रोफ़ाइल और समीक्षाएँ','Verified Reviews':'सत्यापित समीक्षाएँ','Loading reviews...':'समीक्षाएँ लोड हो रही हैं...','No approved reviews for this astrologer yet.':'इस ज्योतिषी के लिए अभी कोई स्वीकृत समीक्षा नहीं है।','Astrologer Dashboard':'ज्योतिषी डैशबोर्ड','Customer Dashboard':'ग्राहक डैशबोर्ड','Admin Dashboard':'एडमिन डैशबोर्ड','Customers':'ग्राहक','Astrologers':'ज्योतिषी','Pending':'लंबित','Questions':'प्रश्न','Customer Reviews':'ग्राहक समीक्षाएँ','Pending Astrologers':'लंबित ज्योतिषी','Admin Answers':'एडमिन उत्तर','Admin Reviews':'एडमिन समीक्षाएँ','Question Approval':'प्रश्न स्वीकृति','Answer Approval':'उत्तर स्वीकृति','Approve':'स्वीकृत करें','Reject':'अस्वीकार करें','SAVE':'सहेजें','WITHDRAW':'निकासी करें','CLAIM & ANSWER':'प्राप्त करें और उत्तर दें','Submit for Admin Approval':'एडमिन स्वीकृति के लिए जमा करें','Resubmit for Admin Approval':'एडमिन स्वीकृति के लिए फिर जमा करें','Proceed to Secure Payment':'सुरक्षित भुगतान के लिए आगे बढ़ें','Forgot Password?':'पासवर्ड भूल गए?','Create new customer account':'नया ग्राहक खाता बनाएँ','Email Login':'ईमेल लॉगिन','Customer ID':'ग्राहक ID','Astrologer ID':'ज्योतिषी ID','Email / ID':'ईमेल / ID','Email address':'ईमेल पता','Password':'पासवर्ड','LOGIN':'लॉगिन','CREATE ACCOUNT':'खाता बनाएँ','Register':'पंजीकरण','Logout':'लॉगआउट','Login':'लॉगिन','Close':'बंद करें','Back':'वापस','Home':'होम','Contact':'संपर्क','Dashboard':'डैशबोर्ड'};
     const attrs=['placeholder','aria-label','title'];
     const originals=new WeakMap();
     function replaceText(text,dict){
@@ -3401,7 +3928,7 @@ window.__SMV_APP_READY=true;
       return out;
     }
     function translate(root,lang){
-      const dict=lang==='ta'?T:lang==='hi'?H:null;
+      const dict=lang==='ta'?Object.assign({},T,UI_T):lang==='hi'?Object.assign({},H,UI_H):null;
       const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
       let n; while(n=walker.nextNode()){
         if(!n.nodeValue.trim()||n.parentElement?.closest('script,style'))continue;
@@ -3423,11 +3950,32 @@ window.__SMV_APP_READY=true;
       try{localStorage.setItem('smvLanguage',currentLang);}catch(_e){}
     }
     select.addEventListener('change',()=>apply(select.value));
-    const observer=new MutationObserver(muts=>{if(currentLang==='en')return;muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)translate(n,currentLang);}));});
-    observer.observe(document.body,{childList:true,subtree:true});
+    const observer=new MutationObserver(muts=>{
+      if(currentLang==='en')return;
+      muts.forEach(m=>{
+        if(m.type==='childList'){
+          m.addedNodes.forEach(n=>{
+            if(n.nodeType===1){translate(n,currentLang);setTimeout(()=>translate(n,currentLang),0);}
+            else if(n.nodeType===3 && n.parentElement){translate(n.parentElement,currentLang);}
+          });
+        }else if(m.type==='characterData'){
+          const n=m.target;
+          if(!n||!n.parentElement||n.parentElement.closest('script,style'))return;
+          const existing=originals.get(n);
+          if(existing && existing!==n.nodeValue){
+            const dict=currentLang==='ta'?Object.assign({},T,UI_T):currentLang==='hi'?Object.assign({},H,UI_H):null;
+            const translatedExisting=dict?replaceText(existing,dict):existing;
+            if(n.nodeValue!==translatedExisting) originals.set(n,n.nodeValue);
+          }else if(!existing){ originals.set(n,n.nodeValue); }
+          translate(n.parentElement,currentLang);
+        }
+      });
+    });
+    observer.observe(document.body,{childList:true,subtree:true,characterData:true});
     let saved='en';try{saved=localStorage.getItem('smvLanguage')||'en';}catch(_e){}
     apply(saved);
     window.__smvToggleLanguage=()=>apply(select.value==='en'?'ta':select.value==='ta'?'hi':'en');
+    window.__smvTranslateCurrentLanguage=()=>translate(document.body,currentLang);
   }
   window.__smvNotifyQuestionUpdate=async function(questionId,event,reason){
     try{
@@ -3644,5 +4192,58 @@ document.addEventListener("click",function(e){
 })();
 </script>
 
+
+<style id="smv-astro-dashboard-correct-responsive-final">
+/* FINAL RESPONSIVE FIX — ASTROLOGER DASHBOARD ONLY
+   Mobile/tablet: 3 summary cards stack normally.
+   Desktop: 3 summary cards fit horizontally in the same content width as Public Question Inbox.
+   Do not change other dashboard sections. */
+#dashboardContent .astro-dashboard-summary{
+  display:grid !important;
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  gap:16px !important;
+}
+#dashboardContent .astro-dashboard-summary > .card{
+  box-sizing:border-box !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  width:auto !important;
+  margin:0 !important;
+  overflow-wrap:anywhere !important;
+}
+
+/* Public Question Inbox stays full-width like the summary row container. */
+#dashboardContent .astro-dashboard-summary + .card{
+  width:100% !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+}
+
+/* MOBILE / TABLET — normal vertical layout */
+@media (max-width:767px){
+  #dashboardContent .astro-dashboard-summary{
+    grid-template-columns:1fr !important;
+    gap:12px !important;
+  }
+  #dashboardContent .astro-dashboard-summary > .card{
+    width:100% !important;
+  }
+}
+
+/* DESKTOP — exactly 3 horizontal cards, fitted to available dashboard width */
+@media (min-width:768px){
+  #dashboardContent .astro-dashboard-summary{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:16px !important;
+    align-items:stretch !important;
+  }
+  #dashboardContent .astro-dashboard-summary > .card{
+    width:100% !important;
+    min-width:0 !important;
+  }
+}
+</style>
 </body>
 </html>
