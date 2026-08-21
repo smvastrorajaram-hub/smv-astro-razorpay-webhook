@@ -91,6 +91,13 @@ section>h2{color:var(--maroon);font-family:Georgia,"Times New Roman",serif}
 #admin,#adminSummary,#pendingAstros,#adminAnswers,#adminReviews,#adminQuestions,#dashboard,#dashboardContent,#astroList,#astroCards,#ask-flow,#register-flow{min-width:0;max-width:100%;overflow-x:hidden}
 #adminQuestions>div,#adminAnswers>div,#pendingAstros>div,#adminReviews>div{min-width:0!important;max-width:100%!important;overflow:hidden!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}
 #adminQuestions b,#adminAnswers b,#pendingAstros b,#adminReviews b,#adminQuestions p,#adminAnswers p,#pendingAstros p,#adminReviews p{white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important;max-width:100%!important}
+.admin-earnings-wrap{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.admin-earnings-wrap::-webkit-scrollbar{height:7px}
+.admin-earnings-item{flex:0 0 280px;scroll-snap-align:start;background:linear-gradient(180deg,#fff,#faf7ff);border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:0 5px 16px rgba(48,43,104,.06);min-height:135px}
+.admin-earnings-total{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.admin-earnings-total strong{font-size:27px;color:var(--primary)}
+@media(max-width:600px){.admin-earnings-item{flex-basis:245px}.admin-earnings-wrap{margin-right:-4px}}
+
 footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px double var(--gold);margin-top:30px;background:#fffaf0}
 
 /* V53 homepage refinement: open welcome composition + separated registration choices */
@@ -1274,19 +1281,19 @@ textarea[id^="adminAns_"]{
 <form id="contactForm" style="display:grid;gap:12px;margin-top:18px;">
 <div>
 <label for="contactName">Name *</label>
-<input autocomplete="name" id="contactName" maxlength="100" name="name" placeholder="Your name" required="" type="text"/>
+<input autocomplete="name" id="contactName" autocomplete="name" maxlength="100" name="name" placeholder="Your name" required="" type="text"/>
 </div>
 <div>
 <label for="contactEmail">Email *</label>
-<input autocomplete="email" id="contactEmail" maxlength="160" name="email" placeholder="your@email.com" required="" type="email"/>
+<input autocomplete="email" id="contactEmail" autocomplete="email" maxlength="160" name="email" placeholder="your@email.com" required="" type="email"/>
 </div>
 <div>
 <label for="contactPlace">Place / City *</label>
-<input autocomplete="address-level2" id="contactPlace" maxlength="120" name="place" placeholder="Your place" required="" type="text"/>
+<input autocomplete="address-level2" id="contactPlace" autocomplete="address-level2" maxlength="120" name="place" placeholder="Your place" required="" type="text"/>
 </div>
 <div>
 <label for="contactMobile">Mobile Number *</label>
-<input autocomplete="tel" id="contactMobile" maxlength="20" name="mobile" placeholder="Your mobile number" required="" type="tel"/>
+<input autocomplete="tel" id="contactMobile" autocomplete="tel" maxlength="20" name="mobile" placeholder="Your mobile number" required="" type="tel"/>
 </div>
 <div>
 <label for="contactQuery">Query *</label>
@@ -1298,7 +1305,8 @@ textarea[id^="adminAns_"]{
 </form>
 </section>
 <section class="hidden" id="admin" style="margin-top:45px">
-<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0">Admin Dashboard</h2><p class="small" style="margin:6px 0 0">SMV ASTRO administration and approval center</p></div><button class="btn gray" id="adminCloseBtn" type="button">← Home</button></div><div id="adminDataLoadMsg" style="margin-top:12px"></div><div id="adminSummary" class="stats-grid admin-summary-grid" style="margin-top:16px"></div></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0">Admin Dashboard</h2><p class="small" style="margin:6px 0 0">SMV ASTRO administration and approval center</p></div><button class="btn gray" id="adminCloseBtn" type="button">← Home</button></div><div id="adminDataLoadMsg" style="margin-top:12px"></div><div id="adminSummary" class="stats-grid admin-summary-grid" style="margin-top:16px"></div></div><div class="card" style="margin-top:16px" id="adminEarningsCard"><div class="admin-earnings-total"><div><h3 style="margin:0">Admin Earnings History</h3><p class="small" style="margin:5px 0 0">Horizontal history of credited Admin earnings and Admin-retained consultations.</p></div><div><span class="small">Total Admin Earnings</span><br><strong id="adminEarningsTotal">₹0.00</strong></div></div><div id="adminEarningsHistory" class="admin-earnings-wrap"><div class="empty">Loading earnings history...</div></div></div>
+
 <div class="card" style="margin-top:16px"><h3>Public Question Approval</h3><div id="adminPendingQuestions"><div class="empty">Loading questions...</div></div></div>
 <div class="card" style="margin-top:16px"><h3>Astrologer Applications</h3><div id="pendingAstros"><div class="empty">Loading applications...</div></div></div>
 <div class="card" style="margin-top:16px"><h3>Answers Awaiting Approval</h3><div id="adminAnswers"><div class="empty">Loading answers...</div></div></div>
@@ -2820,6 +2828,16 @@ async function loadAdminPanel(){
   const customers=(adminData.customers||[]).length, pendingDocs=astros.docs.filter(d=>d.data().status==='pending');
   const userMap=new Map(users.docs.map(d=>[d.id,d.data()]));
   $('adminSummary').innerHTML=`<div class="stat">Customers <b>${customers}</b></div><div class="stat">Astrologers <b>${astros.size}</b></div><div class="stat">Pending <b>${pendingDocs.length}</b></div><div class="stat">Questions <b>${questions.size}</b></div>`;
+  const adminHistory=Array.isArray(adminData.adminEarningsHistory)?adminData.adminEarningsHistory:[];
+  const adminTotal=Number(adminData.totalAdminEarnings||0);
+  if($('adminEarningsTotal')) $('adminEarningsTotal').textContent='₹'+adminTotal.toFixed(2);
+  if($('adminEarningsHistory')){
+    $('adminEarningsHistory').innerHTML=adminHistory.length?adminHistory.slice(0,100).map(x=>{
+      const dateText=smvDateTime(x.date||null);
+      const source=x.source==='admin_answer'?'Admin answered':'Commission';
+      return `<div class="admin-earnings-item"><div class="small"><b>${escapeHtml(source)}</b> · ${escapeHtml(x.status||'credited')}</div><h4 style="margin:7px 0;color:var(--maroon)">₹${Number(x.adminEarnings||0).toFixed(2)}</h4><div class="small"><b>Question ID:</b> ${escapeHtml(x.questionId||x.id||'')}</div><div class="small"><b>Customer:</b> ${escapeHtml(x.customerName||'Customer')}</div><div class="small"><b>Astrologer:</b> ${escapeHtml(x.astrologerName||'Astrologer')}</div><div class="small"><b>Gross:</b> ₹${Number(x.grossAmount||0).toFixed(2)} · ${escapeHtml(dateText)}</div></div>`;
+    }).join(''):'<div class="empty">No Admin earnings recorded yet.</div>';
+  }
   let settings={astroPercent:20,adminPercent:80}; try{const ss=await getDoc(doc(db,'smv_settings','commission'));if(ss.exists())settings=ss.data();}catch(e){}
   let questionSettings={price:5}; try{const qps=await getDoc(doc(db,'smv_settings','question'));if(qps.exists())questionSettings=qps.data();}catch(e){}
   $('questionPrice').value=Number(questionSettings.price||5);
@@ -2857,7 +2875,7 @@ async function loadAdminPanel(){
       const options=approvedAstros.map(a=>{const x=a.data()||{};return `<option value="${escapeHtml(a.id)}" ${selected===a.id?'selected':''}>${escapeHtml(x.name||'Astrologer')} — ${escapeHtml(x.expertise||x.specialization||'Astrology')}</option>`}).join('');
       const allocated = !!q.adminQuestionApprovedAt && !q.answer && ['assigned_to_astrologer','reallocated','available_to_astrologers','claimed_by_astrologer'].includes(String(q.allocationStatus||''));
       const currentAstroName = q.astrologerName || q.astrologerId || 'Not assigned';
-      return `<div class="card" style="margin:10px 0"><h3>${escapeHtml(customerName)}</h3><p><b>Question ID:</b> ${escapeHtml(d.id)}</p><p><b>Question:</b> ${escapeHtml(q.question||'')}</p><p><b>Birth:</b> ${escapeHtml(birthDate)} · ${escapeHtml(birthTime)} · ${escapeHtml(birthPlace)} · ${escapeHtml(birthGender)}</p><p><b>Amount Paid:</b> ₹${Number(q.amount||0).toFixed(2)} · <b>Payment ID:</b> ${escapeHtml(q.customerPaymentId||'')} · <b>Paid:</b> ${escapeHtml(smvDateTime(q.paymentRecordedAt||q.paidAt||q.paymentUpdatedAt||q.paymentDate))}</p>${allocated ? `<div class="small"><b>Status:</b> Approved & Allocated · <b>Astrologer:</b> ${escapeHtml(currentAstroName)}</div><div class="action-row" style="margin-top:10px"><button class="btn gray" data-board-keep="${d.id}">KEEP ALLOCATED</button><select id="boardReallocAstro_${d.id}"><option value="">Select another approved astrologer</option>${approvedAstros.filter(a=>a.id!==q.astrologerId).map(a=>{const x=a.data()||{};return `<option value="${escapeHtml(a.id)}">${escapeHtml(x.name||'Astrologer')} — ${escapeHtml(x.expertise||x.specialization||'Astrology')}</option>`}).join('')}</select><input id="boardReallocPct_${d.id}" type="number" min="0" max="100" step="0.01" value="${Number(q.commissionPercent||q.commissionRate||settings.astroPercent||20)}" placeholder="Commission %"><button class="btn gray" data-board-realloc="${d.id}">RE-ALLOCATE</button><button class="btn" data-board-admin-answer="${d.id}">ADMIN ANSWER</button></div><textarea id="boardAdminAnswer_${d.id}" style="min-height:120px;margin-top:10px" placeholder="Admin answer — use only if the allocated astrologer is not answering."></textarea><div class="small">Question stays in this Admin board until the final answer is submitted and approved.</div>` : `<div class="grid" style="margin-top:10px"><div><label>Assign Astrologer</label><select id="assignAstro_${d.id}"><option value="">Select approved astrologer</option>${options}</select></div><div>`}<label>Astrologer Commission %</label><input id="assignCommission_${d.id}" type="number" min="0" max="100" step="0.01" value="${pct}"></div></div><p class="small" id="assignPreview_${d.id}"></p><div class="action-row"><button class="btn" data-approve-question="${d.id}">APPROVE & ALLOCATE</button><button class="btn gray" data-reject-question="${d.id}">REJECT QUESTION</button></div><input id="questionReject_${d.id}" placeholder="Rejection reason (required if rejecting)"></div>`;
+      return `<div class="card" style="margin:10px 0"><h3>${escapeHtml(customerName)}</h3><p><b>Question ID:</b> ${escapeHtml(d.id)}</p><p><b>Question:</b> ${escapeHtml(q.question||'')}</p><p><b>Birth:</b> ${escapeHtml(birthDate)} · ${escapeHtml(birthTime)} · ${escapeHtml(birthPlace)} · ${escapeHtml(birthGender)}</p><p><b>Amount Paid:</b> ₹${Number(q.amount||0).toFixed(2)} · <b>Payment ID:</b> ${escapeHtml(q.customerPaymentId||'')} · <b>Paid:</b> ${escapeHtml(smvDateTime(q.paymentRecordedAt||q.paidAt||q.paymentUpdatedAt||q.paymentDate))}</p>${allocated ? `<div class="small"><b>Status:</b> Approved & Allocated · <b>Astrologer:</b> ${escapeHtml(currentAstroName)}</div><div class="action-row" style="margin-top:10px"><button class="btn gray" data-board-keep="${d.id}">KEEP ALLOCATED</button><select id="boardReallocAstro_${d.id}"><option value="">Select another approved astrologer</option>${approvedAstros.filter(a=>a.id!==q.astrologerId).map(a=>{const x=a.data()||{};return `<option value="${escapeHtml(a.id)}">${escapeHtml(x.name||'Astrologer')} — ${escapeHtml(x.expertise||x.specialization||'Astrology')}</option>`}).join('')}</select><input id="boardReallocPct_${d.id}" type="number" min="0" max="100" step="0.01" value="${Number(q.commissionPercent||q.commissionRate||settings.astroPercent||20)}" placeholder="Commission %"><button class="btn gray" data-board-realloc="${d.id}">RE-ALLOCATE</button><button class="btn" data-board-admin-answer="${d.id}">ADMIN ANSWER</button></div><textarea id="boardAdminAnswer_${d.id}" style="min-height:400px;height:400px;resize:vertical;margin-top:10px" placeholder="Admin answer — use only if the allocated astrologer is not answering."></textarea><div class="small">Question stays in this Admin board until the final answer is submitted and approved.</div>` : `<div class="grid" style="margin-top:10px"><div><label>Assign Astrologer</label><select id="assignAstro_${d.id}"><option value="">Select approved astrologer</option>${options}</select></div><div>`}<label>Astrologer Commission %</label><input id="assignCommission_${d.id}" type="number" min="0" max="100" step="0.01" value="${pct}"></div></div><p class="small" id="assignPreview_${d.id}"></p><div class="action-row"><button class="btn" data-approve-question="${d.id}">APPROVE & ALLOCATE</button><button class="btn gray" data-reject-question="${d.id}">REJECT QUESTION</button></div><input id="questionReject_${d.id}" placeholder="Rejection reason (required if rejecting)"></div>`;
     }).join('') : '<div class="empty">No questions awaiting Admin approval.</div>';
   }catch(e){console.error('Question approval panel error',e);questionApprovalBox.innerHTML='<div class="empty error">Unable to load question approvals: '+escapeHtml(e.message||String(e))+'</div>';}
   questionApprovalBox.querySelectorAll('[data-approve-question]').forEach(b=>b.onclick=async()=>{
