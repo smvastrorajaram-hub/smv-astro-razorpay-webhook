@@ -220,7 +220,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 }
 
 /* V56/V57 homepage registration: keep Customer and Astrologer entry points visible and separate. */
-.homepage-registration{display:block!important;margin:10px auto 38px!important;padding:8px 0 24px}
+.homepage-registration{margin:10px auto 38px;padding:8px 0 24px}
 .homepage-registration .registration-intro .hidden{display:none!important}
 .homepage-registration .registration-options{margin-top:18px}
 .homepage-registration .registration-option{min-height:300px}
@@ -419,7 +419,14 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
   }catch(e){}
 })();
 </script>
-</head>
+<style id="smv-login-view-fix">
+/* FINAL LOGIN VIEW FIX */
+.hidden{display:none!important}
+#dashboard.hidden,#admin.hidden,#register-flow.hidden,#astro-register-form.hidden,
+#astro-flow.hidden,#ask-flow.hidden,#appointment.hidden,#contact.hidden{display:none!important}
+</style><style id="smv-register-header-style">
+#registerNav{margin-left:2px}
+</style></head>
 <body>
 <header>
 <div class="nav">
@@ -436,6 +443,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <a class="hidden" href="#dashboard" id="dashLink">Dashboard</a>
 <a class="hidden" href="#admin" id="adminLink">Admin</a>
 <button class="btn" id="authBtn">Login</button>
+<button class="btn" id="registerNav" type="button">Register</button>
 </nav>
 </div>
 </header>
@@ -468,7 +476,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 </div>
 </section>
 
-<section class="registration-panel homepage-registration" id="register-flow" style="margin-top:8px">
+<section class="hidden registration-panel homepage-registration" id="register-flow" style="margin-top:8px">
 <div class="container" style="padding-top:0;padding-bottom:0">
 <div class="registration-intro">
 <button class="btn gray hidden" id="regBackBtn">← Back to Home</button>
@@ -665,6 +673,7 @@ function hideHomeSurface(){
 }
 function showHomeSurface(){
   ["home","quickActions","approved-astrologers","faq"].forEach(id=>show(id));
+  hide("register-flow");
   document.querySelectorAll('header a[href="#home"], header a[href="#contact"], header a[href="#services"], #contactNav').forEach(el=>showElement(el));
 }
 function hideElement(el){if(el) el.classList.add("hidden");}
@@ -673,8 +682,17 @@ function hidePrimarySections(except=""){
   ["register-flow","astro-register-form","astro-flow","ask-flow","appointment","contact","dashboard","admin"].forEach(id=>{if(id!==except) hide(id);});
   if(except!=="dashboard") hide("dashLink");
   if(except!=="admin") hide("adminLink");
-  if(except==="dashboard" || except==="admin") hideHomeSurface();
-  else showHomeSurface();
+  if(except==="dashboard" || except==="admin"){
+    hideHomeSurface();
+    hide("register-flow");
+    hide("astro-register-form");
+    hide("astro-flow");
+    hide("ask-flow");
+    hide("appointment");
+    hide("contact");
+  }else{
+    showHomeSurface();
+  }
 }
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));}
 function message(id,html){if($(id)) $(id).innerHTML=html;}
@@ -715,9 +733,11 @@ async function openQuestionService(){
 }
   function smvDateTime(value){ try { if(!value) return '—'; const d=value?.toDate ? value.toDate() : (value?.seconds ? new Date(Number(value.seconds)*1000) : new Date(value)); if(Number.isNaN(d.getTime())) return '—'; return d.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'}); } catch(e){ return '—'; } }
 window.__smvOpenQuestionService=openQuestionService;
+  window.__smvOpenRegister=openRegister;
 
 if($("authBtn") && $("authBtn").dataset.smvAuthBound!=="1"){ $("authBtn").dataset.smvAuthBound="1"; $("authBtn").addEventListener("click",async()=>{try{if(currentUser){await logoutToHome();}else{openAuth("login");}}catch(e){console.error("SMV login action failed",e);}}); }
-$("customerRegBtn")?.addEventListener("click",()=>openAuth("register"));
+$("registerNav")?.addEventListener("click",()=>openRegister());
+  $("customerRegBtn")?.addEventListener("click",()=>openAuth("register"));
 $("privateConsultBtn")?.addEventListener("click",()=>openQuestionService());
 $("astroRegBtn")?.addEventListener("click",openAstroRegister);
 $("regBackBtn")?.addEventListener("click",()=>{hide("register-flow");window.scrollTo({top:0,behavior:"smooth"});});
@@ -867,6 +887,16 @@ async function submitAuth(mode){
     }else{
       show("dashLink");
       hidePrimarySections("dashboard");
+      hide("register-flow");
+      hide("astro-register-form");
+      hide("astro-flow");
+      hide("ask-flow");
+      hide("appointment");
+      hide("contact");
+      hide("home");
+      hide("quickActions");
+      hide("approved-astrologers");
+      hide("faq");
       show("dashboard");
       await loadDashboard();
       go("dashboard");
