@@ -420,6 +420,157 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
 
 
 
+
+/**
+ * Server-side astrologer answer submission.
+ *
+ * The answer is written by the trusted backend first. Email notification is
+ * then attempted from the server (never from the browser), and the result of
+ * each recipient is persisted in the question document.
+ */
+app.post("/submit-answer", async (req, res) => {
+  const user = await requireUser(req, res);
+  if (!user) return;
+
+  const questionId = String(req.body?.questionId || "").trim();
+  const answer = String(req.body?.answer || "").trim();
+
+  try {
+    if (!questionId || !answer) {
+      return res.status(400).json({ error: "Question ID and answer are required." });
+    }
+
+    const questionRef = db.collection("smv_questions").doc(questionId);
+    const snap = await questionRef.get();
+    if (!snap.exists) return res.status(404).json({ error: "Question not found." });
+
+    const q = snap.data() || {};
+    if (String(q.astrologerId || "") !== String(user.uid)) {
+      return res.status(403).json({ error: "This question is not assigned to you." });
+    }
+
+    if (!["admin_approved", "revision_required"].includes(String(q.status || ""))) {
+      return res.status(409).json({ error: "This question is not ready for answer submission." });
+    }
+
+    const minWords = Number(q.answerMinWords || 150);
+    const wordCount = answer.split(/\s+/).filter(Boolean).length;
+    if (wordCount < minWords) {
+      return res.status(400).json({ error: `Please write at least ${minWords} words.` });
+    }
+
+    const commissionPercent = Number(q.commissionPercent || q.commissionRate || 20);
+    const commissionAmount =
+      Math.round(Number(q.amount || 0) * commissionPercent) / 100;
+
+    // Save the answer before attempting email. This makes the submission
+    // independent of browser notification calls and email-provider latency.
+    await questionRef.update({
+      answer,
+      answerWordCount: wordCount,
+      answerSubmittedAt: FieldValue.serverTimestamp(),
+      astrologerAnswerStatus: "submitted",
+      status: "processing",
+      astrologerCommissionAmount: commissionAmount,
+      commissionPercent,
+      commissionRate: commissionPercent,
+      commissionStatus: "pending_admin_approval",
+      answerEmailStatus: {
+        state: "pending",
+        updatedAt: FieldValue.serverTimestamp()
+      }
+    });
+
+    const customerEmail = String(
+      q.customerEmail || await getUserEmail(q.customerId) || ""
+    ).trim();
+    const customerName = String(q.customerName || q.birthName || "Customer");
+    const astrologerEmail = String(await getUserEmail(q.astrologerId) || "").trim();
+    const astrologerName = String(q.astrologerName || "Astrologer");
+
+    const subject = "SMV ASTRO — Astrologer answer submitted";
+    const text = [
+      `Dear ${customerName},`,
+      "",
+      `${astrologerName} has submitted an answer to your astrology question. It is now waiting for Admin review.`,
+      "",
+      `Question: ${q.question || ""}`,
+      `Question ID: ${questionId}`,
+      "",
+      "Regards,",
+      "SMV ASTRO"
+    ].join("\n");
+
+    const recipients = uniqueRecipients([customerEmail, ADMIN_EMAIL]);
+    const emailResults = {};
+    const emailStatusPatch = {
+      state: "completed",
+      updatedAt: FieldValue.serverTimestamp()
+    };
+
+    if (!recipients.length) {
+      const error = "No customer or admin email address is configured.";
+      console.error(`ANSWER EMAIL FAILED | Question ID: ${questionId} | Reason: ${error}`);
+      emailStatusPatch.state = "failed";
+      emailStatusPatch.error = error;
+      emailStatusPatch.recipients = {};
+    } else {
+      for (const recipient of recipients) {
+        const recipientKey = recipient.toLowerCase();
+        const result = await sendSystemEmail({
+          to: [recipient],
+          replyTo: ADMIN_EMAIL || astrologerEmail || customerEmail,
+          subject,
+          text
+        });
+
+        if (result?.failed) {
+          emailResults[recipientKey] = {
+            status: "failed",
+            error: String(result.error || "Unknown email error")
+          };
+          console.error(
+            `ANSWER EMAIL FAILED | Question ID: ${questionId} | Recipient Email: ${recipient} | Reason: ${result.error || "Unknown email error"}`
+          );
+        } else {
+          emailResults[recipientKey] = {
+            status: "sent",
+            messageId: result?.id || null
+          };
+          console.log(
+            `ANSWER EMAIL SENT | Question ID: ${questionId} | Recipient Email: ${recipient}`
+          );
+        }
+      }
+
+      const failed = Object.values(emailResults).some(x => x.status === "failed");
+      emailStatusPatch.state = failed
+        ? (Object.values(emailResults).every(x => x.status === "failed") ? "failed" : "partial")
+        : "sent";
+      emailStatusPatch.recipients = emailResults;
+    }
+
+    await questionRef.set({ answerEmailStatus: emailStatusPatch }, { merge: true });
+
+    const failedCount = Object.values(emailResults).filter(x => x.status === "failed").length;
+    return res.json({
+      ok: true,
+      answerSaved: true,
+      emailState: emailStatusPatch.state,
+      emailFailedCount: failedCount,
+      recipients: recipients.length
+    });
+  } catch (e) {
+    console.error(
+      `Answer submission failed | Question ID: ${questionId || "N/A"} | Reason:`,
+      e?.message || e
+    );
+    return res.status(500).json({
+      error: e?.message || "Unable to submit answer."
+    });
+  }
+});
+
 app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
   const user=await requireUser(req,res); if(!user)return;
   try{
