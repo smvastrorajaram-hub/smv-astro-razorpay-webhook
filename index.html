@@ -2426,7 +2426,7 @@ ${ad.status === 'rejected' && ad.rejectionReason
             'Authorization': 'Bearer ' + token
           },
           body: JSON.stringify({
-            questionId: id,
+            questionId: questionId,
             answer: answer
           })
         }),
@@ -3035,72 +3035,21 @@ answerBox
           );
         }
 
-        const commissionAmount =
-          Number(
-            q.astrologerCommissionAmount || 0
-          );
+        const approvalResult = await renderApi('/admin/approve-answer',{
+          method:'POST',
+          body:JSON.stringify({questionId:id})
+        });
+        if(!approvalResult?.success) throw new Error(approvalResult?.error||'Unable to approve answer.');
 
-        const creditResponse = await renderApi('/admin/credit-commission',{method:'POST',body:JSON.stringify({questionId:id})});
-        if(!creditResponse?.success) throw new Error(creditResponse?.error||'Unable to credit astrologer commission.');
-
-        await withTimeout(
-          updateDoc(
-            questionRef,
-            {
-
-              status: 'answered',
-
-              astrologerAnswerStatus:
-                'approved',
-
-              commissionStatus:
-                'credited',
-
-              answerApprovedAt:
-                serverTimestamp(),
-
-              adminAnswerApprovedAt:
-                serverTimestamp(),
-
-              answerApprovedBy:
-                currentUser.uid,
-
-              commissionCreditedAt:
-                serverTimestamp(),
-
-              commissionAmount:
-                commissionAmount
-
-            }
-          ),
-          15000
-        );
-
-        await setDoc(
-          doc(
-            db,
-            'smv_notifications',
-            q.astrologerId +
-            '_answer_approved_' +
-            Date.now()
-          ),
-          {
-            userId: q.astrologerId,
-            type: 'answer_approved',
-            title: 'Answer Approved',
-            message:
-              `Your answer has been approved. Commission credited: ₹${commissionAmount.toFixed(2)}`,
-            questionId: id,
-            commissionAmount:
-              commissionAmount,
-            createdAt:
-              serverTimestamp(),
-            read: false
-          }
-        );
+        const commissionAmount = Number(approvalResult.commissionAmount || q.astrologerCommissionAmount || 0);
+        const emailState = approvalResult.emailState || 'unknown';
 
         alert(
-          `Answer approved successfully. ₹${commissionAmount.toFixed(2)} commission credited.`
+          emailState === 'sent'
+            ? (approvalResult.already
+                ? `Email notification retry completed. Customer and Astrologer emails were sent again for this already-approved answer.`
+                : `Answer approved successfully. ₹${commissionAmount.toFixed(2)} commission credited. Customer and Astrologer email notifications were sent.`)
+            : `Answer approved successfully. Email notification status: ${emailState}. Check Render Logs for the exact Resend error.`
         );
 
         await loadAdminPanel();
