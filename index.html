@@ -510,6 +510,34 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 @media(max-width:760px){#langSelect{min-height:44px;padding:9px 8px;font-size:12px}}
 </style><style id="smv-register-header-style">
 #registerNav{margin-left:2px}
+
+/* FINAL REQUEST: desktop horizontal dashboard and astrologer-card fit. Mobile is untouched. */
+@media (min-width:761px){
+  #dashboardContent > .grid, #dashboardContent .grid{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:16px!important;
+    width:100%!important;
+    align-items:stretch!important;
+  }
+  #dashboardContent > .grid > .card, #dashboardContent .grid > .card{
+    min-width:0!important; width:100%!important; box-sizing:border-box!important;
+  }
+  #adminSummary{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:14px!important; width:100%!important;
+  }
+  #adminSummary .stat{min-width:0!important;width:100%!important;box-sizing:border-box!important;}
+  #astroCards{
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important;width:100%!important;
+  }
+  #astroCards .astro-public-card{min-width:0!important;width:100%!important;box-sizing:border-box!important;margin-top:0!important;}
+}
+@media (max-width:760px){
+  /* Preserve existing mobile layouts. */
+  #astroCards, #dashboardContent > .grid, #adminSummary{width:100%;min-width:0;}
+}
 </style></head>
 <body>
 <header>
@@ -1072,7 +1100,7 @@ async function loadAstroCards(){
     items=snap.docs.map(d=>({id:d.id,...(d.data()||{})}));
   }
   if(!items.length){box.innerHTML='<div class="empty">No approved astrologers available yet.</div>';return;}
-  box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card astro-public-card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.rating||a.averageRating||"New")} · ${escapeHtml(a.experience||"Experienced")} years experience</p><p>${escapeHtml(a.bio||a.about||"Professional astrologer")}</p><p class="small">Secure payment amount is shown only at checkout.</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=async()=>{
+  box.innerHTML="";items.forEach(a=>{const card=document.createElement("div");card.className="card astro-public-card";card.style.marginTop="12px";card.innerHTML=`${a.photoData?`<img src="${escapeHtml(a.photoData)}" alt="Astrologer photo" style="width:72px;height:72px;border-radius:50%;object-fit:cover">`:''}<h3>${escapeHtml(a.name||"Astrologer")}</h3><p><b>${escapeHtml(a.expertise||a.specialization||"Astrology")}</b></p><p>⭐ ${escapeHtml(a.experience||"Experienced")} years experience</p><div class="action-row"><button class="btn gray" data-profile>PROFILE & REVIEWS</button></div>`;card.querySelector("[data-profile]").onclick=async()=>{
   const btn=card.querySelector("[data-profile]");
   if(btn) { btn.disabled=true; btn.textContent='PROFILE LOADING...'; }
   try{
@@ -3136,7 +3164,7 @@ window.__SMV_APP_READY=true;
          Do NOT wait for Firebase before opening the profile. */
       const stars=n=>'★'.repeat(Math.max(0,Math.min(5,Number(n||0))))+'☆'.repeat(5-Math.max(0,Math.min(5,Number(n||0))));
       const photo=a?.photoData||a?.photoURL||a?.photoUrl||'';
-      showPublicProfileModal(`<div class="profile-dialog">${photo?`<img class="profile-photo" src="${esc(photo)}" alt="${esc(name)}">`:''}<h2 class="profile-title">${esc(name)}</h2><p class="profile-expertise">${esc(a?.expertise||a?.specialization||'Astrology')}</p><p class="profile-bio">${esc(a?.bio||a?.about||'Professional astrologer')}</p><h3 class="profile-reviews-title">Verified Reviews</h3><div id="publicProfileReviews"><div class="empty">Loading reviews...</div></div><button class="btn gray" id="profileCloseBtn">CLOSE</button></div>`);
+      showPublicProfileModal(`<div class="profile-dialog">${photo?`<img class="profile-photo" src="${esc(photo)}" alt="${esc(name)}">`:''}<h2 class="profile-title">${esc(name)}</h2><p class="profile-expertise">${esc(a?.expertise||a?.specialization||'Astrology')}</p><p class="profile-experience">⭐ ${esc(a?.experience||'Experienced')} years experience</p><p class="profile-bio">${esc(a?.bio||a?.about||'Professional astrologer')}</p><h3 class="profile-reviews-title">Verified Reviews</h3><div id="publicProfileReviews"><div class="empty">Loading reviews...</div></div><button class="btn gray" id="profileCloseBtn">CLOSE</button></div>`);
       $('profileCloseBtn').onclick=closeModal;
 
       let reviews=[];
@@ -3278,132 +3306,62 @@ window.__SMV_APP_READY=true;
     select.dataset.smvLangBound='1';
     let currentLang='en';
     const T={
-      "Home":"முகப்பு","Services":"சேவைகள்","Consultation":"ஆலோசனை","Contact":"தொடர்பு","Dashboard":"டாஷ்போர்டு","Admin":"நிர்வாகி","Login":"உள்நுழைவு","Logout":"வெளியேறு","Close":"மூடு","Back":"பின்","← Back":"← பின்","← Back to Home":"← முகப்பிற்குத் திரும்பு","Register":"பதிவு","FAQ":"அடிக்கடி கேட்கப்படும் கேள்விகள்","FREQUENTLY ASKED QUESTIONS":"அடிக்கடி கேட்கப்படும் கேள்விகள்","How do I ask an astrology question?":"ஜோதிடக் கேள்வியை எப்படி கேட்பது?","Can I book a Chat or Call consultation?":"Chat அல்லது Call ஆலோசனையை முன்பதிவு செய்ய முடியுமா?","Are astrologers verified?":"ஜோதிடர்கள் சரிபார்க்கப்பட்டவர்களா?","How can I contact SMV ASTRO?":"SMV ASTRO-வை எப்படி தொடர்பு கொள்வது?","Do I need an account?":"கணக்கு அவசியமா?","How are astrologers selected and verified?":"ஜோதிடர்கள் எவ்வாறு தேர்வு செய்யப்பட்டு சரிபார்க்கப்படுகிறார்கள்?","When will I receive my astrology answer?":"எனது ஜோதிடப் பதில் எப்போது கிடைக்கும்?","Is there a refund or cancellation policy?":"பணத்தைத் திரும்பப் பெறுதல் அல்லது ரத்து கொள்கை உள்ளதா?","What happens if my question is not suitable for the astrology service?":"எனது கேள்வி ஜோதிட சேவைக்கு ஏற்றதாக இல்லாவிட்டால் என்ன ஆகும்?","Are astrology answers guaranteed?":"ஜோதிடப் பதில்கள் உறுதியானவையா?","Ask Now":"இப்போது கேளுங்கள்","ASK NOW":"இப்போது கேளுங்கள்","Ask your astrology question":"உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்","Our Approved Astrologers":"எங்கள் அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்","Choose an approved astrologer to view their profile and verified reviews.":"அங்கீகரிக்கப்பட்ட ஜோதிடரைத் தேர்ந்தெடுத்து அவரின் சுயவிவரத்தையும் சரிபார்க்கப்பட்ட மதிப்புரைகளையும் பார்க்கவும்.","WELCOME TO SMV ASTRO SERVICES":"SMV ASTRO சேவைகளுக்கு வரவேற்கிறோம்","Trusted Astrological Guidance for a Better Tomorrow":"சிறந்த நாளைக்கான நம்பகமான ஜோதிட வழிகாட்டல்","Traditional Wisdom":"பாரம்பரிய ஞானம்","Personal Guidance":"தனிப்பட்ட வழிகாட்டல்","Trusted Consultation":"நம்பகமான ஆலோசனை","Services & Pricing":"சேவைகள் & கட்டணங்கள்","Customer Reviews":"வாடிக்கையாளர் மதிப்புரைகள்","What Our Customers Say":"எங்கள் வாடிக்கையாளர்கள் கூறுவது","Notifications":"அறிவிப்புகள்","Latest updates":"சமீபத்திய புதுப்பிப்புகள்","Customer Account":"வாடிக்கையாளர் கணக்கு","Customer Registration":"வாடிக்கையாளர் பதிவு","Astrologer Registration":"ஜோதிடர் பதிவு","Birth Details":"பிறப்பு விவரங்கள்","Date of Birth":"பிறந்த தேதி","Time of Birth":"பிறந்த நேரம்","Place of Birth":"பிறந்த இடம்","Your Question":"உங்கள் கேள்வி","Ask Your Question":"உங்கள் கேள்வியைக் கேளுங்கள்","ASK YOUR QUESTIONS":"உங்கள் கேள்விகளைக் கேளுங்கள்","Proceed to Secure Payment":"பாதுகாப்பான கட்டணத்திற்குத் தொடர்க","Contact Us":"தொடர்பு கொள்ள","Use the Contact Us form to send your query directly.":"உங்கள் கேள்வியை நேரடியாக அனுப்ப Contact Us படிவத்தைப் பயன்படுத்தவும்.","An account is required for secure customer consultation features. You can create one from Customer Registration or the Login button.":"பாதுகாப்பான வாடிக்கையாளர் ஆலோசனை அம்சங்களுக்கு கணக்கு தேவை. Customer Registration அல்லது Login மூலம் கணக்கை உருவாக்கலாம்.","Astrologer applications are reviewed by SMV ASTRO Admin before their profiles are approved for customer consultations.":"வாடிக்கையாளர் ஆலோசனைக்கு முன் ஜோதிடர் விண்ணப்பங்களை SMV ASTRO நிர்வாகம் மதிப்பாய்வு செய்கிறது.","Yes. Use the Appointment / Consultation Booking form and choose Chat Consultation or Call Consultation. Admin will confirm the appointment.":"ஆம். Appointment / Consultation Booking படிவத்தில் Chat அல்லது Call ஆலோசனையைத் தேர்வு செய்யுங்கள். நிர்வாகி முன்பதிவை உறுதிப்படுத்துவார்.",
-      "Login as a customer, choose Ask Your Questions, enter the birth details and question, then complete the secure payment flow.":"வாடிக்கையாளராக உள்நுழைந்து, உங்கள் கேள்விகளைத் தேர்வு செய்து, பிறப்பு விவரங்களையும் கேள்வியையும் உள்ளிட்டு பாதுகாப்பான கட்டணத்தை முடிக்கவும்.",
-      "All astrologers are carefully reviewed and verified by SMV ASTRO before being approved for consultation services.":"அனைத்து ஜோதிடர்களும் ஆலோசனை சேவைக்கு அங்கீகரிக்கப்படுவதற்கு முன் SMV ASTRO மூலம் கவனமாக மதிப்பாய்வு செய்து சரிபார்க்கப்படுகிறார்கள்.",
-      "After successful payment and submission, your astrology question will normally be answered within 24 hours.":"கட்டணம் வெற்றிகரமாக முடிந்து கேள்வி சமர்ப்பிக்கப்பட்ட பிறகு, உங்கள் ஜோதிடக் கேள்விக்கு பொதுவாக 24 மணி நேரத்திற்குள் பதில் வழங்கப்படும்.",
-      "Payments are generally non-refundable once an accepted question enters the consultation process. If SMV ASTRO cannot provide the purchased service, a refund may be considered.":"ஏற்றுக்கொள்ளப்பட்ட கேள்வி ஆலோசனை செயல்முறையில் சென்ற பிறகு கட்டணம் பொதுவாகத் திருப்பித் தரப்படாது. SMV ASTRO வாங்கிய சேவையை வழங்க முடியாவிட்டால், பணத்தைத் திருப்பித் தருவது பரிசீலிக்கப்படலாம்.",
-      "Questions that are unrelated to astrology, inappropriate, abusive, or involve matters that SMV ASTRO cannot responsibly provide guidance on may be rejected. If the question is rejected before consultation is provided, the customer may be eligible for a refund, normally processed within 48 hours.":"ஜோதிடத்துடன் தொடர்பில்லாத, பொருத்தமற்ற, அவமதிப்பான கேள்விகள் அல்லது SMV ASTRO பொறுப்புடன் வழிகாட்ட முடியாத விஷயங்கள் நிராகரிக்கப்படலாம். ஆலோசனை வழங்குவதற்கு முன் கேள்வி நிராகரிக்கப்பட்டால், வாடிக்கையாளர் பணத்திற்குத் தகுதியுடையவராக இருக்கலாம்; அது பொதுவாக 48 மணி நேரத்திற்குள் செயல்படுத்தப்படும்.",
-      "No. Astrology is a traditional form of guidance and interpretation. It is not a guarantee of future events or outcomes. Customers are free to accept, consider, or disagree with the guidance provided.":"இல்லை. ஜோதிடம் பாரம்பரிய வழிகாட்டல் மற்றும் விளக்கத்தின் ஒரு வடிவமாகும். இது எதிர்கால நிகழ்வுகள் அல்லது முடிவுகளுக்கான உத்தரவாதம் அல்ல. வழங்கப்படும் வழிகாட்டலை ஏற்றுக்கொள்ளவும், பரிசீலிக்கவும் அல்லது ஏற்காமல் இருக்கவும் வாடிக்கையாளர்களுக்கு முழு சுதந்திரம் உள்ளது."
+      'Home':'முகப்பு','Contact':'தொடர்பு','Dashboard':'டாஷ்போர்டு','Admin':'நிர்வாகி','Login':'உள்நுழைவு','Logout':'வெளியேறு','Register':'பதிவு','Close':'மூடு','Back':'பின்','← Back':'← பின்','← Back to Home':'← முகப்பிற்குத் திரும்பு','FAQ':'அடிக்கடி கேட்கப்படும் கேள்விகள்',
+      'ASTROLOGY CONSULTATION':'ஜோதிட ஆலோசனை','VEDA • JYOTISHA • GUIDANCE':'வேதம் • ஜோதிடம் • வழிகாட்டல்','WELCOME TO SMV ASTRO SERVICES':'SMV ASTRO சேவைகளுக்கு வரவேற்கிறோம்','Trusted Astrological Guidance for a Better Tomorrow':'சிறந்த நாளைக்கான நம்பகமான ஜோதிட வழிகாட்டல்','Rooted in the time-honoured Indian tradition of Jyotisha, we bring thoughtful astrological guidance for life, relationships, career and important decisions — with trusted astrologers and a private consultation experience.':'பாரம்பரிய இந்திய ஜோதிட மரபை அடிப்படையாகக் கொண்டு, வாழ்க்கை, உறவுகள், தொழில் மற்றும் முக்கிய முடிவுகளுக்கான சிந்தனையுள்ள ஜோதிட வழிகாட்டலை நம்பகமான ஜோதிடர்கள் மற்றும் தனிப்பட்ட ஆலோசனை அனுபவத்துடன் வழங்குகிறோம்.','Traditional Wisdom':'பாரம்பரிய ஞானம்','Personal Guidance':'தனிப்பட்ட வழிகாட்டல்','Trusted Consultation':'நம்பகமான ஆலோசனை',
+      'QUICK CONSULTATION':'விரைவு ஆலோசனை','Quick Consultation':'விரைவு ஆலோசனை','Ask Now':'இப்போது கேளுங்கள்','ASK NOW':'இப்போது கேளுங்கள்','Ask your astrology question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்',
+      'APPROVED ASTROLOGERS':'அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்','Our Approved Astrologers':'எங்கள் அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்','Choose an approved astrologer to view their profile and verified reviews.':'சுயவிவரம் மற்றும் சரிபார்க்கப்பட்ட மதிப்புரைகளைப் பார்க்க அங்கீகரிக்கப்பட்ட ஜோதிடரைத் தேர்ந்தெடுக்கவும்.','PROFILE & REVIEWS':'சுயவிவரம் & மதிப்புரைகள்','PROFILE LOADING...':'சுயவிவரம் ஏற்றப்படுகிறது...','Verified Reviews':'சரிபார்க்கப்பட்ட மதிப்புரைகள்','Loading reviews...':'மதிப்புரைகள் ஏற்றப்படுகின்றன...','No approved reviews for this astrologer yet.':'இந்த ஜோதிடருக்கு இன்னும் அங்கீகரிக்கப்பட்ட மதிப்புரைகள் இல்லை.','CLOSE':'மூடுக','TRY AGAIN':'மீண்டும் முயற்சிக்கவும்',
+      'FREQUENTLY ASKED QUESTIONS':'அடிக்கடி கேட்கப்படும் கேள்விகள்','How do I ask an astrology question?':'ஜோதிடக் கேள்வியை எப்படி கேட்பது?','Login as a customer, choose Ask Your Questions, enter the birth details and question, then complete the secure payment flow.':'வாடிக்கையாளராக உள்நுழைந்து, உங்கள் கேள்விகளைத் தேர்வு செய்து, பிறப்பு விவரங்களையும் கேள்வியையும் உள்ளிட்டு பாதுகாப்பான கட்டணத்தை முடிக்கவும்.','Can I book a Chat or Call consultation?':'Chat அல்லது Call ஆலோசனையை முன்பதிவு செய்ய முடியுமா?','Yes. Use the Appointment / Consultation Booking form and choose Chat Consultation or Call Consultation. Admin will confirm the appointment.':'ஆம். Appointment / Consultation Booking படிவத்தில் Chat அல்லது Call ஆலோசனையைத் தேர்வு செய்யுங்கள். நிர்வாகி முன்பதிவை உறுதிப்படுத்துவார்.','Are astrologers verified?':'ஜோதிடர்கள் சரிபார்க்கப்பட்டவர்களா?','All astrologers are carefully reviewed and verified by SMV ASTRO before being approved for consultation services.':'அனைத்து ஜோதிடர்களும் ஆலோசனை சேவைக்கு அங்கீகரிக்கப்படுவதற்கு முன் SMV ASTRO மூலம் கவனமாக மதிப்பாய்வு செய்து சரிபார்க்கப்படுகிறார்கள்.','How can I contact SMV ASTRO?':'SMV ASTRO-வை எப்படி தொடர்பு கொள்வது?','Use the Contact Us form to send your query directly.':'உங்கள் கேள்வியை நேரடியாக அனுப்ப Contact Us படிவத்தைப் பயன்படுத்தவும்.','Do I need an account?':'கணக்கு அவசியமா?','An account is required for secure customer consultation features. You can create one from Customer Registration or the Login button.':'பாதுகாப்பான வாடிக்கையாளர் ஆலோசனை அம்சங்களுக்கு கணக்கு தேவை. Customer Registration அல்லது Login மூலம் கணக்கை உருவாக்கலாம்.','How are astrologers selected and verified?':'ஜோதிடர்கள் எவ்வாறு தேர்வு செய்யப்பட்டு சரிபார்க்கப்படுகிறார்கள்?','When will I receive my astrology answer?':'எனது ஜோதிடப் பதில் எப்போது கிடைக்கும்?','After successful payment and submission, your astrology question will normally be answered within 24 hours.':'கட்டணம் வெற்றிகரமாக முடிந்து கேள்வி சமர்ப்பிக்கப்பட்ட பிறகு, உங்கள் ஜோதிடக் கேள்விக்கு பொதுவாக 24 மணி நேரத்திற்குள் பதில் வழங்கப்படும்.','Is there a refund or cancellation policy?':'பணத்தைத் திரும்பப் பெறுதல் அல்லது ரத்து கொள்கை உள்ளதா?','Payments are generally non-refundable once an accepted question enters the consultation process. If SMV ASTRO cannot provide the purchased service, a refund may be considered.':'ஏற்றுக்கொள்ளப்பட்ட கேள்வி ஆலோசனை செயல்முறையில் சென்ற பிறகு கட்டணம் பொதுவாகத் திருப்பித் தரப்படாது. SMV ASTRO வாங்கிய சேவையை வழங்க முடியாவிட்டால், பணத்தைத் திருப்பித் தருவது பரிசீலிக்கப்படலாம்.','What happens if my question is not suitable for the astrology service?':'எனது கேள்வி ஜோதிட சேவைக்கு ஏற்றதாக இல்லாவிட்டால் என்ன ஆகும்?','Questions that are unrelated to astrology, inappropriate, abusive, or involve matters that SMV ASTRO cannot responsibly provide guidance on may be rejected. If the question is rejected before consultation is provided, the customer may be eligible for a refund, normally processed within 48 hours of the rejection decision.':'ஜோதிடத்துடன் தொடர்பில்லாத, பொருத்தமற்ற, அவமதிப்பான கேள்விகள் அல்லது SMV ASTRO பொறுப்புடன் வழிகாட்ட முடியாத விஷயங்கள் நிராகரிக்கப்படலாம். ஆலோசனை வழங்குவதற்கு முன் கேள்வி நிராகரிக்கப்பட்டால், வாடிக்கையாளர் பணத்தைத் திரும்பப் பெற தகுதியுடையவராக இருக்கலாம்; அது பொதுவாக நிராகரிப்பு முடிவிலிருந்து 48 மணி நேரத்திற்குள் செயல்படுத்தப்படும்.','Are astrology answers guaranteed?':'ஜோதிடப் பதில்கள் உறுதியானவையா?','No. Astrology is a traditional form of guidance and interpretation. It is not a guarantee of future events or outcomes. Customers are free to accept, consider, or disagree with the guidance provided.':'இல்லை. ஜோதிடம் பாரம்பரிய வழிகாட்டல் மற்றும் விளக்கத்தின் ஒரு வடிவமாகும். இது எதிர்கால நிகழ்வுகள் அல்லது முடிவுகளுக்கான உத்தரவாதம் அல்ல. வழங்கப்படும் வழிகாட்டலை ஏற்றுக்கொள்ளவும், பரிசீலிக்கவும் அல்லது ஏற்காமல் இருக்கவும் வாடிக்கையாளர்களுக்கு முழு சுதந்திரம் உள்ளது.',
+      'Customer Dashboard':'வாடிக்கையாளர் டாஷ்போர்டு','Astrologer Dashboard':'ஜோதிடர் டாஷ்போர்டு','Admin Dashboard':'நிர்வாக டாஷ்போர்டு','My Dashboard':'என் டாஷ்போர்டு','Customer':'வாடிக்கையாளர்','ASTROLOGER':'ஜோதிடர்','My Questions':'என் கேள்விகள்','My Consultations':'என் ஆலோசனைகள்','Notifications':'அறிவிப்புகள்','Total Earnings':'மொத்த வருமானம்','Public Question Inbox':'பொது கேள்வி பெட்டி','Questions & Answers':'கேள்விகள் & பதில்கள்','Earnings Ledger':'வருமானப் பதிவு','Status':'நிலை','Approved profile':'அங்கீகரிக்கப்பட்ட சுயவிவரம்','Approved':'அங்கீகரிக்கப்பட்டது','Rejected':'நிராகரிக்கப்பட்டது','Waiting for Admin':'நிர்வாக அனுமதிக்காக காத்திருக்கிறது','Application Status':'விண்ணப்ப நிலை','Pending Admin Approval':'நிர்வாக அனுமதி நிலுவையில்','Waiting for Admin Approval':'நிர்வாக அனுமதிக்காக காத்திருக்கிறது','Refresh Status':'நிலையைப் புதுப்பிக்கவும்','REFRESH STATUS':'நிலையைப் புதுப்பிக்கவும்','Your customer/payment contact details remain private.':'உங்கள் வாடிக்கையாளர்/கட்டண தொடர்பு விவரங்கள் தனிப்பட்டதாக பாதுகாக்கப்படும்.','Change Payment Method':'கட்டண முறையை மாற்றவும்','active question(s)':'செயலில் உள்ள கேள்விகள்','Reach ₹300 to request a withdrawal.':'திரும்பப் பெற ₹300 அடைய வேண்டும்.','You can withdraw':'நீங்கள் தொகையைத் திரும்பப் பெறலாம்','WITHDRAW':'திரும்பப் பெறுக','Minimum withdrawal':'குறைந்தபட்ச திரும்பப் பெறும் தொகை','Commission is credited only after Admin approves the submitted answer.':'சமர்ப்பிக்கப்பட்ட பதிலை நிர்வாகம் அங்கீகரித்த பிறகே கமிஷன் வரவு வைக்கப்படும்.','No questions yet.':'இன்னும் கேள்விகள் இல்லை.','No paid public questions are available right now.':'தற்போது பணம் செலுத்தப்பட்ட பொது கேள்விகள் எதுவும் இல்லை.','CLAIM & ANSWER':'பெற்று பதிலளிக்கவும்','Submit for Admin Approval':'நிர்வாக அனுமதிக்குச் சமர்ப்பிக்கவும்','Resubmit for Admin Approval':'நிர்வாக அனுமதிக்காக மீண்டும் சமர்ப்பிக்கவும்','Birth details':'பிறப்பு விவரங்கள்','Question ID':'கேள்வி ID','Customer paid':'வாடிக்கையாளர் செலுத்தியது','Your commission':'உங்கள் கமிஷன்','Earnings Ledger':'வருமானப் பதிவு',
+      'Customers':'வாடிக்கையாளர்கள்','Astrologers':'ஜோதிடர்கள்','Pending':'நிலுவையில்','Questions':'கேள்விகள்','Customer Reviews':'வாடிக்கையாளர் மதிப்புரைகள்','Pending Astrologers':'நிலுவையில் உள்ள ஜோதிடர்கள்','Admin Answers':'நிர்வாக பதில்கள்','Admin Reviews':'நிர்வாக மதிப்புரைகள்','Question Approval':'கேள்வி அனுமதி','Answer Approval':'பதில் அனுமதி','Approve':'அனுமதிக்கவும்','Reject':'நிராகரிக்கவும்','APPROVE & ALLOCATE':'அனுமதித்து ஒதுக்கவும்','REJECT QUESTION':'கேள்வியை நிராகரிக்கவும்','Save':'சேமிக்கவும்','SAVE':'சேமிக்கவும்','SAVING...':'சேமிக்கப்படுகிறது...','Test Razorpay Connection':'Razorpay இணைப்பைச் சோதிக்கவும்','TEST RAZORPAY CONNECTION':'Razorpay இணைப்பைச் சோதிக்கவும்','Commission Settings':'கமிஷன் அமைப்புகள்','Question Price':'கேள்வி கட்டணம்','Minimum Answer Words':'குறைந்தபட்ச பதில் சொற்கள்',
+      'Email Login':'மின்னஞ்சல் உள்நுழைவு','Customer ID':'வாடிக்கையாளர் ID','Astrologer ID':'ஜோதிடர் ID','Email / ID':'மின்னஞ்சல் / ID','Email address':'மின்னஞ்சல் முகவரி','Password':'கடவுச்சொல்','Minimum 6 characters':'குறைந்தது 6 எழுத்துகள்','Forgot Password?':'கடவுச்சொல்லை மறந்துவிட்டீர்களா?','Create new customer account':'புதிய வாடிக்கையாளர் கணக்கை உருவாக்கவும்','Welcome Back':'மீண்டும் வரவேற்கிறோம்','Sign in to continue to your SMV ASTRO dashboard.':'SMV ASTRO டாஷ்போர்டைத் தொடர உள்நுழையவும்.','Secure authentication powered by Firebase.':'Firebase மூலம் பாதுகாப்பான அங்கீகாரம்.','LOGIN':'உள்நுழைக','CREATE ACCOUNT':'கணக்கை உருவாக்கவும்','Create Account':'கணக்கை உருவாக்கவும்','Full Name':'முழு பெயர்','Mobile Number':'மொபைல் எண்','Email':'மின்னஞ்சல்','Register as Customer':'வாடிக்கையாளராக பதிவு செய்யவும்','Register as Astrologer':'ஜோதிடராக பதிவு செய்யவும்','Customer Registration':'வாடிக்கையாளர் பதிவு','Astrologer Registration':'ஜோதிடர் பதிவு','Choose Your Path':'உங்கள் பாதையைத் தேர்ந்தெடுக்கவும்','BEGIN YOUR JOURNEY WITH SMV ASTRO':'SMV ASTRO உடன் உங்கள் பயணத்தைத் தொடங்குங்கள்',
+      'Payment Successful':'கட்டணம் வெற்றிகரமாக முடிந்தது','Payment Received':'கட்டணம் பெறப்பட்டது','Question Approved':'கேள்வி அங்கீகரிக்கப்பட்டது','Astrologer Answer Submitted':'ஜோதிடர் பதில் சமர்ப்பிக்கப்பட்டது','Admin Approval':'நிர்வாக அனுமதி','Answer Ready':'பதில் தயாராக உள்ளது','Astrologer Answer':'ஜோதிடர் பதில்','Your Question':'உங்கள் கேள்வி','Ask Your Question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்','Proceed to Secure Payment':'பாதுகாப்பான கட்டணத்திற்குத் தொடர்க','24 hours':'24 மணி நேரம்','48 hours':'48 மணி நேரம்','within 24 hours':'24 மணி நேரத்திற்குள்','within 48 hours':'48 மணி நேரத்திற்குள்'
     };
     const H={
-      "Home":"होम","Services":"सेवाएँ","Consultation":"परामर्श","Contact":"संपर्क","Dashboard":"डैशबोर्ड","Admin":"एडमिन","Login":"लॉगिन","Logout":"लॉगआउट","Close":"बंद करें","Back":"वापस","← Back":"← वापस","← Back to Home":"← होम पर वापस जाएँ","Register":"पंजीकरण","FAQ":"अक्सर पूछे जाने वाले प्रश्न","FREQUENTLY ASKED QUESTIONS":"अक्सर पूछे जाने वाले प्रश्न","How do I ask an astrology question?":"मैं ज्योतिष का प्रश्न कैसे पूछूँ?","Can I book a Chat or Call consultation?":"क्या मैं चैट या कॉल परामर्श बुक कर सकता/सकती हूँ?","Are astrologers verified?":"क्या ज्योतिषी सत्यापित हैं?","How can I contact SMV ASTRO?":"मैं SMV ASTRO से कैसे संपर्क करूँ?","Do I need an account?":"क्या खाता आवश्यक है?","How are astrologers selected and verified?":"ज्योतिषियों का चयन और सत्यापन कैसे किया जाता है?","When will I receive my astrology answer?":"मुझे अपने ज्योतिषीय प्रश्न का उत्तर कब मिलेगा?","Is there a refund or cancellation policy?":"क्या रिफंड या रद्दीकरण नीति है?","What happens if my question is not suitable for the astrology service?":"यदि मेरा प्रश्न ज्योतिष सेवा के लिए उपयुक्त नहीं है तो क्या होगा?","Are astrology answers guaranteed?":"क्या ज्योतिषीय उत्तर निश्चित होते हैं?","Ask Now":"अभी पूछें","ASK NOW":"अभी पूछें","Ask your astrology question":"अपना ज्योतिषीय प्रश्न पूछें","Our Approved Astrologers":"हमारे स्वीकृत ज्योतिषी","Choose an approved astrologer to view their profile and verified reviews.":"प्रोफ़ाइल और सत्यापित समीक्षाएँ देखने के लिए स्वीकृत ज्योतिषी चुनें।","WELCOME TO SMV ASTRO SERVICES":"SMV ASTRO सेवाओं में आपका स्वागत है","Trusted Astrological Guidance for a Better Tomorrow":"बेहतर कल के लिए विश्वसनीय ज्योतिषीय मार्गदर्शन","Traditional Wisdom":"पारंपरिक ज्ञान","Personal Guidance":"व्यक्तिगत मार्गदर्शन","Trusted Consultation":"विश्वसनीय परामर्श","Services & Pricing":"सेवाएँ और मूल्य","Customer Reviews":"ग्राहक समीक्षाएँ","What Our Customers Say":"हमारे ग्राहक क्या कहते हैं","Notifications":"सूचनाएँ","Latest updates":"नवीनतम अपडेट","Customer Account":"ग्राहक खाता","Customer Registration":"ग्राहक पंजीकरण","Astrologer Registration":"ज्योतिषी पंजीकरण","Birth Details":"जन्म विवरण","Date of Birth":"जन्म तिथि","Time of Birth":"जन्म समय","Place of Birth":"जन्म स्थान","Your Question":"आपका प्रश्न","Ask Your Question":"अपना प्रश्न पूछें","ASK YOUR QUESTIONS":"अपने प्रश्न पूछें","Proceed to Secure Payment":"सुरक्षित भुगतान के लिए आगे बढ़ें","Contact Us":"संपर्क करें","Use the Contact Us form to send your query directly.":"अपना प्रश्न सीधे भेजने के लिए संपर्क फ़ॉर्म का उपयोग करें।","An account is required for secure customer consultation features. You can create one from Customer Registration or the Login button.":"सुरक्षित ग्राहक परामर्श सुविधाओं के लिए खाता आवश्यक है। आप Customer Registration या Login से खाता बना सकते हैं।","Astrologer applications are reviewed by SMV ASTRO Admin before their profiles are approved for customer consultations.":"ग्राहक परामर्श के लिए प्रोफ़ाइल स्वीकृत होने से पहले ज्योतिषी के आवेदन की SMV ASTRO Admin द्वारा समीक्षा की जाती है।","Yes. Use the Appointment / Consultation Booking form and choose Chat Consultation or Call Consultation. Admin will confirm the appointment.":"हाँ। Appointment / Consultation Booking फ़ॉर्म में Chat या Call Consultation चुनें। Admin अपॉइंटमेंट की पुष्टि करेगा।",
-      "Login as a customer, choose Ask Your Questions, enter the birth details and question, then complete the secure payment flow.":"ग्राहक के रूप में लॉगिन करें, अपने प्रश्न चुनें, जन्म विवरण और प्रश्न दर्ज करें, फिर सुरक्षित भुगतान पूरा करें।",
-      "All astrologers are carefully reviewed and verified by SMV ASTRO before being approved for consultation services.":"सभी ज्योतिषियों की परामर्श सेवा के लिए स्वीकृति से पहले SMV ASTRO द्वारा सावधानीपूर्वक समीक्षा और सत्यापन किया जाता है।",
-      "After successful payment and submission, your astrology question will normally be answered within 24 hours.":"सफल भुगतान और प्रश्न जमा करने के बाद आपके ज्योतिषीय प्रश्न का उत्तर सामान्यतः 24 घंटे के भीतर दिया जाएगा।",
-      "Payments are generally non-refundable once an accepted question enters the consultation process. If SMV ASTRO cannot provide the purchased service, a refund may be considered.":"स्वीकृत प्रश्न के परामर्श प्रक्रिया में जाने के बाद भुगतान सामान्यतः वापस नहीं किया जाता। यदि SMV ASTRO खरीदी गई सेवा प्रदान नहीं कर सकता, तो रिफंड पर विचार किया जा सकता है।",
-      "Questions that are unrelated to astrology, inappropriate, abusive, or involve matters that SMV ASTRO cannot responsibly provide guidance on may be rejected. If the question is rejected before consultation is provided, the customer may be eligible for a refund, normally processed within 48 hours.":"ज्योतिष से असंबंधित, अनुचित, अपमानजनक प्रश्न या ऐसे विषय जिन पर SMV ASTRO जिम्मेदारी से मार्गदर्शन नहीं दे सकता, अस्वीकार किए जा सकते हैं। यदि परामर्श देने से पहले प्रश्न अस्वीकार किया जाता है, तो ग्राहक रिफंड के लिए पात्र हो सकता/सकती है, जो सामान्यतः 48 घंटे के भीतर संसाधित किया जाएगा।",
-      "No. Astrology is a traditional form of guidance and interpretation. It is not a guarantee of future events or outcomes. Customers are free to accept, consider, or disagree with the guidance provided.":"नहीं। ज्योतिष पारंपरिक मार्गदर्शन और व्याख्या का एक रूप है। यह भविष्य की घटनाओं या परिणामों की गारंटी नहीं है। ग्राहक दिए गए मार्गदर्शन को स्वीकार, विचार या असहमत कर सकते हैं।"
+      'Home':'होम','Contact':'संपर्क','Dashboard':'डैशबोर्ड','Admin':'एडमिन','Login':'लॉगिन','Logout':'लॉगआउट','Register':'पंजीकरण','Close':'बंद करें','Back':'वापस','← Back':'← वापस','← Back to Home':'← होम पर वापस जाएँ','FAQ':'अक्सर पूछे जाने वाले प्रश्न',
+      'ASTROLOGY CONSULTATION':'ज्योतिष परामर्श','VEDA • JYOTISHA • GUIDANCE':'वेद • ज्योतिष • मार्गदर्शन','WELCOME TO SMV ASTRO SERVICES':'SMV ASTRO सेवाओं में आपका स्वागत है','Trusted Astrological Guidance for a Better Tomorrow':'बेहतर कल के लिए विश्वसनीय ज्योतिषीय मार्गदर्शन','Rooted in the time-honoured Indian tradition of Jyotisha, we bring thoughtful astrological guidance for life, relationships, career and important decisions — with trusted astrologers and a private consultation experience.':'प्राचीन भारतीय ज्योतिष परंपरा पर आधारित, हम जीवन, संबंधों, करियर और महत्वपूर्ण निर्णयों के लिए विश्वसनीय ज्योतिषियों के साथ व्यक्तिगत और विचारपूर्ण ज्योतिषीय मार्गदर्शन प्रदान करते हैं।','Traditional Wisdom':'पारंपरिक ज्ञान','Personal Guidance':'व्यक्तिगत मार्गदर्शन','Trusted Consultation':'विश्वसनीय परामर्श',
+      'QUICK CONSULTATION':'त्वरित परामर्श','Quick Consultation':'त्वरित परामर्श','Ask Now':'अभी पूछें','ASK NOW':'अभी पूछें','Ask your astrology question':'अपना ज्योतिषीय प्रश्न पूछें','APPROVED ASTROLOGERS':'स्वीकृत ज्योतिषी','Our Approved Astrologers':'हमारे स्वीकृत ज्योतिषी','Choose an approved astrologer to view their profile and verified reviews.':'प्रोफ़ाइल और सत्यापित समीक्षाएँ देखने के लिए स्वीकृत ज्योतिषी चुनें।','PROFILE & REVIEWS':'प्रोफ़ाइल और समीक्षाएँ','PROFILE LOADING...':'प्रोफ़ाइल लोड हो रही है...','Verified Reviews':'सत्यापित समीक्षाएँ','Loading reviews...':'समीक्षाएँ लोड हो रही हैं...','No approved reviews for this astrologer yet.':'इस ज्योतिषी के लिए अभी कोई स्वीकृत समीक्षा नहीं है।','CLOSE':'बंद करें','TRY AGAIN':'फिर से प्रयास करें',
+      'FREQUENTLY ASKED QUESTIONS':'अक्सर पूछे जाने वाले प्रश्न','How do I ask an astrology question?':'मैं ज्योतिष का प्रश्न कैसे पूछूँ?','Login as a customer, choose Ask Your Questions, enter the birth details and question, then complete the secure payment flow.':'ग्राहक के रूप में लॉगिन करें, अपने प्रश्न चुनें, जन्म विवरण और प्रश्न दर्ज करें, फिर सुरक्षित भुगतान पूरा करें।','Can I book a Chat or Call consultation?':'क्या मैं चैट या कॉल परामर्श बुक कर सकता/सकती हूँ?','Yes. Use the Appointment / Consultation Booking form and choose Chat Consultation or Call Consultation. Admin will confirm the appointment.':'हाँ। Appointment / Consultation Booking फ़ॉर्म में Chat या Call Consultation चुनें। Admin अपॉइंटमेंट की पुष्टि करेगा।','Are astrologers verified?':'क्या ज्योतिषी सत्यापित हैं?','All astrologers are carefully reviewed and verified by SMV ASTRO before being approved for consultation services.':'सभी ज्योतिषियों की परामर्श सेवा के लिए स्वीकृति से पहले SMV ASTRO द्वारा सावधानीपूर्वक समीक्षा और सत्यापन किया जाता है।','How can I contact SMV ASTRO?':'मैं SMV ASTRO से कैसे संपर्क करूँ?','Use the Contact Us form to send your query directly.':'अपना प्रश्न सीधे भेजने के लिए Contact Us फ़ॉर्म का उपयोग करें।','Do I need an account?':'क्या खाता आवश्यक है?','An account is required for secure customer consultation features. You can create one from Customer Registration or the Login button.':'सुरक्षित ग्राहक परामर्श सुविधाओं के लिए खाता आवश्यक है। आप Customer Registration या Login से खाता बना सकते हैं।','How are astrologers selected and verified?':'ज्योतिषियों का चयन और सत्यापन कैसे किया जाता है?','When will I receive my astrology answer?':'मुझे अपने ज्योतिषीय प्रश्न का उत्तर कब मिलेगा?','After successful payment and submission, your astrology question will normally be answered within 24 hours.':'सफल भुगतान और प्रश्न जमा करने के बाद आपके ज्योतिषीय प्रश्न का उत्तर सामान्यतः 24 घंटे के भीतर दिया जाएगा।','Is there a refund or cancellation policy?':'क्या रिफंड या रद्दीकरण नीति है?','Payments are generally non-refundable once an accepted question enters the consultation process. If SMV ASTRO cannot provide the purchased service, a refund may be considered.':'स्वीकृत प्रश्न के परामर्श प्रक्रिया में जाने के बाद भुगतान सामान्यतः वापस नहीं किया जाता। यदि SMV ASTRO खरीदी गई सेवा प्रदान नहीं कर सकता, तो रिफंड पर विचार किया जा सकता है।','What happens if my question is not suitable for the astrology service?':'यदि मेरा प्रश्न ज्योतिष सेवा के लिए उपयुक्त नहीं है तो क्या होगा?','Questions that are unrelated to astrology, inappropriate, abusive, or involve matters that SMV ASTRO cannot responsibly provide guidance on may be rejected. If the question is rejected before consultation is provided, the customer may be eligible for a refund, normally processed within 48 hours of the rejection decision.':'ज्योतिष से असंबंधित, अनुचित, अपमानजनक प्रश्न या ऐसे विषय जिन पर SMV ASTRO जिम्मेदारी से मार्गदर्शन नहीं दे सकता, अस्वीकार किए जा सकते हैं। यदि परामर्श देने से पहले प्रश्न अस्वीकार किया जाता है, तो ग्राहक रिफंड के लिए पात्र हो सकता है और यह सामान्यतः 48 घंटे के भीतर संसाधित किया जाएगा।','Are astrology answers guaranteed?':'क्या ज्योतिषीय उत्तर निश्चित होते हैं?','No. Astrology is a traditional form of guidance and interpretation. It is not a guarantee of future events or outcomes. Customers are free to accept, consider, or disagree with the guidance provided.':'नहीं। ज्योतिष पारंपरिक मार्गदर्शन और व्याख्या का एक रूप है। यह भविष्य की घटनाओं या परिणामों की गारंटी नहीं है। ग्राहक दिए गए मार्गदर्शन को स्वीकार, विचार या असहमत कर सकते हैं।',
+      'Customer Dashboard':'ग्राहक डैशबोर्ड','Astrologer Dashboard':'ज्योतिषी डैशबोर्ड','Admin Dashboard':'एडमिन डैशबोर्ड','My Dashboard':'मेरा डैशबोर्ड','Customer':'ग्राहक','ASTROLOGER':'ज्योतिषी','My Questions':'मेरे प्रश्न','My Consultations':'मेरे परामर्श','Notifications':'सूचनाएँ','Total Earnings':'कुल कमाई','Public Question Inbox':'सार्वजनिक प्रश्न इनबॉक्स','Questions & Answers':'प्रश्न और उत्तर','Earnings Ledger':'कमाई विवरण','Status':'स्थिति','Approved profile':'स्वीकृत प्रोफ़ाइल','Approved':'स्वीकृत','Rejected':'अस्वीकृत','Waiting for Admin':'एडमिन की प्रतीक्षा','Application Status':'आवेदन स्थिति','Pending Admin Approval':'एडमिन स्वीकृति लंबित','Waiting for Admin Approval':'एडमिन स्वीकृति की प्रतीक्षा','REFRESH STATUS':'स्थिति अपडेट करें','Your customer/payment contact details remain private.':'आपके ग्राहक/भुगतान संपर्क विवरण निजी रखे जाते हैं।','Change Payment Method':'भुगतान विधि बदलें','active question(s)':'सक्रिय प्रश्न','Reach ₹300 to request a withdrawal.':'निकासी का अनुरोध करने के लिए ₹300 तक पहुँचें।','You can withdraw':'आप निकासी कर सकते हैं','WITHDRAW':'निकासी करें','Minimum withdrawal':'न्यूनतम निकासी','Commission is credited only after Admin approves the submitted answer.':'जमा किए गए उत्तर को एडमिन द्वारा स्वीकृत करने के बाद ही कमीशन जमा किया जाता है।','No questions yet.':'अभी कोई प्रश्न नहीं है।','No paid public questions are available right now.':'अभी कोई भुगतान किए गए सार्वजनिक प्रश्न उपलब्ध नहीं हैं।','CLAIM & ANSWER':'प्राप्त करें और उत्तर दें','Submit for Admin Approval':'एडमिन स्वीकृति के लिए जमा करें','Resubmit for Admin Approval':'एडमिन स्वीकृति के लिए फिर जमा करें','Birth details':'जन्म विवरण','Question ID':'प्रश्न ID','Customer paid':'ग्राहक द्वारा भुगतान','Your commission':'आपका कमीशन',
+      'Customers':'ग्राहक','Astrologers':'ज्योतिषी','Pending':'लंबित','Questions':'प्रश्न','Customer Reviews':'ग्राहक समीक्षाएँ','Pending Astrologers':'लंबित ज्योतिषी','Admin Answers':'एडमिन उत्तर','Admin Reviews':'एडमिन समीक्षाएँ','Question Approval':'प्रश्न स्वीकृति','Answer Approval':'उत्तर स्वीकृति','Approve':'स्वीकृत करें','Reject':'अस्वीकार करें','APPROVE & ALLOCATE':'स्वीकृत करके आवंटित करें','REJECT QUESTION':'प्रश्न अस्वीकार करें','Save':'सहेजें','SAVE':'सहेजें','SAVING...':'सहेजा जा रहा है...','TEST RAZORPAY CONNECTION':'Razorpay कनेक्शन जाँचें','Commission Settings':'कमीशन सेटिंग्स','Question Price':'प्रश्न मूल्य','Minimum Answer Words':'न्यूनतम उत्तर शब्द',
+      'Email Login':'ईमेल लॉगिन','Customer ID':'ग्राहक ID','Astrologer ID':'ज्योतिषी ID','Email / ID':'ईमेल / ID','Email address':'ईमेल पता','Password':'पासवर्ड','Minimum 6 characters':'कम से कम 6 अक्षर','Forgot Password?':'पासवर्ड भूल गए?','Create new customer account':'नया ग्राहक खाता बनाएँ','Welcome Back':'वापसी पर स्वागत है','Sign in to continue to your SMV ASTRO dashboard.':'अपने SMV ASTRO डैशबोर्ड पर जाने के लिए लॉगिन करें।','Secure authentication powered by Firebase.':'Firebase द्वारा सुरक्षित प्रमाणीकरण।','LOGIN':'लॉगिन','CREATE ACCOUNT':'खाता बनाएँ','Create Account':'खाता बनाएँ','Full Name':'पूरा नाम','Mobile Number':'मोबाइल नंबर','Email':'ईमेल','Register as Customer':'ग्राहक के रूप में पंजीकरण करें','Register as Astrologer':'ज्योतिषी के रूप में पंजीकरण करें','Customer Registration':'ग्राहक पंजीकरण','Astrologer Registration':'ज्योतिषी पंजीकरण','Choose Your Path':'अपना मार्ग चुनें','BEGIN YOUR JOURNEY WITH SMV ASTRO':'SMV ASTRO के साथ अपनी यात्रा शुरू करें',
+      'Payment Successful':'भुगतान सफल','Payment Received':'भुगतान प्राप्त','Question Approved':'प्रश्न स्वीकृत','Astrologer Answer Submitted':'ज्योतिषी का उत्तर जमा किया गया','Admin Approval':'एडमिन स्वीकृति','Answer Ready':'उत्तर तैयार','Astrologer Answer':'ज्योतिषी का उत्तर','Your Question':'आपका प्रश्न','Ask Your Question':'अपना ज्योतिषीय प्रश्न पूछें','Proceed to Secure Payment':'सुरक्षित भुगतान के लिए आगे बढ़ें','24 hours':'24 घंटे','48 hours':'48 घंटे','within 24 hours':'24 घंटे के भीतर','within 48 hours':'48 घंटे के भीतर'
     };
-    /* V120: robust multilingual text layer — translates complete and partial text nodes
-       without changing Firebase, payment, dashboard, consultation or auth logic. */
-    Object.assign(T,{
-      "ASTROLOGY CONSULTATION":"ஜோதிட ஆலோசனை",
-      "VEDA • JYOTISHA • GUIDANCE":"வேதம் • ஜோதிடம் • வழிகாட்டல்",
-      "Quick Consultation":"விரைவு ஆலோசனை",
-      "QUICK CONSULTATION":"விரைவு ஆலோசனை",
-      "APPROVED ASTROLOGERS":"அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்",
-      "FREQUENTLY ASKED QUESTIONS":"அடிக்கடி கேட்கப்படும் கேள்விகள்",
-      "FAQ":"அடிக்கடி கேட்கப்படும் கேள்விகள்",
-      "Rooted in the time-honoured Indian tradition of Jyotisha, we bring thoughtful astrological guidance for life, relationships, career and important decisions — with trusted astrologers and a private consultation experience.":"பாரம்பரிய இந்திய ஜோதிட மரபை அடிப்படையாகக் கொண்டு, வாழ்க்கை, உறவுகள், தொழில் மற்றும் முக்கிய முடிவுகளுக்கான சிந்தனையுள்ள ஜோதிட வழிகாட்டலை நம்பகமான ஜோதிடர்கள் மற்றும் தனிப்பட்ட ஆலோசனை அனுபவத்துடன் வழங்குகிறோம்.",
-      "Traditional Wisdom":"பாரம்பரிய ஞானம்",
-      "Personal Guidance":"தனிப்பட்ட வழிகாட்டல்",
-      "Trusted Consultation":"நம்பகமான ஆலோசனை",
-      "Profile & Reviews":"சுயவிவரம் & மதிப்புரைகள்",
-      "PROFILE & REVIEWS":"சுயவிவரம் & மதிப்புரைகள்",
-      "Contact Us":"தொடர்பு கொள்ளுங்கள்",
-      "Our Approved Astrologers":"எங்கள் அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்",
-      "Choose an approved astrologer to view their profile and verified reviews.":"சுயவிவரம் மற்றும் சரிபார்க்கப்பட்ட மதிப்புரைகளைப் பார்க்க அங்கீகரிக்கப்பட்ட ஜோதிடரைத் தேர்ந்தெடுக்கவும்.",
-      "Do you have questions?":"உங்களுக்கு கேள்விகள் உள்ளதா?",
-      "Secure authentication powered by Firebase.":"Firebase மூலம் பாதுகாப்பான அங்கீகாரம்.",
-      "Welcome Back":"மீண்டும் வரவேற்கிறோம்",
-      "Sign in to continue to your SMV ASTRO dashboard.":"SMV ASTRO டாஷ்போர்டைத் தொடர உள்நுழையவும்.",
-      "Email Login":"மின்னஞ்சல் உள்நுழைவு",
-      "Customer ID":"வாடிக்கையாளர் ID",
-      "Astrologer ID":"ஜோதிடர் ID",
-      "Email / ID":"மின்னஞ்சல் / ID",
-      "Password":"கடவுச்சொல்",
-      "Forgot Password?":"கடவுச்சொல்லை மறந்துவிட்டீர்களா?",
-      "Create new customer account":"புதிய வாடிக்கையாளர் கணக்கை உருவாக்கவும்",
-      "LOGIN":"உள்நுழைக"
-    });
-    Object.assign(H,{
-      "ASTROLOGY CONSULTATION":"ज्योतिष परामर्श",
-      "VEDA • JYOTISHA • GUIDANCE":"वेद • ज्योतिष • मार्गदर्शन",
-      "Quick Consultation":"त्वरित परामर्श",
-      "QUICK CONSULTATION":"त्वरित परामर्श",
-      "APPROVED ASTROLOGERS":"स्वीकृत ज्योतिषी",
-      "FREQUENTLY ASKED QUESTIONS":"अक्सर पूछे जाने वाले प्रश्न",
-      "FAQ":"अक्सर पूछे जाने वाले प्रश्न",
-      "Rooted in the time-honoured Indian tradition of Jyotisha, we bring thoughtful astrological guidance for life, relationships, career and important decisions — with trusted astrologers and a private consultation experience.":"प्राचीन भारतीय ज्योतिष परंपरा पर आधारित, हम जीवन, संबंधों, करियर और महत्वपूर्ण निर्णयों के लिए विश्वसनीय ज्योतिषियों के साथ व्यक्तिगत और विचारपूर्ण ज्योतिषीय मार्गदर्शन प्रदान करते हैं।",
-      "Traditional Wisdom":"पारंपरिक ज्ञान",
-      "Personal Guidance":"व्यक्तिगत मार्गदर्शन",
-      "Trusted Consultation":"विश्वसनीय परामर्श",
-      "Profile & Reviews":"प्रोफ़ाइल और समीक्षाएँ",
-      "PROFILE & REVIEWS":"प्रोफ़ाइल और समीक्षाएँ",
-      "Contact Us":"संपर्क करें",
-      "Our Approved Astrologers":"हमारे स्वीकृत ज्योतिषी",
-      "Choose an approved astrologer to view their profile and verified reviews.":"प्रोफ़ाइल और सत्यापित समीक्षाएँ देखने के लिए स्वीकृत ज्योतिषी चुनें।",
-      "Do you have questions?":"क्या आपके कोई प्रश्न हैं?",
-      "Secure authentication powered by Firebase.":"Firebase द्वारा सुरक्षित प्रमाणीकरण।",
-      "Welcome Back":"वापसी पर स्वागत है",
-      "Sign in to continue to your SMV ASTRO dashboard.":"अपने SMV ASTRO डैशबोर्ड पर जाने के लिए लॉगिन करें।",
-      "Email Login":"ईमेल लॉगिन",
-      "Customer ID":"ग्राहक ID",
-      "Astrologer ID":"ज्योतिषी ID",
-      "Email / ID":"ईमेल / ID",
-      "Password":"पासवर्ड",
-      "Forgot Password?":"पासवर्ड भूल गए?",
-      "Create new customer account":"नया ग्राहक खाता बनाएँ",
-      "LOGIN":"लॉगिन"
-    });
-    Object.assign(T,{
-      "24 hours":"24 மணி நேரம்",
-      "48 hours":"48 மணி நேரம்",
-      "within 24 hours":"24 மணி நேரத்திற்குள்",
-      "within 48 hours":"48 மணி நேரத்திற்குள்"
-    });
-    Object.assign(H,{
-      "24 hours":"24 घंटे",
-      "48 hours":"48 घंटे",
-      "within 24 hours":"24 घंटे के भीतर",
-      "within 48 hours":"48 घंटे के भीतर"
-    });
     const attrs=['placeholder','aria-label','title'];
     const originals=new WeakMap();
-    function applyDictionaryText(text,dict){
-      if(!dict || !text || !text.trim()) return text;
+    function replaceText(text,dict){
+      if(!text||!dict)return text;
       let out=text;
-      const keys=Object.keys(dict).filter(k=>k && k.trim()).sort((a,b)=>b.length-a.length);
-      for(const key of keys){
-        if(out.includes(key)) out=out.split(key).join(dict[key]);
-      }
+      Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{if(out.includes(k))out=out.split(k).join(dict[k]);});
       return out;
     }
-    function translateNode(root, lang){
+    function translate(root,lang){
       const dict=lang==='ta'?T:lang==='hi'?H:null;
       const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-      const nodes=[]; let n; while(n=walker.nextNode()) nodes.push(n);
-      nodes.forEach(node=>{
-        if(!node.nodeValue.trim() || node.parentElement?.closest('script,style')) return;
-        if(!originals.has(node)) originals.set(node,node.nodeValue);
-        const en=originals.get(node);
-        node.nodeValue=dict ? applyDictionaryText(en,dict) : en;
-      });
-      root.querySelectorAll?.(attrs.map(a=>'['+a+']').join(',')).forEach(el=>{
-        attrs.forEach(a=>{
-          if(!el.hasAttribute(a))return;
-          const key=a+'__smvEn';
-          if(!el.dataset[key])el.dataset[key]=el.getAttribute(a);
-          const en=el.dataset[key];
-          el.setAttribute(a,dict ? applyDictionaryText(en,dict) : en);
-        });
-      });
+      let n; while(n=walker.nextNode()){
+        if(!n.nodeValue.trim()||n.parentElement?.closest('script,style'))continue;
+        if(!originals.has(n)) originals.set(n,n.nodeValue);
+        n.nodeValue=dict?replaceText(originals.get(n),dict):originals.get(n);
+      }
+      root.querySelectorAll?.('*').forEach(el=>attrs.forEach(a=>{
+        if(!el.hasAttribute(a))return;
+        const key='smvOrig_'+a;
+        if(!el.dataset[key])el.dataset[key]=el.getAttribute(a);
+        el.setAttribute(a,dict?replaceText(el.dataset[key],dict):el.dataset[key]);
+      }));
     }
-    const observer=new MutationObserver(muts=>{if(currentLang==='en')return;muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)translateNode(n,currentLang);}));});
+    function apply(lang){
+      currentLang=['en','ta','hi'].includes(lang)?lang:'en';
+      select.value=currentLang;document.documentElement.lang=currentLang;
+      document.body.classList.toggle('lang-tamil',currentLang==='ta');
+      translate(document.body,currentLang);
+      try{localStorage.setItem('smvLanguage',currentLang);}catch(_e){}
+    }
+    select.addEventListener('change',()=>apply(select.value));
+    const observer=new MutationObserver(muts=>{if(currentLang==='en')return;muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)translate(n,currentLang);}));});
     observer.observe(document.body,{childList:true,subtree:true});
-    select.onchange=()=>{currentLang=select.value;document.documentElement.lang=currentLang;document.body.classList.toggle('lang-tamil',currentLang==='ta');translateNode(document.body,currentLang);};
-    window.__smvToggleLanguage=()=>{select.value=select.value==='en'?'ta':select.value==='ta'?'hi':'en';select.onchange();};
+    let saved='en';try{saved=localStorage.getItem('smvLanguage')||'en';}catch(_e){}
+    apply(saved);
+    window.__smvToggleLanguage=()=>apply(select.value==='en'?'ta':select.value==='ta'?'hi':'en');
   }
   window.__smvNotifyQuestionUpdate=async function(questionId,event,reason){
     try{
@@ -3619,77 +3577,6 @@ document.addEventListener("click",function(e){
   setTimeout(expose,250); setTimeout(expose,1000); setTimeout(expose,2500); setTimeout(expose,5000);
 })();
 </script>
-<script>
-/* FINAL SMV LANGUAGE REPAIR — keeps existing functionality and forces reliable EN/TA/HI switching. */
-(function(){
-  const run=()=>{
-    const select=document.getElementById('langSelect');
-    if(!select || select.dataset.finalLangFix==='1') return;
-    select.dataset.finalLangFix='1';
 
-    const TA={
-      'Home':'முகப்பு','Contact':'தொடர்பு','Dashboard':'டாஷ்போர்டு','Admin':'நிர்வாகி','Login':'உள்நுழைவு','Logout':'வெளியேறு','Register':'பதிவு','Close':'மூடு','Back':'பின்','FAQ':'அடிக்கடி கேட்கப்படும் கேள்விகள்',
-      'Ask Now':'இப்போது கேளுங்கள்','ASK NOW':'இப்போது கேளுங்கள்','Our Approved Astrologers':'எங்கள் அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்','Approved Astrologers':'அங்கீகரிக்கப்பட்ட ஜோதிடர்கள்','PROFILE & REVIEWS':'சுயவிவரம் & மதிப்புரைகள்','PROFILE LOADING...':'சுயவிவரம் ஏற்றப்படுகிறது...','Verified Reviews':'சரிபார்க்கப்பட்ட மதிப்புரைகள்','No approved reviews for this astrologer yet.':'இந்த ஜோதிடருக்கு இன்னும் அங்கீகரிக்கப்பட்ட மதிப்புரைகள் இல்லை.','Loading reviews...':'மதிப்புரைகள் ஏற்றப்படுகின்றன...','CLOSE':'மூடுக','TRY AGAIN':'மீண்டும் முயற்சிக்கவும்',
-      'Customer Dashboard':'வாடிக்கையாளர் டாஷ்போர்டு','Astrologer Dashboard':'ஜோதிடர் டாஷ்போர்டு','Admin Dashboard':'நிர்வாக டாஷ்போர்டு','My Questions':'என் கேள்விகள்','My Consultations':'என் ஆலோசனைகள்','Notifications':'அறிவிப்புகள்','Total Earnings':'மொத்த வருமானம்','Public Question Inbox':'பொது கேள்வி பெட்டி','Questions & Answers':'கேள்விகள் & பதில்கள்','Earnings Ledger':'வருமானப் பதிவு',
-      'Trusted Astrological Guidance for a Better Tomorrow':'சிறந்த நாளைக்கான நம்பகமான ஜோதிட வழிகாட்டல்','WELCOME TO SMV ASTRO SERVICES':'SMV ASTRO சேவைகளுக்கு வரவேற்கிறோம்','Traditional Wisdom':'பாரம்பரிய ஞானம்','Personal Guidance':'தனிப்பட்ட வழிகாட்டல்','Trusted Consultation':'நம்பகமான ஆலோசனை','ASTROLOGY CONSULTATION':'ஜோதிட ஆலோசனை',
-      'Frequently Asked Questions':'அடிக்கடி கேட்கப்படும் கேள்விகள்','FREQUENTLY ASKED QUESTIONS':'அடிக்கடி கேட்கப்படும் கேள்விகள்','How do I ask an astrology question?':'ஜோதிடக் கேள்வியை எப்படி கேட்பது?','Can I book a Chat or Call consultation?':'Chat அல்லது Call ஆலோசனையை முன்பதிவு செய்ய முடியுமா?','Are astrologers verified?':'ஜோதிடர்கள் சரிபார்க்கப்பட்டவர்களா?','How can I contact SMV ASTRO?':'SMV ASTRO-வை எப்படி தொடர்பு கொள்வது?','Do I need an account?':'கணக்கு அவசியமா?','How are astrologers selected and verified?':'ஜோதிடர்கள் எவ்வாறு தேர்வு செய்யப்பட்டு சரிபார்க்கப்படுகிறார்கள்?','When will I receive my astrology answer?':'எனது ஜோதிடப் பதில் எப்போது கிடைக்கும்?','Is there a refund or cancellation policy?':'பணத்தைத் திரும்பப் பெறுதல் அல்லது ரத்து கொள்கை உள்ளதா?','What happens if my question is not suitable for the astrology service?':'எனது கேள்வி ஜோதிட சேவைக்கு ஏற்றதாக இல்லாவிட்டால் என்ன ஆகும்?','Are astrology answers guaranteed?':'ஜோதிடப் பதில்கள் உறுதியானவையா?',
-      'Customer':'வாடிக்கையாளர்','ASTROLOGER':'ஜோதிடர்','Email Login':'மின்னஞ்சல் உள்நுழைவு','Customer ID':'வாடிக்கையாளர் ID','Astrologer ID':'ஜோதிடர் ID','Email / ID':'மின்னஞ்சல் / ID','Password':'கடவுச்சொல்','Forgot Password?':'கடவுச்சொல்லை மறந்துவிட்டீர்களா?','Create new customer account':'புதிய வாடிக்கையாளர் கணக்கை உருவாக்கவும்','Welcome Back':'மீண்டும் வரவேற்கிறோம்','Secure authentication powered by Firebase.':'Firebase மூலம் பாதுகாப்பான அங்கீகாரம்.',
-      'Payment Successful':'கட்டணம் வெற்றிகரமாக முடிந்தது','Payment Received':'கட்டணம் பெறப்பட்டது','Answer Ready':'பதில் தயாராக உள்ளது','Admin Approval':'நிர்வாக அனுமதி','Astrologer Answer':'ஜோதிடர் பதில்','Question Approved':'கேள்வி அங்கீகரிக்கப்பட்டது','Astrologer Answer Submitted':'ஜோதிடர் பதில் சமர்ப்பிக்கப்பட்டது','Your Question':'உங்கள் கேள்வி','Ask Your Question':'உங்கள் ஜோதிடக் கேள்வியைக் கேளுங்கள்','Proceed to Secure Payment':'பாதுகாப்பான கட்டணத்திற்குத் தொடர்க','24 hours':'24 மணி நேரம்','48 hours':'48 மணி நேரம்','within 24 hours':'24 மணி நேரத்திற்குள்','within 48 hours':'48 மணி நேரத்திற்குள்'
-    };
-    const HI={
-      'Home':'होम','Contact':'संपर्क','Dashboard':'डैशबोर्ड','Admin':'एडमिन','Login':'लॉगिन','Logout':'लॉगआउट','Register':'पंजीकरण','Close':'बंद करें','Back':'वापस','FAQ':'अक्सर पूछे जाने वाले प्रश्न',
-      'Ask Now':'अभी पूछें','ASK NOW':'अभी पूछें','Our Approved Astrologers':'हमारे स्वीकृत ज्योतिषी','Approved Astrologers':'स्वीकृत ज्योतिषी','PROFILE & REVIEWS':'प्रोफ़ाइल और समीक्षाएँ','PROFILE LOADING...':'प्रोफ़ाइल लोड हो रही है...','Verified Reviews':'सत्यापित समीक्षाएँ','No approved reviews for this astrologer yet.':'इस ज्योतिषी के लिए अभी कोई स्वीकृत समीक्षा नहीं है।','Loading reviews...':'समीक्षाएँ लोड हो रही हैं...','CLOSE':'बंद करें','TRY AGAIN':'फिर से प्रयास करें',
-      'Customer Dashboard':'ग्राहक डैशबोर्ड','Astrologer Dashboard':'ज्योतिषी डैशबोर्ड','Admin Dashboard':'एडमिन डैशबोर्ड','My Questions':'मेरे प्रश्न','My Consultations':'मेरे परामर्श','Notifications':'सूचनाएँ','Total Earnings':'कुल कमाई','Public Question Inbox':'सार्वजनिक प्रश्न इनबॉक्स','Questions & Answers':'प्रश्न और उत्तर','Earnings Ledger':'कमाई विवरण',
-      'Trusted Astrological Guidance for a Better Tomorrow':'बेहतर कल के लिए विश्वसनीय ज्योतिषीय मार्गदर्शन','WELCOME TO SMV ASTRO SERVICES':'SMV ASTRO सेवाओं में आपका स्वागत है','Traditional Wisdom':'पारंपरिक ज्ञान','Personal Guidance':'व्यक्तिगत मार्गदर्शन','Trusted Consultation':'विश्वसनीय परामर्श','ASTROLOGY CONSULTATION':'ज्योतिष परामर्श',
-      'Frequently Asked Questions':'अक्सर पूछे जाने वाले प्रश्न','FREQUENTLY ASKED QUESTIONS':'अक्सर पूछे जाने वाले प्रश्न','How do I ask an astrology question?':'मैं ज्योतिष का प्रश्न कैसे पूछूँ?','Can I book a Chat or Call consultation?':'क्या मैं चैट या कॉल परामर्श बुक कर सकता/सकती हूँ?','Are astrologers verified?':'क्या ज्योतिषी सत्यापित हैं?','How can I contact SMV ASTRO?':'मैं SMV ASTRO से कैसे संपर्क करूँ?','Do I need an account?':'क्या खाता आवश्यक है?','How are astrologers selected and verified?':'ज्योतिषियों का चयन और सत्यापन कैसे किया जाता है?','When will I receive my astrology answer?':'मुझे अपने ज्योतिषीय प्रश्न का उत्तर कब मिलेगा?','Is there a refund or cancellation policy?':'क्या रिफंड या रद्दीकरण नीति है?','What happens if my question is not suitable for the astrology service?':'यदि मेरा प्रश्न ज्योतिष सेवा के लिए उपयुक्त नहीं है तो क्या होगा?','Are astrology answers guaranteed?':'क्या ज्योतिषीय उत्तर निश्चित होते हैं?',
-      'Customer':'ग्राहक','ASTROLOGER':'ज्योतिषी','Email Login':'ईमेल लॉगिन','Customer ID':'ग्राहक ID','Astrologer ID':'ज्योतिषी ID','Email / ID':'ईमेल / ID','Password':'पासवर्ड','Forgot Password?':'पासवर्ड भूल गए?','Create new customer account':'नया ग्राहक खाता बनाएँ','Welcome Back':'वापसी पर स्वागत है','Secure authentication powered by Firebase.':'Firebase द्वारा सुरक्षित प्रमाणीकरण।',
-      'Payment Successful':'भुगतान सफल','Payment Received':'भुगतान प्राप्त','Answer Ready':'उत्तर तैयार है','Admin Approval':'एडमिन अनुमोदन','Astrologer Answer':'ज्योतिषी का उत्तर','Question Approved':'प्रश्न स्वीकृत','Astrologer Answer Submitted':'ज्योतिषी का उत्तर जमा किया गया','Your Question':'आपका प्रश्न','Ask Your Question':'अपना ज्योतिषीय प्रश्न पूछें','Proceed to Secure Payment':'सुरक्षित भुगतान के लिए आगे बढ़ें','24 hours':'24 घंटे','48 hours':'48 घंटे','within 24 hours':'24 घंटे के भीतर','within 48 hours':'48 घंटे के भीतर'
-    };
-    const dicts={en:{},ta:TA,hi:HI};
-    const originals=new WeakMap();
-    const attrs=['placeholder','aria-label','title'];
-    function replaceText(text,dict){
-      if(!text||!dict)return text;
-      let out=text;
-      Object.keys(dict).sort((a,b)=>b.length-a.length).forEach(k=>{if(out.includes(k))out=out.split(k).join(dict[k]);});
-      return out;
-    }
-    function translate(root,lang){
-      const dict=dicts[lang]||{};
-      const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-      let n;
-      while(n=walker.nextNode()){
-        if(!n.nodeValue.trim()||n.parentElement?.closest('script,style'))continue;
-        if(!originals.has(n)) originals.set(n,n.nodeValue);
-        n.nodeValue=replaceText(originals.get(n),dict);
-      }
-      root.querySelectorAll?.('*').forEach(el=>attrs.forEach(a=>{
-        if(!el.hasAttribute(a))return;
-        const key='__smvOrig_'+a;
-        if(!el.dataset[key])el.dataset[key]=el.getAttribute(a);
-        el.setAttribute(a,replaceText(el.dataset[key],dict));
-      }));
-    }
-    function apply(lang){
-      select.value=lang;
-      document.documentElement.lang=lang;
-      document.body.classList.toggle('lang-tamil',lang==='ta');
-      translate(document.body,lang);
-      try{localStorage.setItem('smvLanguage',lang);}catch(_e){}
-    }
-    select.addEventListener('change',()=>apply(select.value));
-    const observer=new MutationObserver(muts=>{
-      const lang=select.value;
-      if(lang==='en')return;
-      muts.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)translate(n,lang);}));
-    });
-    observer.observe(document.body,{childList:true,subtree:true});
-    let saved='en';try{saved=localStorage.getItem('smvLanguage')||'en';}catch(_e){}
-    apply(['en','ta','hi'].includes(saved)?saved:'en');
-    window.__smvFinalLanguageApply=apply;
-  };
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
-})();
-</script>
 </body>
 </html>
