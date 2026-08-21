@@ -380,7 +380,8 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
 
     const subject = "SMV ASTRO Query";
     const text = [
-      "New SVM ASTRO Customer Query",
+      "SMV ASTRO QUERY",
+      "Hello.",
       "",
       `Name: ${name}`,
       `Email: ${email}`,
@@ -395,7 +396,8 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
 
     const htmlBody = `
       <div style="font-family:Arial,sans-serif;line-height:1.6">
-        <h2 style="color:#7e1818">New SVM ASTRO Customer Query</h2>
+        <h2 style="color:#7e1818">SMV ASTRO QUERY</h2>
+        <p>Hello.</p>
         <p><b>Name:</b> ${escapeHtmlEmail(name)}</p>
         <p><b>Email:</b> ${escapeHtmlEmail(email)}</p>
         <p><b>Place:</b> ${escapeHtmlEmail(place)}</p>
