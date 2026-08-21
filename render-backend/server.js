@@ -5,7 +5,7 @@ const admin = require("firebase-admin");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const ADMIN_UID = String(process.env.ADMIN_UID || "TwjeEIFS3Zcf1SxboLZoujm91Ky2").trim();
+const ADMIN_UID = String(process.env.ADMIN_UID || "").trim();
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -25,7 +25,7 @@ const RAZORPAY_KEY_ID = String(process.env.RAZORPAY_KEY_ID || "").trim();
 const RAZORPAY_KEY_SECRET = String(process.env.RAZORPAY_KEY_SECRET || "").trim();
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "").trim();
 const RESEND_API_KEY = String(process.env.RESEND_API_KEY || "").trim();
-const RESEND_FROM = String(process.env.RESEND_FROM || "onboarding@resend.dev").trim();
+const RESEND_FROM = String(process.env.RESEND_FROM || "").trim();
 const RESEND_TEST_RECIPIENT = String(process.env.RESEND_TEST_RECIPIENT || ADMIN_EMAIL || "").trim();
 // SMTP is retained as an optional fallback for paid Render services. Render Free
 // services block outbound SMTP ports 25/465/587, so Resend HTTP API is preferred.
@@ -141,18 +141,59 @@ app.use((req, res, next) => {
   return express.json({ limit: "15mb" })(req, res, next);
 });
 
+app.set("trust proxy", 1);
+
+// Production security headers. These do not require an extra dependency and
+// are compatible with the existing Firebase/Resend frontend.
 app.use((req, res, next) => {
-  // The Blogger frontend uses Firebase ID-token Authorization headers, not
-  // cookie credentials, so wildcard CORS is safe for this API and prevents
-  // Blogger/custom-domain deployments from failing with a browser
-  // "Failed to fetch" before the request reaches Express.
-  const origin = req.headers.origin;
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  if (req.secure || req.headers["x-forwarded-proto"] === "https") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
   next();
 });
+
+const defaultAllowedOrigins = [
+  "https://smvastorajaram-hub.github.io"
+];
+const corsOrigins = allowedOrigins.length ? allowedOrigins : defaultAllowedOrigins;
+app.use((req, res, next) => {
+  const origin = String(req.headers.origin || "");
+  if (!origin || corsOrigins.includes(origin)) {
+    if (origin) res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  }
+  if (req.method === "OPTIONS") return res.sendStatus(origin && !corsOrigins.includes(origin) ? 403 : 204);
+  next();
+});
+
+const contactRate = new Map();
+function clientIp(req) {
+  return String(req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
+}
+function maskEmail(value) {
+  const e = String(value || "").trim();
+  const at = e.indexOf("@");
+  if (at <= 1) return e ? "***" : "";
+  return e.slice(0, 1) + "***" + e.slice(at - 1);
+}
+function contactRateAllowed(ip) {
+  const now = Date.now();
+  const windowMs = 10 * 60 * 1000;
+  const maxRequests = 3;
+  const list = (contactRate.get(ip) || []).filter(t => now - t < windowMs);
+  if (list.length >= maxRequests) { contactRate.set(ip, list); return false; }
+  list.push(now); contactRate.set(ip, list);
+  if (contactRate.size > 2000) {
+    for (const [key, times] of contactRate) { if (!times.some(t => now - t < windowMs)) contactRate.delete(key); }
+  }
+  return true;
+}
 
 async function requireUser(req, res) {
   const header = String(req.get("Authorization") || "");
@@ -349,6 +390,12 @@ function escapeHtmlEmail(value) {
 
 app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => {
   try {
+    if (!contactRateAllowed(clientIp(req))) {
+      return res.status(429).json({ error: "Too many contact requests. Please try again later." });
+    }
+    if (String(req.body?.website || "").trim()) {
+      return res.status(400).json({ error: "Unable to process this request." });
+    }
     const name = String(req.body?.name || "").trim();
     const email = String(req.body?.email || "").trim();
     const place = String(req.body?.place || "").trim();
@@ -378,9 +425,9 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
       source: "website-contact-form"
     });
 
-    const subject = "SMV ASTRO Query";
+    const subject = "SMV Astro Query";
     const text = [
-      "SMV ASTRO QUERY",
+      "SMV ASTRO SERVICES",
       "Hello.",
       "",
       `Name: ${name}`,
@@ -396,7 +443,7 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
 
     const htmlBody = `
       <div style="font-family:Arial,sans-serif;line-height:1.6">
-        <h2 style="color:#7e1818">SMV ASTRO QUERY</h2>
+        <h2 style="color:#7e1818">SMV ASTRO SERVICES</h2>
         <p>Hello.</p>
         <p><b>Name:</b> ${escapeHtmlEmail(name)}</p>
         <p><b>Email:</b> ${escapeHtmlEmail(email)}</p>
@@ -849,12 +896,44 @@ app.get("/admin-data", async (req, res) => {
     ]);
 
     const customers = users.items.filter(x => String(x.role || "").toLowerCase() === "customer");
+    const adminEarningsHistory = questions.items
+      .filter(q => {
+        const status = String(q.status || "").toLowerCase();
+        const commissionStatus = String(q.commissionStatus || "").toLowerCase();
+        return (commissionStatus === "credited" && Number(q.adminCommissionAmount || 0) > 0) ||
+          (status === "answered" && q.adminTakeover === true);
+      })
+      .map(q => {
+        const adminAmount = q.adminTakeover === true
+          ? Number(q.amount || 0)
+          : Number(q.adminCommissionAmount || 0);
+        return {
+          id: q.id || "",
+          questionId: q.id || "",
+          customerName: String(q.customerName || q.birthName || "Customer"),
+          astrologerName: String(q.astrologerName || (q.adminTakeover ? "Admin" : "Astrologer")),
+          grossAmount: Number(q.amount || 0),
+          adminEarnings: Number.isFinite(adminAmount) ? adminAmount : 0,
+          source: q.adminTakeover ? "admin_answer" : "commission",
+          status: q.adminTakeover ? "retained" : "credited",
+          date: q.commissionCreditedAt || q.answerApprovedAt || q.adminAnswerApprovedAt || q.answeredAt || q.updatedAt || null
+        };
+      })
+      .filter(x => x.adminEarnings > 0)
+      .sort((a,b) => {
+        const av = a.date?.seconds ? Number(a.date.seconds) : 0;
+        const bv = b.date?.seconds ? Number(b.date.seconds) : 0;
+        return bv - av;
+      });
+    const totalAdminEarnings = adminEarningsHistory.reduce((sum, x) => sum + Number(x.adminEarnings || 0), 0);
     return res.json({
       success: true,
       customers,
       users: users.items,
       astrologers: astrologers.items,
       questions: questions.items,
+      adminEarningsHistory,
+      totalAdminEarnings: Math.round(totalAdminEarnings * 100) / 100,
       errors: { users: users.error || null, astrologers: astrologers.error || null, questions: questions.error || null }
     });
   } catch (e) {
@@ -1179,10 +1258,10 @@ app.post("/admin/approve-answer", express.json({limit:"20kb"}), async (req, res)
       const result = await sendSystemEmail({to:[recipient],replyTo:ADMIN_EMAIL,subject,text});
       if (result?.failed) {
         results[key] = {status:"failed",error:String(result.error || "Unknown email error")};
-        console.error(`ANSWER APPROVAL EMAIL FAILED | Question ID: ${questionId} | Recipient Email: ${recipient} | Reason: ${result.error || "Unknown email error"}`);
+        console.error(`ANSWER APPROVAL EMAIL FAILED | Question ID: ${questionId} | Recipient: ${maskEmail(recipient)} | Reason: ${result.error || "Unknown email error"}`);
       } else {
         results[key] = {status:"sent",messageId:result?.id || null};
-        console.log(`ANSWER APPROVAL EMAIL SENT | Question ID: ${questionId} | Recipient Email: ${recipient}`);
+        console.log(`ANSWER APPROVAL EMAIL SENT | Question ID: ${questionId} | Recipient: ${maskEmail(recipient)}`);
       }
     }
     const vals = Object.values(results);
