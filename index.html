@@ -1309,7 +1309,7 @@ async function renderPublicApi(path, options={}){
   return data;
 }
 const ADMIN_UID="TwjeEIFS3Zcf1SxboLZoujm91Ky2";
-let currentUser=null, selectedAstro=null, pendingAfterLogin=null, questionServicePrice=5, pendingQuestionId="", pendingQuestionFingerprint="", loginMethod="email";
+let currentUser=null, selectedAstro=null, pendingAfterLogin=null, questionServicePrice=5, pendingQuestionId="", pendingQuestionFingerprint="", loginMethod="email", dashboardTransitionInProgress=false;
 const $=id=>document.getElementById(id);
 const show=id=>$(id)?.classList.remove("hidden"); const hide=id=>$(id)?.classList.add("hidden");
 const go=id=>$(id)?.scrollIntoView({behavior:"smooth",block:"start"});
@@ -1851,24 +1851,46 @@ $("submitQuestionBtn")?.addEventListener("click",async()=>{
       pendingQuestionId="";
 
       // PAYMENT SUCCESS -> CUSTOMER DASHBOARD DIRECTLY.
-      // No extra "Continue to Dashboard" tap is required.
+      // Load the dashboard first so the customer never sees a blank dashboard
+      // while Firebase is still fetching the consultation data.
       setTimeout(async()=>{
+        dashboardTransitionInProgress=true;
         try{
+          currentUser=auth?.currentUser||currentUser;
           hide("paymentSuccessPanel");
           hide("ask-flow");
           hide("astro-flow");
           hide("appointment");
+          hide("contact");
+          hide("register-flow");
+          hide("astro-register-form");
           show("dashboard");
+
+          const dashBox=$("dashboardContent");
+          if(dashBox) dashBox.innerHTML='<div class="card"><h3>Customer Dashboard</h3><p class="small">Payment confirmed. Loading your dashboard...</p></div>';
+
           await loadDashboard();
           go("dashboard");
         }catch(dashErr){
           console.error("Customer dashboard open after payment failed:",dashErr);
-          hide("paymentSuccessPanel");
-          hide("ask-flow");
+          const dashBox=$("dashboardContent");
+          if(dashBox) dashBox.innerHTML='<div class="card error"><b>Payment was successful.</b><p class="small">Your question has been saved. The dashboard could not be loaded right now.</p><button class="btn gray" id="paymentDashboardRetry">OPEN CUSTOMER DASHBOARD</button></div>';
+          $("paymentDashboardRetry")?.addEventListener("click",async()=>{
+            dashboardTransitionInProgress=true;
+            try{
+              currentUser=auth?.currentUser||currentUser;
+              await loadDashboard();
+              go("dashboard");
+            }finally{
+              dashboardTransitionInProgress=false;
+            }
+          });
           show("dashboard");
-          try{go("dashboard");}catch(_e){}
+          go("dashboard");
+        }finally{
+          dashboardTransitionInProgress=false;
         }
-      },900);
+      },300);
      }else{throw new Error("Payment verification failed.");}
     }catch(err){const detail=err?.message||String(err)||"Payment verification failed.";message("askMsg",'<span class="error"><b>Payment confirmation is pending.</b><br><span class="payment-help">Do not make another payment if your bank/account was already debited. Please try verification again. If the payment was not completed, you can retry payment safely.</span><br><small>'+escapeHtml(detail)+'</small></span>');btn.disabled=false;btn.textContent="RETRY VERIFICATION";}
    },
@@ -1961,7 +1983,12 @@ async function renderNotifications(targetId){
   }catch(e){box.innerHTML='<div class="empty">Notifications unavailable.</div>';}
 }
 async function loadDashboard(){
- const box=$('dashboardContent'); if(!currentUser){box.innerHTML='<div class="card">Please login to continue.</div>';return;}
+ const box=$('dashboardContent');
+ if(!currentUser){box.innerHTML='<div class="card">Please login to continue.</div>';return;}
+ if(box && !box.dataset.smvDashboardLoading){
+   box.dataset.smvDashboardLoading="1";
+   box.innerHTML='<div class="card"><h3>Loading Dashboard...</h3><p class="small">Please wait while your consultation details are loaded.</p></div>';
+ }
  try{
   const u=await withTimeout(getDoc(doc(db,'smv_users',currentUser.uid))), data=u.exists()?u.data():{};
    let role=String(data.role||'').toLowerCase();
@@ -2656,7 +2683,9 @@ ${ad.status === 'rejected' && ad.rejectionReason
    document.querySelectorAll('[data-review]').forEach(b=>b.onclick=()=>openReview(b.dataset.review,b.dataset.astro));
   }
   const note=document.createElement('div'); note.className='card'; note.style.marginTop='16px'; note.innerHTML='<h3>Notifications</h3><div id="userNotifications"><div class="small">Loading...</div></div>'; box.appendChild(note); await renderNotifications('userNotifications'); show('dashboard'); touchSession(); armIdleTimer();
+   delete box.dataset.smvDashboardLoading;
  }catch(e){
+   delete box.dataset.smvDashboardLoading;
    console.error('Dashboard load failed:',e);
    box.innerHTML='<div class="card error"><b>Dashboard could not be loaded.</b><p class="small">Your login session is active, but some dashboard data could not be read. The basic dashboard is being kept available.</p><button class="btn gray" id="dashboardRetry">RETRY</button></div>';
    $('dashboardRetry')?.addEventListener('click',()=>loadDashboard());
@@ -3720,6 +3749,11 @@ if(auth){ onAuthStateChanged(auth,async user=>{
      // ASK NOW login has a protected destination. Let submitAuth() continue
      // to Customer Dashboard + Question Form instead of this normal dashboard-only path.
      if(pendingAfterLogin==='question'){ armIdleTimer(); return; }
+
+     // Payment verification is already loading the Customer Dashboard.
+     // Prevent a simultaneous auth-state dashboard load from replacing it.
+     if(dashboardTransitionInProgress){ armIdleTimer(); return; }
+
      const adminUser=await isCurrentAdmin();
      if(adminUser){ hide('dashLink'); show('adminLink'); }
      else {
