@@ -2417,39 +2417,46 @@ ${ad.status === 'rejected' && ad.rejectionReason
           commissionPercent
         ) / 100;
 
-      await withTimeout(
-        updateDoc(questionRef, {
-
-          answer: answer,
-
-          answerWordCount: wordCount,
-
-          answerSubmittedAt:
-            serverTimestamp(),
-
-          astrologerAnswerStatus:
-            'submitted',
-
-          status: 'processing',
-
-          astrologerCommissionAmount:
-            commissionAmount,
-
-          commissionPercent:
-            commissionPercent,
-
-          commissionRate:
-            commissionPercent,
-
-          commissionStatus:
-            'pending_admin_approval'
-
+      const token = await currentUser.getIdToken();
+      const response = await withTimeout(
+        fetch(BACKEND + '/submit-answer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            questionId: id,
+            answer: answer
+          })
         }),
-        15000
+        20000
       );
 
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.ok) {
+        throw new Error(result?.error || 'Unable to submit answer.');
+      }
+
+      if (result.emailState === 'sent') {
+        console.info(
+          'ANSWER EMAIL SENT',
+          'Question ID:', id,
+          'Recipients:', result.recipients
+        );
+      } else if (result.emailState === 'partial' || result.emailState === 'failed') {
+        console.warn(
+          'ANSWER EMAIL FAILED',
+          'Question ID:', id,
+          'Email state:', result.emailState,
+          'Failed recipients:', result.emailFailedCount
+        );
+      }
+
       alert(
-        'Answer submitted successfully. Waiting for Admin approval.'
+        result.emailState === 'sent'
+          ? 'Answer submitted successfully. Customer and Admin email notifications were sent. Waiting for Admin approval.'
+          : 'Answer submitted successfully and saved. Email notification could not be fully delivered; the server has logged the failure. Waiting for Admin approval.'
       );
 
       await loadDashboard();
