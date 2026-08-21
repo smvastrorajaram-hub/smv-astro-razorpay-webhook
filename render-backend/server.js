@@ -82,6 +82,51 @@ async function sendEmail({to, subject, text, html, replyTo}) {
   }
   throw new Error("Email provider is not configured. Set RESEND_API_KEY and RESEND_FROM in Render.");
 }
+
+async function getUserEmail(uid) {
+  if (!uid) return "";
+  try {
+    const u = await admin.auth().getUser(uid);
+    if (u?.email) return String(u.email).trim();
+  } catch (_) {}
+  try {
+    const s = await db.collection("smv_users").doc(uid).get();
+    return String(s.data()?.email || "").trim();
+  } catch (_) { return ""; }
+}
+
+function uniqueRecipients(list) {
+  return [...new Set((list || []).map(x => String(x || "").trim()).filter(Boolean))];
+}
+
+async function sendSystemEmail({ to = [], subject, text, replyTo }) {
+  const recipients = uniqueRecipients(to);
+  if (!recipients.length) return { skipped: true };
+  try {
+    return await sendEmail({ to: recipients, subject, text, replyTo });
+  } catch (e) {
+    console.error("System email failed:", subject, e?.message || e);
+    return { failed: true, error: e?.message || String(e) };
+  }
+}
+
+async function sendAdminTransactionEmail({ eventType, paymentId, orderId, amount, currency, questionId, customerEmail, status }) {
+  if (!ADMIN_EMAIL) return;
+  const subject = `SMV ASTRO Transaction — ${eventType}`;
+  const text = [
+    "SMV ASTRO Transaction Notification",
+    "",
+    `Event: ${eventType}`,
+    `Status: ${status || eventType}`,
+    `Amount: ${amount != null ? `${amount} ${currency || "INR"}` : "N/A"}`,
+    `Razorpay Payment ID: ${paymentId || "N/A"}`,
+    `Razorpay Order ID: ${orderId || "N/A"}`,
+    `Question ID: ${questionId || "N/A"}`,
+    `Customer Email: ${customerEmail || "N/A"}`,
+    `Time: ${new Date().toISOString()}`
+  ].join("\n");
+  await sendSystemEmail({ to: [ADMIN_EMAIL], subject, text, replyTo: customerEmail || ADMIN_EMAIL });
+}
 if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
   console.error("Razorpay credentials are missing. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Render.");
 }
@@ -417,8 +462,11 @@ app.post("/question-notify", express.json({limit:"20kb"}), async(req,res)=>{
     } else if(event==="answer_rejected"){
       if(astrologerEmail)to=[astrologerEmail]; subject="SMV ASTRO — Answer revision required"; text=`Dear ${astrologerName},\n\nYour submitted answer requires revision.\n\nReason: ${reason||"Please review and resubmit the answer."}\nQuestion ID: ${questionId}\n\nRegards,\nSMV ASTRO`;
     }
+    // Every question/answer event keeps a master copy for the Admin.
+    if (ADMIN_EMAIL && !to.includes(ADMIN_EMAIL)) to.push(ADMIN_EMAIL);
+    to = uniqueRecipients(to);
     if(!to.length) return res.status(400).json({error:"No recipient email address is available for this update."});
-    await sendEmail({to,replyTo:ADMIN_EMAIL,subject,text});
+    await sendSystemEmail({to,replyTo:ADMIN_EMAIL,subject,text});
     return res.json({ok:true,recipients:to.length,event});
   }catch(e){console.error("Question notification failed:",e);return res.status(500).json({error:"Unable to send question update email right now."});}
 });
@@ -860,7 +908,20 @@ async function markQuestionPaid(questionId, orderId, paymentId, signature, sourc
     });
     return { already: false, customerId: q.customerId, customerPaymentId, paymentRecordedAt };
   });
-  if (!result.already) await db.collection("smv_notifications").add({ userId: result.customerId, type: "payment", title: "Payment successful", message: "Your payment was verified. Your question is now waiting for Admin approval.", questionId, createdAt: FieldValue.serverTimestamp(), read: false });
+  if (!result.already) {
+    await db.collection("smv_notifications").add({ userId: result.customerId, type: "payment", title: "Payment successful", message: "Your payment was verified. Your question is now waiting for Admin approval.", questionId, createdAt: FieldValue.serverTimestamp(), read: false });
+    const qSnap = await qRef.get();
+    const q = qSnap.exists ? (qSnap.data() || {}) : {};
+    const customerEmail = String(q.customerEmail || await getUserEmail(result.customerId) || "").trim();
+    const amount = Number(q.amount || 0);
+    await sendSystemEmail({
+      to: [customerEmail, ADMIN_EMAIL],
+      subject: "SMV ASTRO — Payment Successful",
+      replyTo: ADMIN_EMAIL,
+      text: `Payment successful for SMV ASTRO.\n\nQuestion ID: ${questionId}\nCustomer Payment ID: ${result.customerPaymentId || "N/A"}\nAmount: ₹${amount.toFixed(2)}\nRazorpay Payment ID: ${paymentId}\nRazorpay Order ID: ${orderId}\n\nYour question is now waiting for Admin approval.`
+    });
+    await sendAdminTransactionEmail({ eventType: "PAYMENT SUCCESS", paymentId, orderId, amount, currency: "INR", questionId, customerEmail, status: "paid" });
+  }
   return result;
 }
 
@@ -969,7 +1030,46 @@ app.post("/razorpay/webhook", express.raw({ type: "application/json" }), async (
           if (qSnap.exists && qSnap.data().paymentStatus !== "paid") await markQuestionPaid(stored.questionId, orderId, paymentId, "", "razorpay_webhook");
         } catch (e) { console.error("Webhook question update failed:", e); }
       }
-      if (newStatus === "failed" && stored.questionId) await db.collection("smv_questions").doc(stored.questionId).set({ status: "payment_failed", paymentStatus: "failed", paymentUpdatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      if (newStatus === "failed" && stored.questionId) {
+        await db.collection("smv_questions").doc(stored.questionId).set({ status: "payment_failed", paymentStatus: "failed", paymentUpdatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        const qSnap = await db.collection("smv_questions").doc(stored.questionId).get();
+        const q = qSnap.exists ? (qSnap.data() || {}) : {};
+        const customerEmail = String(q.customerEmail || stored.customerEmail || await getUserEmail(q.customerId || stored.firebaseUid) || "").trim();
+        const amount = paymentEntity?.amount != null ? Number(paymentEntity.amount) / 100 : Number(q.amount || stored.amount || 0);
+        await sendSystemEmail({
+          to: [customerEmail, ADMIN_EMAIL],
+          subject: "SMV ASTRO — Payment Failed",
+          replyTo: ADMIN_EMAIL,
+          text: `A SMV ASTRO payment was not completed.\n\nQuestion ID: ${stored.questionId}\nAmount: ₹${Number(amount || 0).toFixed(2)}\nRazorpay Payment ID: ${paymentId || "N/A"}\nRazorpay Order ID: ${orderId || "N/A"}\nStatus: Failed`
+        });
+        await sendAdminTransactionEmail({ eventType: "PAYMENT FAILED", paymentId, orderId, amount, currency: "INR", questionId: stored.questionId, customerEmail, status: "failed" });
+      }
+    }
+    // Refund and other Razorpay transaction events are always copied to Admin.
+    if (eventType.startsWith("refund.")) {
+      const refundEntity = event?.payload?.refund?.entity || {};
+      const amount = refundEntity.amount != null ? Number(refundEntity.amount) / 100 : null;
+      await sendAdminTransactionEmail({
+        eventType: eventType.toUpperCase(),
+        paymentId: refundEntity.payment_id || paymentId,
+        orderId,
+        amount,
+        currency: refundEntity.currency || "INR",
+        questionId: stored?.questionId || null,
+        customerEmail: stored?.customerEmail || null,
+        status: refundEntity.status || eventType
+      });
+    } else if (!["payment.captured","order.paid","payment.failed"].includes(eventType)) {
+      await sendAdminTransactionEmail({
+        eventType: eventType.toUpperCase(),
+        paymentId,
+        orderId,
+        amount: paymentEntity?.amount != null ? Number(paymentEntity.amount) / 100 : null,
+        currency: paymentEntity?.currency || orderEntity?.currency || "INR",
+        questionId: null,
+        customerEmail: null,
+        status: eventType
+      });
     }
     await eventRef.set({ processed: true, processedAt: FieldValue.serverTimestamp() }, { merge: true });
     return res.status(200).send("OK");
