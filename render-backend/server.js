@@ -378,7 +378,7 @@ app.post("/contact-query", express.json({ limit: "20kb" }), async (req, res) => 
       source: "website-contact-form"
     });
 
-    const subject = `New SVM ASTRO Customer Query — ${name}`;
+    const subject = "SMV ASTRO Query";
     const text = [
       "New SVM ASTRO Customer Query",
       "",
