@@ -1204,7 +1204,7 @@ footer{text-align:center;padding:35px 16px;color:var(--muted);border-top:3px dou
 <textarea id="questionText" placeholder="Write your astrology question here..." rows="6" style="width:100%;max-width:100%;min-width:0;box-sizing:border-box;padding:12px;border:1px solid #d7dde7;border-radius:10px;font:inherit;overflow-wrap:anywhere;word-break:break-word"></textarea>
 <button class="btn" id="submitQuestionBtn" style="margin-top:12px">Proceed to Secure Payment</button>
 <div class="small" id="askMsg" style="margin-top:10px"></div>
-<div class="card hidden" id="paymentSuccessPanel" style="margin-top:16px;border:2px solid #b8860b;background:#fffaf0"><h3 style="margin-top:0">Payment Successful ✓</h3><p>Your payment has been securely verified.</p><div class="small" id="paymentSuccessDetails" style="line-height:1.8"></div><button class="btn" id="continueAfterPayment" type="button">CONTINUE TO DASHBOARD</button></div>
+<div class="card hidden" id="paymentSuccessPanel" style="margin-top:16px;border:2px solid #b8860b;background:#fffaf0"><h3 style="margin-top:0">Payment Successful ✓</h3><p>Your payment has been securely verified.</p><div class="small" id="paymentSuccessDetails" style="line-height:1.8"></div><button class="btn hidden" id="continueAfterPayment" type="button" tabindex="-1" aria-hidden="true">CONTINUE TO DASHBOARD</button></div>
 </div>
 </section>
 
@@ -1365,6 +1365,58 @@ function smvConfirm(title,message,okText="OK",cancelText="CANCEL",danger=false){
 function openRegister(){hidePrimarySections("register-flow");show("register-flow");go("register-flow");}
 function openAstroRegister(){hidePrimarySections("astro-register-form");show("astro-register-form");go("astro-register-form");}
 function openAstroFlow(){openQuestionService();}
+
+async function returnCurrentAccountAfterAskDenied(){
+  try{
+    hide("ask-flow");
+    hide("paymentSuccessPanel");
+    hide("astro-flow");
+    hide("appointment");
+    hide("contact");
+
+    if(!currentUser){
+      showHomeSurface();
+      window.scrollTo({top:0,behavior:"smooth"});
+      return;
+    }
+
+    const u=auth?.currentUser||currentUser;
+    const profile=await getUserProfile(u.uid);
+    const role=String(profile?.role||"").toLowerCase();
+
+    if(role==="admin" || u.uid===ADMIN_UID){
+      hidePrimarySections("admin");
+      show("admin");
+      show("adminLink");
+      await loadAdminPanel();
+      go("admin");
+      return;
+    }
+
+    if(role==="astrologer"){
+      hidePrimarySections("astrologer-dashboard");
+      show("dashboard");
+      show("dashLink");
+      await loadDashboard();
+      go("dashboard");
+      return;
+    }
+
+    // Customer fallback
+    hidePrimarySections("dashboard");
+    show("dashboard");
+    show("dashLink");
+    await loadDashboard();
+    go("dashboard");
+  }catch(e){
+    console.error("Return to account dashboard failed:",e);
+    hide("ask-flow");
+    show("dashboard");
+    try{await loadDashboard();}catch(_e){}
+    go("dashboard");
+  }
+}
+
 async function openQuestionService(){
   /*
    * ASK NOW destination:
@@ -1394,6 +1446,9 @@ async function openQuestionService(){
 
   if(questionRole!=="customer"){
     smvNotice("Customer Login Required","Please login with a Customer account to ask an astrology question.","!");
+    // Do not logout the current account. Automatically return the account
+    // that pressed ASK NOW to its own dashboard.
+    setTimeout(()=>returnCurrentAccountAfterAskDenied(),900);
     return;
   }
 
@@ -1447,7 +1502,9 @@ $("astroRegBtn")?.addEventListener("click",openAstroRegister);
 $("regBackBtn")?.addEventListener("click",()=>{hide("register-flow");window.scrollTo({top:0,behavior:"smooth"});});
 $("astroRegBackBtn")?.addEventListener("click",openRegister);
 $("backHomeBtn")?.addEventListener("click",()=>{hide("astro-flow");hide("ask-flow");window.scrollTo({top:0,behavior:"smooth"});});
-$("backAstroBtn")?.addEventListener("click",()=>{hide("ask-flow");go("ask-service");});
+$("backAstroBtn")?.addEventListener("click",async()=>{
+  await returnCurrentAccountAfterAskDenied();
+});
 $("dashLink")?.addEventListener("click",e=>{e.preventDefault();loadDashboard();go("dashboard");});
 $("adminLink")?.addEventListener("click",e=>{e.preventDefault();openAdminEntry();});
 $("adminFeatureBtn")?.addEventListener("click",e=>{e.preventDefault();openAdminEntry();});
@@ -1568,12 +1625,14 @@ async function submitAuth(mode){
 }
     const goToQuestion=pendingAfterLogin==="question";
     const goToAdmin=pendingAfterLogin==="admin";
-    pendingAfterLogin=null;
     closeModal();
     if(goToQuestion){
+      // Keep the protected destination flag until the question form is open.
+      // This prevents the auth-state listener from opening the dashboard first.
       await openQuestionService();
       return;
     }
+    pendingAfterLogin=null;
     hide("dashboard"); hide("admin"); hide("dashLink"); hide("adminLink");
     const profile=await getUserProfile(loginCred.user.uid);
     const adminUser=(loginCred.user.uid===ADMIN_UID || String(profile.role||"").toLowerCase()==="admin");
@@ -1790,8 +1849,26 @@ $("submitQuestionBtn")?.addEventListener("click",async()=>{
       if(successDetails) successDetails.innerHTML='<b>Question ID:</b> '+escapeHtml(pendingQuestionId)+'<br><b>Payment ID:</b> '+escapeHtml(customerPay)+'<br><b>Payment Date & Time:</b> '+escapeHtml(smvDateTime(vr.paymentRecordedAt||new Date()))+'<br><b>Status:</b> Waiting for Admin question approval';
       if(successPanel) show("paymentSuccessPanel");
       pendingQuestionId="";
-      const continueBtn=$("continueAfterPayment");
-      if(continueBtn) continueBtn.onclick=async()=>{ hide("paymentSuccessPanel"); hide("ask-flow"); show("dashboard"); await loadDashboard(); go("dashboard"); };
+
+      // PAYMENT SUCCESS -> CUSTOMER DASHBOARD DIRECTLY.
+      // No extra "Continue to Dashboard" tap is required.
+      setTimeout(async()=>{
+        try{
+          hide("paymentSuccessPanel");
+          hide("ask-flow");
+          hide("astro-flow");
+          hide("appointment");
+          show("dashboard");
+          await loadDashboard();
+          go("dashboard");
+        }catch(dashErr){
+          console.error("Customer dashboard open after payment failed:",dashErr);
+          hide("paymentSuccessPanel");
+          hide("ask-flow");
+          show("dashboard");
+          try{go("dashboard");}catch(_e){}
+        }
+      },900);
      }else{throw new Error("Payment verification failed.");}
     }catch(err){const detail=err?.message||String(err)||"Payment verification failed.";message("askMsg",'<span class="error"><b>Payment confirmation is pending.</b><br><span class="payment-help">Do not make another payment if your bank/account was already debited. Please try verification again. If the payment was not completed, you can retry payment safely.</span><br><small>'+escapeHtml(detail)+'</small></span>');btn.disabled=false;btn.textContent="RETRY VERIFICATION";}
    },
@@ -2024,9 +2101,7 @@ const ep = {
    box.innerHTML=`<div class="grid astro-dashboard-summary">
     <div class="card">${ad.photoData?`<img src="${ad.photoData}" style="width:88px;height:88px;border-radius:50%;object-fit:cover">`:''}<span class="badge">ASTROLOGER</span><h3>${escapeHtml(data.name||'')}</h3>
     <p>Status: <b>${escapeHtml(ad.status||'pending')}</b></p><p><b>${escapeHtml(ad.expertise||ad.specialization||'Astrology')}</b></p>
-    <p>${escapeHtml(ad.experience||0)} years experience</p><p>${escapeHtml(ad.bio||ad.about||'')}</p>
-    <p class="small">Your customer/payment contact details remain private.</p>
-    <div class="action-row"><button class="btn gray" id="changePayoutBtn">Change Payment Method</button></div></div>
+    <p>${escapeHtml(ad.experience||0)} years experience</p><p>${escapeHtml(ad.bio||ad.about||'')}</p></div>
     <div class="card"><h3>My Questions</h3><p><b>${active.length}</b> active question(s)</p><p>Approved profile: <b>${
   ad.status === 'approved'
     ? 'Approved'
@@ -2572,7 +2647,6 @@ ${ad.status === 'rejected' && ad.rejectionReason
 
 };
    const change=()=>openPayoutChange();
-   if($('changePayoutBtn')) $('changePayoutBtn').onclick=change;
    if($('changePayoutBtn2')) $('changePayoutBtn2').onclick=change;
   } else {
    const qs=await withTimeout(getDocs(query(collection(db,'smv_questions'),where('customerId','==',currentUser.uid))));
@@ -4246,4 +4320,53 @@ document.addEventListener("click",function(e){
 }
 </style>
 </body>
+
+<style id="smv-astro-dashboard-normal-mobile-final">
+/* Astrologer Dashboard — normal mobile width.
+   Desktop layout remains unchanged. */
+@media (max-width:760px){
+  #dashboardContent .astro-dashboard-summary{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:none!important;
+    grid-auto-flow:row!important;
+    width:100%!important;
+    max-width:100%!important;
+    gap:14px!important;
+    overflow:visible!important;
+  }
+
+  #dashboardContent .astro-dashboard-summary > .card{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:14px!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+  }
+
+  #dashboardContent .astro-dashboard-summary > .card h3{
+    font-size:18px!important;
+    line-height:1.3!important;
+  }
+
+  #dashboardContent .astro-dashboard-summary > .card p{
+    font-size:13px!important;
+    line-height:1.5!important;
+    overflow-wrap:anywhere!important;
+    word-break:break-word!important;
+  }
+
+  #dashboardContent .astro-dashboard-summary > .card .small{
+    font-size:12px!important;
+  }
+
+  #dashboardContent .astro-dashboard-summary > .card img{
+    max-width:88px!important;
+    max-height:88px!important;
+  }
+}
+</style>
+
 </html>
